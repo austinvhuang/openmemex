@@ -1,59 +1,92 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleInstances  #-}
 {-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Main where
 
 import Control.Applicative
+import Data.Semigroup ((<>))
+import Data.Time.Clock
 import Database.SQLite.Simple
 import Database.SQLite.Simple.FromRow
+import Options.Applicative
 
-import Data.Time.Clock
-
-import Options.Generic
-
-
-data Entry = Entry {
-    entryID :: Int, 
+data Entry = Entry
+  { entryID :: Int,
     date :: String,
     time :: String,
     content :: String
-    } deriving (Show)
-
-data Tag = Tag {
-    foreignID :: Int, 
-    tag :: String
-    } deriving (Show)
-
-data CommandLine w = CommandLine { 
-    note :: w ::: String <?> "A note to yourself"
-    , tags :: w ::: [String] <?> "Tags for the note"
-    , reset :: w ::: Bool <?> "Wipe Database" 
-    } deriving (Generic)
-
-instance ParseRecord (CommandLine Wrapped)
-instance Show (CommandLine Unwrapped)
+  }
+  deriving (Show)
 
 instance FromRow Entry where
   fromRow = Entry <$> field <*> field <*> field <*> field
 
-instance FromRow Tag where
-  fromRow = Tag <$> field <*> field
+data Tag = Tag
+  { foreignID :: Int,
+    tag :: String
+  }
+  deriving (Show)
+
+data CommandLine = CommandLine
+  { note :: String,
+    tags :: [String],
+    resetDB :: Bool
+  }
+  deriving (Show)
+
+commandLine :: Parser CommandLine
+commandLine =
+  CommandLine
+    <$> strOption
+      ( long "note"
+          <> help "Note content"
+      )
+    <*> many
+      ( strOption
+          ( long "tag"
+              <> help "Topic tag"
+          )
+      )
+    <*> switch (long "reset" <> help "Reset databse")
+
+optionsParser :: ParserInfo CommandLine
+optionsParser =
+  info
+    (helper <*> commandLine)
+    ( fullDesc <> progDesc "note2self"
+        <> header
+          "note2self - take notes for yourself"
+    )
+
+dbFile = "note2self.db"
 
 initDB :: IO ()
 initDB = do
-  conn <- open "note2self.db"
+  conn <- open dbFile
   execute_ conn "DROP TABLE IF EXISTS entries;"
   execute_ conn "DROP TABLE IF EXISTS tags;"
   execute_ conn "CREATE TABLE entries (entryID INTEGER PRIMARY KEY, date text, time text, content text);"
   execute_ conn "CREATE TABLE tags (entryID, tag text);"
   close conn
 
+dump = do
+  putStrLn "DB Contents"
+  conn <- open dbFile
+  r <- query_ conn "SELECT * from entries" :: IO [Entry]
+  mapM_ print r
+  close conn
+
 main :: IO ()
 main = do
   initDB
-  options <- unwrapRecord "Note2Self"
-  print (options :: CommandLine Unwrapped)
+  options <- execParser optionsParser
+  print (options :: CommandLine)
+  if (resetDB options)
+    then putStrLn "Resetting DB" >> initDB
+    else pure ()
+  dump
+  pure ()
