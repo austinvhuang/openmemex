@@ -1,2 +1,4 @@
 *.db
+*.db.backup
 .stack-work
+*.vim

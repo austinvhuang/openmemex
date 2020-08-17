@@ -18,6 +18,7 @@ executable n2s
   other-modules:       Backend, Parser
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
+                     , directory
                      , sqlite-simple
                      , optparse-applicative
                      , optparse-generic
