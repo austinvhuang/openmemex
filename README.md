@@ -1,13 +1,13 @@
 # note2self
 
-Bikeshedding personal project.
+A personal bikeshedding-ish project.
 
 General concept:
 
 - Dump notes to myself into a sqlite database.
 - Notes can also be associated with topic tags.
 
-Some immediate TODOs:
+Some immediate short-term TODOs:
 
 - Implement commands properly in optparse-applicative (resetting the database should be a command not a flag)
 - Add a few more convenient commands (undo / delete a note, add a tag to an existing note)
