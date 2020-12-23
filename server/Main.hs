@@ -67,15 +67,11 @@ type AllTagsAPI = "all" :> "tags" :> Get '[JSON] [[String]]
 
 type AllEntriesAPI = "all" :> "entries" :> Get '[JSON] [Entry]
 
-type CombinedAPI = RootAPI :<|> DateAPI :<|> RangeAPI :<|> AllTagsAPI :<|> AllEntriesAPI
+type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [Entry]
 
--- for testing
-entries =
-  [ Entry 123 "2020-11-21" "4:00pm" "hello world",
-    Entry 124 "2020-11-21" "5:00pm" "hello foo",
-    Entry 125 "2020-11-24" "5:00pm" "hello foo"
-  ] ::
-    [Entry]
+type CombinedAPI = RootAPI :<|> DateAPI :<|> RangeAPI :<|> AllTagsAPI :<|> AllEntriesAPI :<|> ContentAPI
+
+-- Helper functions
 
 date2string year month day = printf "%.4d-%.2d-%.2d" year month day
 
@@ -110,7 +106,6 @@ queryRangeH y1 m1 d1 y2 m2 d2 = (liftIO $ queryRange y1 m1 d1 y2 m2 d2) :: Handl
 
 -- | Returns a unique list of all tags
 -- See https://stackoverflow.com/questions/32098328/no-instance-for-database-sqlite-simple-fromfield-fromfield-char
--- Re why this isn't [String]
 allTags :: IO [[String]]
 allTags = do
   conn <- open dbFile
@@ -130,17 +125,24 @@ allEntries = do
 
 allEntriesH = liftIO allEntries :: Handler [Entry]
 
--- | Test function
-getEntries :: Int -> Int -> Int -> Handler [Entry]
-getEntries year month day = return matches
-  where
-    matches = filter (\x -> (date x) == printf "%.4d-%.2d-%.2d" year month day) entries
+queryContent :: String -> IO [Entry]
+queryContent query = do
+  conn <- open dbFile
+  let queryString = 
+       Query $ pack $ "SELECT * FROM entries WHERE content LIKE '%" ++ query  ++ "%'"
+  r <- query_ conn queryString :: IO [Entry]
+  close conn
+  pure r
+
+queryContentH q = liftIO $ queryContent q :: Handler [Entry]
+
+-- App definition
 
 combinedApi :: Proxy CombinedAPI
 combinedApi = Proxy
 
 server :: Server CombinedAPI
-server = getRoot :<|> queryDateH :<|> queryRangeH :<|> allTagsH :<|> allEntriesH
+server = getRoot :<|> queryDateH :<|> queryRangeH :<|> allTagsH :<|> allEntriesH :<|> queryContentH
 
 mkApp :: IO Application
 mkApp = return $ serve combinedApi server
