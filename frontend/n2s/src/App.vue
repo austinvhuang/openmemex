@@ -1,15 +1,20 @@
 <template>
-  memex
-  <div id="app"/>
+  <h1>memexAI</h1>
+
+  <div id="app">
+  <LandingPage/>
+  </div>
+
+
+
 </template>
 
 <script>
+import LandingPage from "./components/LandingPage"
+
 export default {
   name: 'App',
-  data() {
-    return {
-    }
-  }
+  components: { LandingPage }
 }
 </script>
 
