@@ -32,4 +32,5 @@ executable server
                      , aeson
                      , sqlite-simple
                      , servant-server
+                     , text
                      , warp
