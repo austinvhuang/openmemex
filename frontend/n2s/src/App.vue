@@ -1,8 +1,8 @@
 <template>
-  <h1>memexAI</h1>
+  <h1>note2self.ai</h1>
 
   <div id="app">
-  <LandingPage/>
+  <EntryCards/>
   </div>
 
 
@@ -10,11 +10,12 @@
 </template>
 
 <script>
-import LandingPage from "./components/LandingPage"
+//import LandingPage from "./components/LandingPage"
+import EntryCards from "./components/EntryCards"
 
 export default {
   name: 'App',
-  components: { LandingPage }
+  components: { EntryCards }
 }
 </script>
 
