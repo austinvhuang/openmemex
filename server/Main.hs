@@ -10,10 +10,9 @@
 {-# LANGUAGE TypeOperators #-}
 
 import Control.Monad.IO.Class (liftIO)
+import DB
 import Data.Aeson
 import Data.Text (Text, pack, unpack)
-import Database.SQLite.Simple
-import Database.SQLite.Simple.FromRow
 import GHC.Generics
 import GHC.TypeLits
 import Network.Wai.Handler.Warp
@@ -21,15 +20,19 @@ import Servant
 import System.IO
 import Text.Printf (printf)
 
-import DB
-
 -- API Types
 
 type RootAPI = Get '[JSON] [String]
 
-type DateAPI = "date" :> Capture "year" Int :> Capture "month" Int :> Capture "day" Int :> Get '[JSON] [Entry]
+type DateAPI =
+  "date" :> Capture "year" Int :> Capture "month" Int :> Capture "day" Int :> Get '[JSON] [Entry]
 
-type RangeAPI = "range" :> Capture "year" Int :> Capture "month" Int :> Capture "day" Int :> Capture "year" Int :> Capture "month" Int :> Capture "day" Int :> Get '[JSON] [Entry]
+type RangeAPI =
+  "range" :> Capture "year" Int :> Capture "month" Int :> Capture "day" Int
+    :> Capture "year" Int
+    :> Capture "month" Int
+    :> Capture "day" Int
+    :> Get '[JSON] [Entry]
 
 type AllTagsAPI = "all" :> "tags" :> Get '[JSON] [[String]]
 
@@ -37,7 +40,8 @@ type AllEntriesAPI = "all" :> "entries" :> Get '[JSON] [Entry]
 
 type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [Entry]
 
-type CombinedAPI = RootAPI :<|> DateAPI :<|> RangeAPI :<|> AllTagsAPI :<|> AllEntriesAPI :<|> ContentAPI
+type CombinedAPI =
+  RootAPI :<|> DateAPI :<|> RangeAPI :<|> AllTagsAPI :<|> AllEntriesAPI :<|> ContentAPI
 
 -- Helper functions
 
@@ -73,9 +77,9 @@ runs :: IO ()
 runs = do
   let port = 3000
       settings =
-        setPort port $
-          setBeforeMainLoop (hPutStrLn stderr ("listening on port " ++ show port)) $
-            defaultSettings
+        setPort port
+          $ setBeforeMainLoop (hPutStrLn stderr ("listening on port " ++ show port))
+          $ defaultSettings
   runSettings settings =<< mkApp
 
 main = runs
