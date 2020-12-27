@@ -25,7 +25,7 @@ executable n2s
                      , time
 
 executable server
-  hs-source-dirs:      server
+  hs-source-dirs:      server, shared
   main-is:             Main.hs
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
@@ -34,3 +34,14 @@ executable server
                      , servant-server
                      , text
                      , warp
+
+executable crawler
+  hs-source-dirs:      crawler, shared
+  main-is:             Main.hs
+  default-language:    Haskell2010
+  build-depends:       base >= 4.7 && < 5
+                     , aeson
+                     , sqlite-simple
+                     , network-uri
+                     , text
+

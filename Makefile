@@ -6,3 +6,6 @@ server-watcher:
 
 prettier-watcher:
 	rg *.vue *.js *.html --files | entr -s "npx prettier --write *.vue"
+
+crawler-watcher:
+	~/.local/bin/ghcid -c "stack ghci note2self:exe:crawler" -Tmain
