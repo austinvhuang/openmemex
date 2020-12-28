@@ -1,4 +1,6 @@
 <template>
+  <h1>note2self.ai</h1>
+
   <div id="app">
     <EntryCards />
   </div>

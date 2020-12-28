@@ -1,7 +1,7 @@
 <template>
   <div class="container">
-    <h1>note2self.ai</h1>
-    <svg height="100" width="100%" class="timeline fade-in">
+    <button v-tooltip.auto="msg">test</button>
+    <svg height="100" width="100%" v-tooltip.top-center="msg">
       <line
         x1="0"
         y1="50%"
@@ -12,7 +12,6 @@
 
       <circle
         v-for="item in parsedDate"
-        v-tooltip.top-center="item.date"
         :key="item.entryID"
         :cx="item.pDate + '%'"
         cy="50%"
@@ -29,7 +28,7 @@
     {{ cache_run }}
     <p></p>
 
-    <div class="card fade-in" v-for="item in entries" :key="item.entryID">
+    <div class="card" v-for="item in entries" :key="item.entryID">
       <div class="card-header">
         <h3><span v-text="item.date" /></h3>
       </div>
@@ -45,7 +44,7 @@ export default {
       entries: [],
       parsedDate: [],
       cache_run: 0,
-      msg: "hello world",
+      msg: "test",
     };
   },
   computed: {},
@@ -64,7 +63,6 @@ export default {
         let minVal = Math.min(...parsed);
         this.parsedDate = this.entries.map((e) => ({
           entryID: e.entryID,
-          date: e.date,
           pDate: ((Date.parse(e.date) - minVal) / (maxVal - minVal)) * 100,
         }));
         console.log(this.parsedDate);
@@ -82,6 +80,13 @@ export default {
       console.log("Cache Reset");
       console.log(this.cache_run);
       console.log(this.parsedDate);
+    },
+    entries(before, after) {
+      console.log("before");
+      console.log(before);
+      console.log("after");
+      console.log(after);
+      console.log("updated parsed date");
     },
   },
 };
@@ -109,83 +114,5 @@ export default {
 .container {
   width: 80%;
   margin: 0 auto;
-}
-
-.tooltip {
-  font-family: "roboto";
-  font-size: 40px;
-  background: #eeeeeee;
-  box-shadow: 0 5px 10px 0px rgba(0, 0, 0, 0.2);
-  border-radius: 5px;
-  border-color: #000000;
-  &.popover {
-    .popover-arrow {
-      border-color: #000000;
-      height: 20px;
-      border-style: solid;
-      margin: 10px;
-    }
-  }
-}
-
-.timeline {
-  box-shadow: 0 5px 10px 0px rgba(0, 0, 0, 0.2);
-  border-color: #000000;
-  border-width: 10px;
-  border-radius: 5px;
-}
-
-// https://codepen.io/JTBennett/pen/BjpXRo
-.fade-in {
-  animation: fadeIn ease 500ms;
-  -webkit-animation: fadeIn ease 500ms;
-  -moz-animation: fadeIn ease 500ms;
-  -o-animation: fadeIn ease 500ms;
-  -ms-animation: fadeIn ease 500ms;
-}
-
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@-moz-keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@-webkit-keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@-o-keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@-ms-keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
 }
 </style>
