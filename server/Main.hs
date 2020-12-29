@@ -1,20 +1,14 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
 import Control.Monad.IO.Class (liftIO)
 import DB
-import Data.Aeson
 import Data.Text (Text, pack, unpack)
-import GHC.Generics
-import GHC.TypeLits
 import Network.Wai.Handler.Warp
 import Servant
 import System.IO
@@ -77,9 +71,9 @@ runs :: IO ()
 runs = do
   let port = 3000
       settings =
-        setPort port
-          $ setBeforeMainLoop (hPutStrLn stderr ("listening on port " ++ show port))
-          $ defaultSettings
+        setPort port $
+          setBeforeMainLoop (hPutStrLn stderr ("listening on port " ++ show port)) $
+            defaultSettings
   runSettings settings =<< mkApp
 
 main = runs

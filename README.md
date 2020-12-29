@@ -1,7 +1,5 @@
 # note2self
 
-A personal bikeshedding-ish project.
-
 General concept:
 
 - Dump notes to myself into a sqlite database.

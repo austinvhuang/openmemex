@@ -1,20 +1,14 @@
 <template>
-  <div id="app">
-    <EntryCards />
-  </div>
+  <div id="app"><EntryMap /></div>
 </template>
 
 <script>
-//import LandingPage from "./components/LandingPage"
-// import Vue from "vue";
-import EntryCards from "./components/EntryCards";
-// import Tooltip from "v-tooltip";
-
-// Vue.use(Tooltip);
+// import EntryCards from "./components/EntryCards";
+import EntryMap from "./components/EntryMap";
 
 export default {
   name: "App",
-  components: { EntryCards },
+  components: { EntryMap },
 };
 </script>
 
