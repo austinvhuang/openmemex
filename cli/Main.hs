@@ -1,8 +1,8 @@
 module Main where
 
-import Data.Time
+import Data.Time ( formatTime, defaultTimeLocale, getZonedTime )
 
-import Options.Applicative
+import Options.Applicative ( execParser )
 
 import Backend
 import Parser
@@ -11,7 +11,7 @@ main :: IO ()
 main = do
   options <- execParser optionsParser
   print (options :: CommandLine)
-  if (resetDB options)
+  if resetDB options
     then putStrLn "Resetting DB" >> initDB >> putStrLn "Previous DB saved as note2self.db.backup"
     else pure ()
 
@@ -19,7 +19,7 @@ main = do
   let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
   let tm = formatTime defaultTimeLocale "%H:%M:%S" now
   r <- addEntry $ Entry Nothing dt tm (note options)
-  mapM (addTag r) (tags options)
+  mapM_ (addTag r) (tags options)
   dumpEntries
   dumpTags
   pure ()

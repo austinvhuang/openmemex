@@ -1,25 +1,20 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
 
 module DB where
 
-import Data.Time
-
 import Control.Monad.IO.Class (liftIO)
-import Data.Aeson ( ToJSON )
+import Data.Aeson (ToJSON)
 import Data.Text (Text, pack, unpack)
+import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
 import Database.SQLite.Simple
-import Database.SQLite.Simple.FromRow
-import GHC.Generics
-import GHC.TypeLits
+import GHC.Generics (Generic)
 import System.Directory (copyFile)
 import Text.Printf (printf)
 
@@ -66,20 +61,20 @@ data PageTitle = PageTitle String deriving (Show, Eq)
 data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL
 
 -- data CacheContentType = CachePageTitle | CacheGenericContent deriving (Show, Generic)
-data CacheEntry = CacheEntry {
-  cacheForeignID :: Int, -- entryID
-  cacheDate :: String,
-  cacheTime :: String,
-  cacheUrl :: String,
-  cacheContentType :: String, -- CacheContentType,
-  cacheContent :: String
-} deriving (Show, Generic)
+data CacheEntry = CacheEntry
+  { cacheForeignID :: Int, -- entryID
+    cacheDate :: String,
+    cacheTime :: String,
+    cacheUrl :: String,
+    cacheContentType :: String, -- CacheContentType,
+    cacheContent :: String
+  }
+  deriving (Show, Generic)
 
 instance FromRow CacheEntry where
   fromRow = CacheEntry <$> field <*> field <*> field <*> field <*> field <*> field
 
 instance ToJSON CacheEntry
-
 
 dbFile = "note2self.db"
 
@@ -101,10 +96,12 @@ queryRange :: Int -> Int -> Int -> Int -> Int -> Int -> IO [Entry]
 queryRange startYear startMonth startDay endYear endMonth endDay = do
   conn <- open dbFile
   let queryString =
-        Query $ pack $ "SELECT * FROM entries WHERE date BETWEEN \"" 
-        ++ date2string startYear startMonth startDay 
-        ++ "\" AND \"" 
-        ++ date2string endYear endMonth endDay ++ "\""
+        Query $ pack $
+          "SELECT * FROM entries WHERE date BETWEEN \""
+            ++ date2string startYear startMonth startDay
+            ++ "\" AND \""
+            ++ date2string endYear endMonth endDay
+            ++ "\""
   r <- query_ conn queryString :: IO [Entry]
   close conn
   pure r
@@ -129,8 +126,8 @@ allEntries = do
 queryContent :: String -> IO [Entry]
 queryContent query = do
   conn <- open dbFile
-  let queryString = 
-       Query $ pack $ "SELECT * FROM entries WHERE content LIKE '%" ++ query  ++ "%'"
+  let queryString =
+        Query $ pack $ "SELECT * FROM entries WHERE content LIKE '%" ++ query ++ "%'"
   r <- query_ conn queryString :: IO [Entry]
   close conn
   pure r
@@ -145,32 +142,48 @@ writeCache cacheEntries = do
   let tm = formatTime defaultTimeLocale "%H:%M:%S" now
   let timeStamp = formatTime defaultTimeLocale "%Y%m%d_%H%M%S" now
   let tableName = "cache_" ++ timeStamp
-  copyFile dbFile (dbFile ++ ".backup." ++ timeStamp++ ".db")
+  copyFile dbFile (dbFile ++ ".backup." ++ timeStamp ++ ".db")
   conn <- open dbFile
 
   -- insert metadata entry
-  executeNamed conn 
-    (Query . pack $ "INSERT INTO cache_meta (table_name, cache_date, cache_time) " ++
-    "VALUES (:tableName, :date, :time)")
-    [":tableName" := tableName, ":date" := dt, ":time" := tm] 
+  executeNamed
+    conn
+    ( Query . pack $
+        "INSERT INTO cache_meta (table_name, cache_date, cache_time) "
+          ++ "VALUES (:tableName, :date, :time)"
+    )
+    [":tableName" := tableName, ":date" := dt, ":time" := tm]
 
   -- create new table
-  executeNamed conn 
-    (Query . pack $ "CREATE TABLE :cacheTable " ++ 
-    "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, " ++
-    "cache_date TEXT, cache_time TEXT, cache_url TEXT, " ++
-    "cache_content_type TEXT, cache_content TEXT);")
+  executeNamed
+    conn
+    ( Query . pack $
+        "CREATE TABLE :cacheTable "
+          ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
+          ++ "cache_date TEXT, cache_time TEXT, cache_url TEXT, "
+          ++ "cache_content_type TEXT, cache_content TEXT);"
+    )
     [":cacheTable" := tableName]
 
-  -- insert data into new table 
-  mapM_ (\CacheEntry{..} -> 
-    executeNamed conn 
-      (Query . pack $ "INSERT INTO :cacheTable " ++
-      "       (entry_id, cache_date, cache_time, cache_url, cache_content_type, cache_content) " ++
-      "VALUES (:entryID, :cacheDate, :cacheTime, :cacheUrl, :cacheContentType, cacheContent)")
-      [":cacheTable" := tableName, ":entryID" := cacheForeignID, ":cacheDate" := cacheDate,
-      ":cacheTime" := cacheTime, "cacheUrl" := cacheUrl, 
-      ":cacheContentType" := cacheContentType, ":cacheContent" := cacheContent])
+  -- insert data into new table
+  mapM_
+    ( \CacheEntry {..} ->
+        executeNamed
+          conn
+          ( Query . pack $
+              "INSERT INTO :cacheTable "
+                ++ "       (entry_id, cache_date, cache_time, cache_url, cache_content_type, cache_content) "
+                ++ "VALUES (:entryID, :cacheDate, :cacheTime, :cacheUrl, :cacheContentType, cacheContent)"
+          )
+          [ ":cacheTable" := tableName,
+            ":entryID" := cacheForeignID,
+            ":cacheDate" := cacheDate,
+            ":cacheTime" := cacheTime,
+            "cacheUrl" := cacheUrl,
+            ":cacheContentType" := cacheContentType,
+            ":cacheContent" := cacheContent
+          ]
+    )
     cacheEntries
 
   close conn

@@ -8,7 +8,6 @@ import GHC.Int (Int64)
 import System.Directory (copyFile)
 
 import Database.SQLite.Simple
-import Database.SQLite.Simple.FromRow
 
 data Entry = Entry
   { entryID :: Maybe Int, -- only needs a value when reading
