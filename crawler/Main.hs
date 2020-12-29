@@ -2,6 +2,9 @@
 
 module Main where
 
+import Control.Concurrent (threadDelay)
+
+import Data.Time
 
 import Data.Text(isInfixOf, pack, unpack, replace)
 
@@ -11,14 +14,14 @@ import  Text.HTML.Scalpel
 import Network.URI (URI, isURI, parseURI)
 import DB
 
-data PageTitle = PageTitle String deriving (Show, Eq)
+import Text.Pretty.Simple (pPrint)
 
-data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL
-
+-- TODO - this doesn't work yet - need to use the query format
 arxivTransform :: String -> String
 arxivTransform url = unpack . replace "arxiv.org" "export.arxiv.org" $ pack url
 -- arxivTransform url = "http://export.arxiv.org/api/query?id_list=cs/9901002v1"
 
+-- TODO - add other transformations
 urlTransformations = arxivTransform
 
 idURL :: String -> URLType
@@ -57,15 +60,16 @@ main = do
   entries <- allEntries
   -- mapM_ (putStrLn . show) entries
   let linkEntries = filter (isURI . content) entries
-  mapM_ (putStrLn . show . content) linkEntries
+  -- mapM_ (putStrLn . show . content) linkEntries
   let links = urlTransformations <$> content <$> linkEntries
-  mapM_ (\url -> do
+  titles <- mapM (\url -> do
     putStrLn $ "Querying url: " ++ url
-    -- titles <- router url
-    titles <- catchAny (router url) $ \e -> do
+    titles <- catchAny (threadDelay 100000 >> router url) $ \e -> do
         putStrLn $ "Got an exception: " ++ show e
         putStrLn "Returning dummy value of Nothing"
         return $ Just $ PageTitle ""
-    putStrLn $ show titles
+    -- putStrLn $ show titles
+    pure titles
     )
-    links
+    (take 10 links) -- for testing
+  pPrint titles

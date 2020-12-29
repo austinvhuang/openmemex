@@ -42,6 +42,7 @@ initDB = do
   execute_ conn "DROP TABLE IF EXISTS tags;"
   execute_ conn "CREATE TABLE entries (entryID INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT, content TEXT);"
   execute_ conn "CREATE TABLE tags (tagID INTEGER PRIMARY KEY AUTOINCREMENT, entryID INTEGER, tag TEXT);"
+  execute_ conn "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
   close conn
 
 addEntry :: Entry -> IO Int64
