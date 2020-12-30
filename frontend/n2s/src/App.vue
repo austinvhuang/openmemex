@@ -1,14 +1,14 @@
 <template>
-  <div id="app"><EntryMap /></div>
+  <div id="app"><EntryCards /></div>
 </template>
 
 <script>
-// import EntryCards from "./components/EntryCards";
-import EntryMap from "./components/EntryMap";
+import EntryCards from "./components/EntryCards";
+// import EntryMap from "./components/EntryMap";
 
 export default {
   name: "App",
-  components: { EntryMap },
+  components: { EntryCards },
 };
 </script>
 

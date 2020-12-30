@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <h1>note2self.ai</h1>
-    <svg height="100" width="100%" class="timeline fade-in">
+    <svg height="100" width="100%" class="timeline fade-in"  v-on:mousemove="drag($event)">
       <line
         x1="0"
         y1="50%"
@@ -11,8 +11,9 @@
       />
 
       <circle
+        v-on:click="timelineClick($event, item.url)"
         v-for="item in parsedDate"
-        v-tooltip.top-center="item.date"
+        v-tooltip.top-center="item.pageTitle"
         :key="item.entryID"
         :cx="item.pDate + '%'"
         cy="50%"
@@ -24,18 +25,20 @@
       />
     </svg>
 
-    <button v-on:click="cache_run = 1">Run cache</button>
-
-    {{ cache_run }}
-    <p></p>
-
-    <div class="card fade-in" v-for="item in entries" :key="item.entryID">
+<!-- this width doesn't work, width is determined by the card CSS attribute -->
+    <div width="80%">
+    <div class="card fade-in" v-for="item in entries" :key="item.cvForeignID">
       <div class="card-header">
-        <h3><span v-text="item.date" /></h3>
+        <h3><span v-text="item.cvDate" /></h3>
       </div>
-      <span v-text="item.content" />
+      <span v-text="item.cvContent" />
     </div>
+    
   </div>
+  <div width="20%">
+    HELLO DIV
+    </div>
+    </div>
 </template>
 
 <script>
@@ -44,14 +47,12 @@ export default {
     return {
       entries: [],
       parsedDate: [],
-      cache_run: 0,
-      msg: "hello world",
     };
   },
   computed: {},
   created: function () {
     // note - uses proxy
-    fetch("http://localhost:8080/all/entries")
+    fetch("http://localhost:8080/all/cache")
       .then((response) => response.json())
       .then((data) => {
         console.log("retrieved data");
@@ -59,30 +60,33 @@ export default {
         return data;
       })
       .then((data) => {
-        let parsed = data.map((e) => Date.parse(e.date));
+        let parsed = data.map((e) => Date.parse(e.cvDate));
         let maxVal = Math.max(...parsed);
         let minVal = Math.min(...parsed);
         this.parsedDate = this.entries.map((e) => ({
-          entryID: e.entryID,
-          date: e.date,
-          pDate: ((Date.parse(e.date) - minVal) / (maxVal - minVal)) * 100,
+          entryID: e.cvForeignID,
+          date: e.cvDate,
+          pageTitle: e.cvContent,
+          url: e.cvUrl,
+          pDate: ((Date.parse(e.cvDate) - minVal) / (maxVal - minVal)) * 100,
         }));
         console.log(this.parsedDate);
       });
   },
   mounted: function () {},
-  methods: {},
-  watch: {
-    cache_run(before, after) {
-      console.log("before");
-      console.log(before);
-      console.log("after");
-      console.log(after);
-      this.cache_run = 0;
-      console.log("Cache Reset");
-      console.log(this.cache_run);
-      console.log(this.parsedDate);
+  methods: {
+    timelineClick(e, url) {
+      console.log("Clicked timeline")
+      console.log(e)
+      window.open(url)
     },
+    drag(e) {
+      console.log("drag " + e)
+    }
+
+  },
+
+  watch: {
   },
 };
 </script>
@@ -90,6 +94,7 @@ export default {
 <style>
 .card {
   /* box-shadow: 10px, 10px grey; */
+  display: block;
   box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.2),
     0px 4px 4px 0px rgba(0, 0, 0, 0.15), 0px 2px 2px 0px rgba(0, 0, 0, 0.2);
   background-color: #eeeeee;
@@ -112,8 +117,8 @@ export default {
 }
 
 .tooltip {
-  font-family: "roboto";
-  font-size: 40px;
+  font-family: "arial";
+  font-size: 1em;
   background: #eeeeeee;
   box-shadow: 0 5px 10px 0px rgba(0, 0, 0, 0.2);
   border-radius: 5px;

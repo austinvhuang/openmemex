@@ -32,10 +32,12 @@ type AllTagsAPI = "all" :> "tags" :> Get '[JSON] [[String]]
 
 type AllEntriesAPI = "all" :> "entries" :> Get '[JSON] [Entry]
 
+type AllCacheAPI = "all" :> "cache" :> Get '[JSON] [CacheView]
+
 type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [Entry]
 
 type CombinedAPI =
-  RootAPI :<|> DateAPI :<|> RangeAPI :<|> AllTagsAPI :<|> AllEntriesAPI :<|> ContentAPI
+  RootAPI :<|> DateAPI :<|> RangeAPI :<|> AllTagsAPI :<|> AllEntriesAPI :<|> AllCacheAPI :<|> ContentAPI
 
 -- Helper functions
 
@@ -48,11 +50,14 @@ getRoot = return ["n2s API"]
 
 queryDateH y m d = liftIO $ queryDate y m d :: Handler [Entry]
 
+queryRangeH :: Int -> Int -> Int -> Int -> Int -> Int -> Handler [Entry]
 queryRangeH y1 m1 d1 y2 m2 d2 = (liftIO $ queryRange y1 m1 d1 y2 m2 d2) :: Handler [Entry]
 
 allTagsH = liftIO allTags :: Handler [[String]]
 
 allEntriesH = liftIO allEntries :: Handler [Entry]
+
+allCacheH = liftIO allCache :: Handler [CacheView]
 
 queryContentH q = liftIO $ queryContent q :: Handler [Entry]
 
@@ -62,7 +67,7 @@ combinedApi :: Proxy CombinedAPI
 combinedApi = Proxy
 
 server :: Server CombinedAPI
-server = getRoot :<|> queryDateH :<|> queryRangeH :<|> allTagsH :<|> allEntriesH :<|> queryContentH
+server = getRoot :<|> queryDateH :<|> queryRangeH :<|> allTagsH :<|> allEntriesH :<|> allCacheH :<|> queryContentH
 
 mkApp :: IO Application
 mkApp = return $ serve combinedApi server

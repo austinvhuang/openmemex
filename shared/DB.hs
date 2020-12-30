@@ -63,6 +63,23 @@ data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL
 
 data CacheContentType = CachePageTitle | CacheGenericContent deriving (Show, Generic)
 
+-- API Service View
+data CacheView = CacheView
+  { cvForeignID :: Int, -- entryID
+    cvUrl :: String,
+    cvContentType :: String, -- CacheContentType,
+    cvContent :: String,
+    cvDate :: String,
+    cvTime :: String
+  }
+  deriving (Show, Generic)
+
+instance FromRow CacheView where
+  fromRow = CacheView <$> field <*> field <*> field <*> field <*> field <*> field
+
+instance ToJSON CacheView
+
+--  database representation
 data CacheEntry = CacheEntry
   { cacheForeignID :: Int, -- entryID
     cacheUrl :: String,
@@ -124,6 +141,13 @@ allEntries = do
   close conn
   pure r
 
+allCache :: IO [CacheView]
+allCache = do
+  conn <- open dbFile
+  r <- query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_content, date, time from cache"
+  close conn
+  pure r
+
 queryContent :: String -> IO [Entry]
 queryContent query = do
   conn <- open dbFile
@@ -146,6 +170,11 @@ crawlerOutput2cache out =
             cacheContentType = show CachePageTitle, -- TODO - cleanup
             cacheContent = title
           }
+
+backupDB = do
+  now <- getZonedTime
+  let timeStamp = formatTime defaultTimeLocale "%Y%m%d_%H%M%S" now
+  copyFile dbFile (dbFile ++ ".backup." ++ timeStamp ++ ".db")
 
 writeCache :: [CacheEntry] -> IO ()
 writeCache cacheEntries = do
@@ -196,5 +225,43 @@ writeCache cacheEntries = do
           ]
     )
     cacheEntries
+  bracketExecute $
+    "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_content, date, time, content) "
+      ++ "as select cache_entry_id, "
+      ++ tableName
+      ++ ".entry_id as entry_id, cache_url, cache_content_type, cache_content, date, time, content "
+      ++ "from "
+      ++ tableName
+      ++ " left join entries on "
+      ++ tableName
+      ++ ".entry_id=entries.entry_id;"
 
   close conn
+
+bracketQuery :: FromRow r => String -> IO [r]
+bracketQuery queryString = do
+  conn <- open dbFile
+  r <- query_ conn (Query . pack $ queryString)
+  close conn
+  pure r
+
+bracketExecute :: String -> IO ()
+bracketExecute queryString = do
+  conn <- open dbFile
+  execute_ conn (Query . pack $ queryString)
+  close conn
+
+wipeCache :: IO ()
+wipeCache = do
+  backupDB
+  r <- bracketQuery "SELECT table_name FROM cache_meta" :: IO [[String]]
+  let flattened = concat r
+  putStrLn $ "Removing tables \n" ++ show flattened
+  mapM_
+    ( \x ->
+        bracketExecute $ "DROP TABLE IF EXISTS " ++ x
+    )
+    flattened
+  bracketExecute "DROP TABLE IF EXISTS cache_meta"
+  bracketExecute "DROP VIEW IF EXISTS cache"
+  bracketExecute "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"

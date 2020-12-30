@@ -12,3 +12,9 @@ crawler-run:
 
 crawler-build:
 	~/.local/bin/ghcid -c "stack ghci note2self:exe:crawler"
+
+clean-backups:
+	rm note2self.db.backup.20*.db
+
+vue-server:
+	cd frontend/n2s; npm run serve

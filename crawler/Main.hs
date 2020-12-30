@@ -43,6 +43,7 @@ router url = do
   let urlType = idURL url
   case urlType of
     ArxivURL -> pure Nothing
+    TwitterURL -> pure Nothing
     PdfURL -> pure Nothing
     _ -> do
       result <- getTitle url
@@ -57,7 +58,9 @@ main = do
   let linkEntries = filter (isURI . content) entries
   let links = urlTransformations <$> content <$> linkEntries
 
-  let filt = id -- replace with other alternatives as needed0
+  let filt = id
+  -- let filt = take 5 -- for debugging
+
   titles <-
     mapM
       ( \url -> do
