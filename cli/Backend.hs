@@ -1,13 +1,11 @@
-{-# LANGUAGE OverloadedStrings #-} 
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Backend where
 
-import GHC.Int (Int64)
-
-import System.Directory (copyFile)
-
 import Database.SQLite.Simple
+import GHC.Int (Int64)
+import System.Directory (copyFile)
 
 data Entry = Entry
   { entryID :: Maybe Int, -- only needs a value when reading
@@ -21,8 +19,7 @@ instance FromRow Entry where
   fromRow = Entry <$> field <*> field <*> field <*> field
 
 data Tag = Tag
-  { 
-    tagID :: Maybe Int, -- only needs a value when reading
+  { tagID :: Maybe Int, -- only needs a value when reading
     foreignID :: Int,
     tag :: String
   }
@@ -39,16 +36,17 @@ initDB = do
   conn <- open dbFile
   execute_ conn "DROP TABLE IF EXISTS entries;"
   execute_ conn "DROP TABLE IF EXISTS tags;"
-  execute_ conn "CREATE TABLE entries (entryID INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT, content TEXT);"
-  execute_ conn "CREATE TABLE tags (tagID INTEGER PRIMARY KEY AUTOINCREMENT, entryID INTEGER, tag TEXT);"
+  execute_ conn "CREATE TABLE entries (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT, content TEXT);"
+  execute_ conn "CREATE TABLE tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
   execute_ conn "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
   close conn
 
 addEntry :: Entry -> IO Int64
-addEntry Entry{..} = do
+addEntry Entry {..} = do
   conn <- open dbFile
-  executeNamed conn 
-    "INSERT INTO entries (date, time, content) VALUES (:date, :time, :content)" 
+  executeNamed
+    conn
+    "INSERT INTO entries (date, time, content) VALUES (:date, :time, :content)"
     [":date" := date, ":time" := time, ":content" := content]
   r <- lastInsertRowId conn
   close conn
@@ -57,8 +55,9 @@ addEntry Entry{..} = do
 addTag :: Int64 -> String -> IO Int64
 addTag entryID tag = do
   conn <- open dbFile
-  executeNamed conn 
-    "INSERT INTO tags (entryID, tag) VALUES (:entryID, :tag)" 
+  executeNamed
+    conn
+    "INSERT INTO tags (entry_id, tag) VALUES (:entryID, :tag)"
     [":entryID" := entryID, ":tag" := tag]
   r <- lastInsertRowId conn
   close conn

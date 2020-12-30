@@ -55,8 +55,9 @@ main = do
   entries <- allEntries
   -- mapM_ (putStrLn . show) entries
   let linkEntries = filter (isURI . content) entries
-  -- mapM_ (putStrLn . show . content) linkEntries
   let links = urlTransformations <$> content <$> linkEntries
+
+  let filt = id -- replace with other alternatives as needed0
   titles <-
     mapM
       ( \url -> do
@@ -68,5 +69,7 @@ main = do
           -- putStrLn $ show titles
           pure titles
       )
-      (take 10 links) -- for testing
+      (filt links) -- for testing
+  let cacheEntries = crawlerOutput2cache $ zip3 (filt linkEntries) (filt links) (filt titles)
+  writeCache cacheEntries
   pPrint titles

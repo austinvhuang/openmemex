@@ -11,6 +11,7 @@ module DB where
 
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (ToJSON)
+import Data.Maybe (catMaybes)
 import Data.Text (Text, pack, unpack)
 import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
 import Database.SQLite.Simple
@@ -60,11 +61,10 @@ data PageTitle = PageTitle String deriving (Show, Eq)
 
 data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL
 
--- data CacheContentType = CachePageTitle | CacheGenericContent deriving (Show, Generic)
+data CacheContentType = CachePageTitle | CacheGenericContent deriving (Show, Generic)
+
 data CacheEntry = CacheEntry
   { cacheForeignID :: Int, -- entryID
-    cacheDate :: String,
-    cacheTime :: String,
     cacheUrl :: String,
     cacheContentType :: String, -- CacheContentType,
     cacheContent :: String
@@ -72,7 +72,7 @@ data CacheEntry = CacheEntry
   deriving (Show, Generic)
 
 instance FromRow CacheEntry where
-  fromRow = CacheEntry <$> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = CacheEntry <$> field <*> field <*> field <*> field
 
 instance ToJSON CacheEntry
 
@@ -96,12 +96,13 @@ queryRange :: Int -> Int -> Int -> Int -> Int -> Int -> IO [Entry]
 queryRange startYear startMonth startDay endYear endMonth endDay = do
   conn <- open dbFile
   let queryString =
-        Query $ pack $
-          "SELECT * FROM entries WHERE date BETWEEN \""
-            ++ date2string startYear startMonth startDay
-            ++ "\" AND \""
-            ++ date2string endYear endMonth endDay
-            ++ "\""
+        Query $
+          pack $
+            "SELECT * FROM entries WHERE date BETWEEN \""
+              ++ date2string startYear startMonth startDay
+              ++ "\" AND \""
+              ++ date2string endYear endMonth endDay
+              ++ "\""
   r <- query_ conn queryString :: IO [Entry]
   close conn
   pure r
@@ -132,8 +133,19 @@ queryContent query = do
   close conn
   pure r
 
-crawlerOutput2cache :: [Maybe PageTitle] -> [CacheEntry]
-crawlerOutput2cache = undefined
+crawlerOutput2cache :: [(Entry, String, Maybe PageTitle)] -> [CacheEntry]
+crawlerOutput2cache out =
+  catMaybes $ convert <$> out
+  where
+    convert (_, _, Nothing) = Nothing
+    convert (Entry {..}, url, Just (PageTitle title)) =
+      Just
+        CacheEntry
+          { cacheForeignID = entryID,
+            cacheUrl = url,
+            cacheContentType = show CachePageTitle, -- TODO - cleanup
+            cacheContent = title
+          }
 
 writeCache :: [CacheEntry] -> IO ()
 writeCache cacheEntries = do
@@ -158,12 +170,13 @@ writeCache cacheEntries = do
   executeNamed
     conn
     ( Query . pack $
-        "CREATE TABLE :cacheTable "
+        "CREATE TABLE " ++ tableName -- :cacheTable "
           ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
-          ++ "cache_date TEXT, cache_time TEXT, cache_url TEXT, "
+          ++ "cache_url TEXT, "
           ++ "cache_content_type TEXT, cache_content TEXT);"
     )
-    [":cacheTable" := tableName]
+    []
+  --    [":cacheTable" := tableName]
 
   -- insert data into new table
   mapM_
@@ -171,15 +184,13 @@ writeCache cacheEntries = do
         executeNamed
           conn
           ( Query . pack $
-              "INSERT INTO :cacheTable "
-                ++ "       (entry_id, cache_date, cache_time, cache_url, cache_content_type, cache_content) "
-                ++ "VALUES (:entryID, :cacheDate, :cacheTime, :cacheUrl, :cacheContentType, cacheContent)"
+              "INSERT INTO " ++ tableName -- :cacheTable "
+                ++ "       (entry_id, cache_url, cache_content_type, cache_content) "
+                ++ "VALUES (:entryID, :cacheUrl, :cacheContentType, :cacheContent)"
           )
-          [ ":cacheTable" := tableName,
-            ":entryID" := cacheForeignID,
-            ":cacheDate" := cacheDate,
-            ":cacheTime" := cacheTime,
-            "cacheUrl" := cacheUrl,
+          -- [ ":cacheTable" := tableName,
+          [ ":entryID" := cacheForeignID,
+            ":cacheUrl" := cacheUrl,
             ":cacheContentType" := cacheContentType,
             ":cacheContent" := cacheContent
           ]
