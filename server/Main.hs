@@ -10,8 +10,13 @@ import Control.Monad.IO.Class (liftIO)
 import DB
 import Data.Text (Text, pack, unpack)
 import Network.Wai.Handler.Warp
+  ( defaultSettings,
+    runSettings,
+    setBeforeMainLoop,
+    setPort,
+  )
 import Servant
-import System.IO
+import System.IO (hPutStrLn, stderr)
 import Text.Printf (printf)
 
 -- API Types

@@ -3,7 +3,7 @@
 module Main where
 
 import Control.Concurrent (threadDelay)
-import Control.Exception
+import Control.Exception (SomeException, catch)
 import DB
 import Data.Text (isInfixOf, pack, replace, unpack)
 import Network.URI (URI, isURI, parseURI)
@@ -51,13 +51,10 @@ router url = do
 
 main :: IO ()
 main = do
-  print $ isURI "http://www.google.com"
-  print $ isURI "hello world"
   entries <- allEntries
   -- mapM_ (putStrLn . show) entries
   let linkEntries = filter (isURI . content) entries
   let links = urlTransformations <$> content <$> linkEntries
-
   let filt = id
   -- let filt = take 5 -- for debugging
 
@@ -68,8 +65,7 @@ main = do
           titles <- catchAny (threadDelay 100000 >> router url) $ \e -> do
             putStrLn $ "Got an exception: " ++ show e
             putStrLn "Returning dummy value of Nothing"
-            return $ Just $ PageTitle ""
-          -- putStrLn $ show titles
+            pure $ Just $ PageTitle ""
           pure titles
       )
       (filt links) -- for testing
