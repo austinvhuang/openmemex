@@ -1,10 +1,8 @@
 module Main where
 
-import Data.Time ( formatTime, defaultTimeLocale, getZonedTime )
-
-import Options.Applicative ( execParser )
-
 import Backend
+import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
+import Options.Applicative (execParser)
 import Parser
 
 main :: IO ()

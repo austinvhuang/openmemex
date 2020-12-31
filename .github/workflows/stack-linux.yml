@@ -15,6 +15,7 @@ jobs:
       - name: build
         run: |
           stack build
+          stack install note2self:exe:n2s
       - name: run
         run: |
           stack run n2s --help

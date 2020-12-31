@@ -33,5 +33,5 @@ optionsParser =
     (helper <*> commandLine)
     ( fullDesc <> progDesc "note2self"
         <> header
-          "note2self - take notes for yourself"
+          "note2self - take notes for yourself v0.2"
     )

@@ -27,7 +27,12 @@ type DateAPI =
   "date" :> Capture "year" Int :> Capture "month" Int :> Capture "day" Int :> Get '[JSON] [Entry]
 
 type RangeAPI =
-  "range" :> Capture "year" Int :> Capture "month" Int :> Capture "day" Int
+  "range"
+    -- start of the range
+    :> Capture "year" Int
+    :> Capture "month" Int
+    :> Capture "day" Int
+    -- end of the range
     :> Capture "year" Int
     :> Capture "month" Int
     :> Capture "day" Int
@@ -72,13 +77,20 @@ combinedApi :: Proxy CombinedAPI
 combinedApi = Proxy
 
 server :: Server CombinedAPI
-server = getRoot :<|> queryDateH :<|> queryRangeH :<|> allTagsH :<|> allEntriesH :<|> allCacheH :<|> queryContentH
+server =
+  getRoot
+    :<|> queryDateH
+    :<|> queryRangeH
+    :<|> allTagsH
+    :<|> allEntriesH
+    :<|> allCacheH
+    :<|> queryContentH
 
 mkApp :: IO Application
 mkApp = return $ serve combinedApi server
 
-runs :: IO ()
-runs = do
+runServer :: IO ()
+runServer = do
   let port = 3000
       settings =
         setPort port $
@@ -86,4 +98,5 @@ runs = do
             defaultSettings
   runSettings settings =<< mkApp
 
-main = runs
+main :: IO ()
+main = runServer
