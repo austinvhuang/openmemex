@@ -1,7 +1,30 @@
 <template>
   <div class="container">
-    <h1>note2self.ai</h1>
-    <svg height="100" width="100%" class="timeline fade-in"  v-on:mousemove="drag($event)">
+    <div
+      class="searchdiv"
+      :style="{
+        'box-shadow': searchStatus
+          ? '0px 5px 10px 0px rgba(173, 154, 154, 0.6)'
+          : '0px 5px 10px 0px rgba(173, 154, 154, 0.0)'
+      }"
+      @mouseover="searchOver($event, true)"
+      @mouseleave="searchOver($event, false)"
+    >
+      Search:
+      <input
+        type="text"
+        id="search"
+        name="search"
+        width="90%"
+        class="searchinput"
+      />
+    </div>
+    <svg
+      height="100"
+      width="100%"
+      class="timeline fade-in"
+      v-on:mousemove="drag($event)"
+    >
       <line
         x1="0"
         y1="50%"
@@ -25,20 +48,25 @@
       />
     </svg>
 
-<!-- this width doesn't work, width is determined by the card CSS attribute -->
-    <div width="80%">
-    <div class="card fade-in" v-for="item in entries" :key="item.cvForeignID">
-      <div class="card-header">
-        <h3><span v-text="item.cvDate" /></h3>
+    <!-- this width doesn't work, width is determined by the card CSS attribute -->
+    <div width="66%">
+      <div class="card fade-in" v-for="item in entries" :key="item.cvForeignID">
+        <div class="card-header">
+          <h3><span v-text="item.cvDate" /></h3>
+        </div>
+        <span v-text="item.cvContent" />
       </div>
-      <span v-text="item.cvContent" />
     </div>
-    
+    <div width="34%">
+      <object
+        data="https://www.cnn.com"
+        height="800"
+        width="34%"
+        type="text/html"
+      />
+      External content
+    </div>
   </div>
-  <div width="20%">
-    HELLO DIV
-    </div>
-    </div>
 </template>
 
 <script>
@@ -47,51 +75,65 @@ export default {
     return {
       entries: [],
       parsedDate: [],
+      searchStatus: false
     };
   },
   computed: {},
-  created: function () {
+  created: function() {
     // note - uses proxy
     fetch("http://localhost:8080/all/cache")
-      .then((response) => response.json())
-      .then((data) => {
+      .then(response => response.json())
+      .then(data => {
         console.log("retrieved data");
         this.entries = data;
         return data;
       })
-      .then((data) => {
-        let parsed = data.map((e) => Date.parse(e.cvDate));
+      .then(data => {
+        let parsed = data.map(e => Date.parse(e.cvDate));
         let maxVal = Math.max(...parsed);
         let minVal = Math.min(...parsed);
-        this.parsedDate = this.entries.map((e) => ({
+        this.parsedDate = this.entries.map(e => ({
           entryID: e.cvForeignID,
           date: e.cvDate,
           pageTitle: e.cvContent,
           url: e.cvUrl,
-          pDate: ((Date.parse(e.cvDate) - minVal) / (maxVal - minVal)) * 100,
+          pDate: ((Date.parse(e.cvDate) - minVal) / (maxVal - minVal)) * 100
         }));
         console.log(this.parsedDate);
       });
   },
-  mounted: function () {},
+  mounted: function() {},
   methods: {
     timelineClick(e, url) {
-      console.log("Clicked timeline")
-      console.log(e)
-      window.open(url)
+      console.log("Clicked timeline");
+      console.log(e);
+      window.open(url);
     },
     drag(e) {
-      console.log("drag " + e)
+      console.log("drag " + e);
+    },
+    searchOver(e, value) {
+      this.searchStatus = value;
+      console.log(value);
     }
-
   },
 
-  watch: {
-  },
+  watch: {}
 };
 </script>
 
 <style>
+.searchdiv {
+  width: 100%;
+  margin-bottom: 40px;
+  margin-top: 40px;
+  font-size: 2em;
+}
+
+.searchinput {
+  width: 90%;
+}
+
 .card {
   /* box-shadow: 10px, 10px grey; */
   display: block;
@@ -99,7 +141,7 @@ export default {
     0px 4px 4px 0px rgba(0, 0, 0, 0.15), 0px 2px 2px 0px rgba(0, 0, 0, 0.2);
   background-color: #eeeeee;
   border-radius: 10px;
-  width: 80%;
+  width: 66%;
   float: left;
   margin-bottom: 5px;
   margin-top: 5px;
@@ -138,6 +180,7 @@ export default {
   border-color: #000000;
   border-width: 10px;
   border-radius: 5px;
+  width: 100%;
 }
 
 // https://codepen.io/JTBennett/pen/BjpXRo

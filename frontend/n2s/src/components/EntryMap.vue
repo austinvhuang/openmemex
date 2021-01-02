@@ -35,17 +35,17 @@ export default {
           { a: "F", b: 53 },
           { a: "G", b: 19 },
           { a: "H", b: 87 },
-          { a: "I", b: 52 },
+          { a: "I", b: 52 }
         ],
         encoding: {
           x: { field: "a", type: "ordinal" },
-          y: { field: "b", type: "quantitative" },
-        },
+          y: { field: "b", type: "quantitative" }
+        }
       },
       watch: {
         vlobj(v) {
           if (v) this.draw();
-        },
+        }
       },
       methods: {
         draw() {
@@ -53,13 +53,13 @@ export default {
           vlobj.width = "container";
           vlobj.height = "container";
           embed("#viz", vlobj, { actions: false });
-        },
+        }
       },
       mounted() {
         embed("#viz", this.vlobj, { actions: false });
-      },
+      }
     };
-  },
+  }
 };
 </script>
 
