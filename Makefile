@@ -18,3 +18,9 @@ clean-backups:
 
 vue-server:
 	cd frontend/n2s; npm run serve
+
+libtorch-mac:
+	rm -rf ./libtorch
+	rm -f cpu-libtorch-macos-latest.zip
+	wget https://github.com/hasktorch/libtorch-binary-for-ci/releases/download/1.7.0/cpu-libtorch-macos-latest.zip
+	unzip libtorch-macos-latest.zip
