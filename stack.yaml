@@ -25,3 +25,6 @@ extra-include-dirs:
 
 extra-lib-dirs:
   - libtorch/lib
+
+packages:
+  - .

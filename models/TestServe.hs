@@ -1,4 +1,6 @@
 import Torch
 
 main = do
-    putStrLn "Done"
+  let x = randn' [2, 3]
+  print x
+  putStrLn "Done"
