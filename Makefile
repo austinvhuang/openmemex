@@ -25,3 +25,15 @@ libtorch-mac:
 	wget https://github.com/hasktorch/libtorch-binary-for-ci/releases/download/1.7.0/cpu-libtorch-macos-latest.zip
 	unzip cpu-libtorch-macos-latest.zip
 	rm -f cpu-libtorch-macos-latest.zip
+
+libtorch-linux:
+	rm -rf ./libtorch
+	rm -f cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
+	wget https://github.com/hasktorch/libtorch-binary-for-ci/releases/download/1.7.0/cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
+	unzip cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
+	rm -f cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
+
+model-linux: libtorch-linux
+	export LD_LIBRARY_PATH=`pwd`/libtorch/lib; stack run model
+
+	
