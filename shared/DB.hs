@@ -225,6 +225,7 @@ writeCache cacheEntries = do
           ]
     )
     cacheEntries
+  bracketExecute "DROP VIEW IF EXISTS cache"
   bracketExecute $
     "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_content, date, time, content) "
       ++ "as select cache_entry_id, "
@@ -251,6 +252,8 @@ bracketExecute queryString = do
   execute_ conn (Query . pack $ queryString)
   close conn
 
+-- | Wipe all caches and reset the cache metadata table
+-- meant to be run interactively from GHCI
 wipeCache :: IO ()
 wipeCache = do
   backupDB
