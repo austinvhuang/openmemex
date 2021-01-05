@@ -1,40 +1,16 @@
 import torch
-import torch.nn as nn
 
-class TestModule(nn.Module):
+class Model(torch.nn.Module):
     def __init__(self):
-        super(TestModule, self).__init__()
-
-        self.fc1 = nn.Linear(2, 1)
-        self.setval()
-        # self.fc1.weight.data = torch.tensor([[2.0, 3.0]])
-
-    def forward(self, x):
-        y = self.fc1(x)
-        # y = torch.relu(y)
-        return y
-
-    def setval(self):
+        super(Model, self).__init__()
+        self.fc1 = torch.nn.Linear(2, 1)
         self.fc1.weight.data = torch.tensor([[2.0, 3.0]])
         self.fc1.bias.data.fill_(0.0)
 
+    def forward(self, x):
+        return self.fc1(x)
 
 if __name__ == "__main__":
-    test = TestModule()
-    x = torch.tensor([1.0, 2.0])
-    test.setval()
-    print(test(x))
-
-    traced = torch.jit.trace(TestModule(), x)
-    print(traced.code)
-    print(traced.graph)
-
-    scripted = torch.jit.script(test)
-    print(scripted.code)
-    print(scripted.graph)
-
+    test = Model()
+    traced = torch.jit.trace(test, torch.ones([1, 2]))
     traced.save('traced.zip')
-
-
-
-
