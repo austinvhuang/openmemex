@@ -36,4 +36,5 @@ libtorch-linux:
 model-linux: libtorch-linux
 	export LD_LIBRARY_PATH=`pwd`/libtorch/lib; stack run model
 
-	
+model-mac: 
+	source setenv; stack run model
