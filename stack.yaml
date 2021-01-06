@@ -23,9 +23,12 @@ extra-include-dirs:
   - libtorch/include/torch/csrc/api/include
   - libtorch/include
 
+# will fail on osx for absolute paths
+# according to stack docs absolute paths are required but it seems to work on mac with relative paths
+# see https://docs.haskellstack.org/en/v1.3.2/yaml_configuration/#extra-include-dirsextra-lib-dirs
 extra-lib-dirs:
   - libtorch/lib
 
 packages:
   - .
-  - models
+  - model

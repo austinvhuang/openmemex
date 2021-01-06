@@ -36,5 +36,20 @@ libtorch-linux:
 model-linux: libtorch-linux
 	export LD_LIBRARY_PATH=`pwd`/libtorch/lib; stack run model
 
-model-mac: 
-	source setenv; stack run model
+model-mac-build: 
+	python model/test_export.py
+	rm -rf ./.stack-work/install
+	stack build model
+
+	# this should fail
+	stack run model || true
+
+	# patch the rpath
+	otool -l `stack exec -- which model` > otool.log.pre
+	install_name_tool -add_rpath libtorch/lib `stack exec -- which model`
+	otool -l `stack exec -- which model` > otool.log.post
+
+	# see https://unix.stackexchange.com/questions/100786/why-does-diff-fail-when-invoked-from-a-makefile
+	diff otool.log.pre otool.log.post; [ $$? -eq 1 ] 
+
+	stack run model
