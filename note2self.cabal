@@ -34,8 +34,11 @@ executable server
                      , directory
                      , servant-server
                      , sqlite-simple
+                     , servant-swagger
+                     , swagger2
                      , text
                      , time
+                     , wai-logger
                      , warp
 
 executable crawler

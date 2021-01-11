@@ -17,7 +17,9 @@ import Network.Wai.Handler.Warp
     runSettings,
     setBeforeMainLoop,
     setPort,
+    setLogger,
   )
+import Network.Wai.Logger (withStdoutLogger)
 import Servant
 import System.IO (hPutStrLn, stderr)
 import Text.Printf (printf)
@@ -116,11 +118,11 @@ mkApp = return $ serve combinedApi server
 runServer :: IO ()
 runServer = do
   let port = 3000
-      settings =
-        setPort port $
-          setBeforeMainLoop (hPutStrLn stderr ("listening on port " ++ show port)) $
-            defaultSettings
-  runSettings settings =<< mkApp
+  withStdoutLogger $ \aplogger -> do 
+    let settings = setPort port $ setLogger aplogger $
+                  setBeforeMainLoop (hPutStrLn stderr ("listening on port " ++ show port)) $
+                  defaultSettings
+    runSettings settings =<< mkApp
 
 main :: IO ()
 main = runServer
