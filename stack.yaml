@@ -18,6 +18,8 @@ extra-deps:
       - hasktorch
       - libtorch-ffi
       - libtorch-ffi-helper
+# servant swagger ui
+#  - servant-swagger-ui-jensoleg-0.3.3@sha256:e2b59a65f0d4f8aa7e43881e0f5447c496908aff7b80dd9a3a9e1e825eb007a6,3541
 
 extra-include-dirs:
   - libtorch/include/torch/csrc/api/include

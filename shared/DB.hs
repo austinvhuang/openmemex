@@ -18,6 +18,7 @@ import Database.SQLite.Simple
 import GHC.Generics (Generic)
 import System.Directory (copyFile)
 import Text.Printf (printf)
+import System.IO (hPutStrLn, stderr)
 
 data Date = Date
   { year :: String,
@@ -128,6 +129,7 @@ queryRange startYear startMonth startDay endYear endMonth endDay = do
 -- See https://stackoverflow.com/questions/32098328/no-instance-for-database-sqlite-simple-fromfield-fromfield-char
 allTags :: IO [[String]]
 allTags = do
+  hPutStrLn stderr "allTags"
   conn <- open dbFile
   let queryString = Query $ pack $ "SELECT distinct tag from tags order by tag"
   r <- query_ conn queryString :: IO [[String]]
