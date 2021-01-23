@@ -268,3 +268,10 @@ wipeCache = do
   bracketExecute "DROP TABLE IF EXISTS cache_meta"
   bracketExecute "DROP VIEW IF EXISTS cache"
   bracketExecute "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
+
+replaceTag :: String -> String -> IO ()
+replaceTag fromTag toTag = do
+  backupDB
+  -- TODO - fill-in
+  pure ()
+

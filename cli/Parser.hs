@@ -2,7 +2,6 @@ module Parser where
 
 import Control.Applicative
 import Data.Semigroup ((<>))
-import Data.Time.Clock
 import Options.Applicative
 
 data CommandLine = CommandLine

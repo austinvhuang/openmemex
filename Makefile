@@ -1,6 +1,9 @@
 install-tools:
 	stack install ormolu ghcid
 
+cli-watcher:
+	~/.local/bin/ghcid -c "stack ghci note2self:exe:n2s" -Tmain
+
 server-watcher:
 	~/.local/bin/ghcid -c "stack ghci note2self:exe:server" -Tmain
 
