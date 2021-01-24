@@ -9,9 +9,12 @@ edition = "2018"
 [dependencies]
 wasm-bindgen = "0.2.67"
 wasm-bindgen-test = "0.2"
-yew = "0.17"
+yew = "0.17.4"
+# yew = { git = "http://github.com/yewstack/yew/" }
 serde = "1.0.120"
 anyhow = "1.0.38"
+wasm-logger = "0.2.0"
+log = "0.4.6"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

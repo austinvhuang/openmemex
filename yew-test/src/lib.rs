@@ -1,27 +1,7 @@
-use anyhow::Error;
-use serde::Deserialize;
 use wasm_bindgen::prelude::*;
-use yew::format::{Json, Nothing};
+use serde::Deserialize;
+use yew::{format::{Json, Nothing}, prelude::*};
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
-use yew::*;
-
-pub struct App {
-    fetch_task: Option<FetchTask>,
-    entries: Option<Entries>,
-    link: ComponentLink<Self>,
-    error: Option<String>,
-}
-
-#[derive(Debug)]
-pub enum Msg {
-    GetEntries,
-    ReceiveEntries(Result<Entries, anyhow::Error>),
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct Entries {
-    entries: Vec<Entry>,
-}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Entry {
@@ -30,6 +10,21 @@ pub struct Entry {
     content: String,
     date: String,
 }
+
+#[derive(Debug)]
+pub enum Msg {
+    GetEntries,
+    ReceiveEntries(Result<Vec<Entry>, anyhow::Error>),
+}
+
+#[derive(Debug)]
+pub struct App {
+    fetch_task: Option<FetchTask>,
+    entries: Option<Vec<Entry>>,
+    link: ComponentLink<Self>,
+    error: Option<String>,
+}
+
 
 impl App {
     fn view_entries(&self) -> Html {
@@ -47,40 +42,45 @@ impl Component for App {
     type Message = Msg;
     type Properties = ();
 
-    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
             fetch_task: None,
-            entries: None,
+            entries: Some(Vec::<Entry>::new()),
             link,
             error: None,
         }
     }
 
+    fn change(&mut self, _props: Self::Properties) -> bool {
+        false
+    }
+
     fn update(&mut self, msg: Self::Message) -> bool {
+        use Msg::*;
+
         match msg {
             GetEntries => {
                 // define request
-                let request = Request::get("http://localhost:3000/all/entires")
+                log::info!("submitting request"); // TODO: logging doesn't work yet
+                let request = Request::get("http://localhost:3000/all/entries")
                     .body(Nothing)
                     .expect("Could not build request.");
                 // define callback
-                // TODO fix From trait error
-                /*
                 let callback =
                     self.link
-                        .callback(|response: Response<Json<Result<Entries, anyhow::Error>>>| {
+                        .callback(|response: Response<Json<Result<Vec<Entry>, anyhow::Error>>>| {
                             let Json(data) = response.into_body();
-                            Msg::ReceiveEntries(data);
+                            Msg::ReceiveEntries(data)
                         });
-                // pass request+callback to fetch service
+                // task
                 let task = FetchService::fetch(request, callback).expect("failed to start request");
                 self.fetch_task = Some(task);
-                */
                 true // redraw page
             }
             Msg::ReceiveEntries(response) => {
                 match response {
                     Ok(result) => {
+                        log::info!("Update: {:#?}", result);
                         self.entries = Some(result);
                     }
                     Err(error) => {
@@ -91,10 +91,6 @@ impl Component for App {
                 true // redraw page
             }
         }
-    }
-
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
-        false
     }
 
     fn view(&self) -> Html {
@@ -125,5 +121,6 @@ impl Component for App {
 
 #[wasm_bindgen(start)]
 pub fn run_app() {
+    wasm_logger::init(wasm_logger::Config::default());
     yew::start_app::<App>();
 }
