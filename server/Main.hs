@@ -23,6 +23,7 @@ import Network.Wai.Logger (withStdoutLogger)
 import Servant
 import System.IO (hPutStrLn, stderr)
 import Text.Printf (printf)
+import Network.Wai.Middleware.Cors (simpleCors)
 
 import Data.Aeson (FromJSON, ToJSON)
 
@@ -113,7 +114,7 @@ server =
     :<|> postNoteH
 
 mkApp :: IO Application
-mkApp = return $ serve combinedApi server
+mkApp = return $ simpleCors $ serve combinedApi server
 
 runServer :: IO ()
 runServer = do

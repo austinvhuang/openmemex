@@ -38,6 +38,7 @@ executable server
                      , swagger2
                      , text
                      , time
+                     , wai-cors
                      , wai-logger
                      , warp
 

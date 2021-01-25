@@ -3,3 +3,6 @@ watch:
 
 fmt:
 	rg --files | entr -s "cargo fmt"
+
+serve:
+	miniserve ./static/

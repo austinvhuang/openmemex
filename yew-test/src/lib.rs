@@ -6,6 +6,7 @@ use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 #[derive(Deserialize, Debug, Clone)]
 pub struct Entry {
     time: String,
+    #[serde(rename(deserialize = "entryID"))]
     entry_id: i32,
     content: String,
     date: String,
@@ -28,10 +29,19 @@ pub struct App {
 
 impl App {
     fn view_entries(&self) -> Html {
-        html! { <div> {"Fetched"} </div> }
+        log::info!("view_entries {:#?}", self.entries);
+        match self.entries {
+            Some(ref entries) => {
+                log::info!("Fetched ... {:#?}", entries);
+                html! { <div> {"Fetched"} </div> }
+            }
+            None => {
+                html! { <div> {"No Content"} </div> }
+            }
+        }
     }
     fn view_fetching(&self) -> Html {
-        html! { <div> {"Fetching..."} </div> }
+        html! { <div> {"No Data"} </div> }
     }
     fn view_error(&self) -> Html {
         html! { <div> {"Error"} </div> }
@@ -43,12 +53,17 @@ impl Component for App {
     type Properties = ();
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        log::info!("Creating component");
+        let cb = link.callback_once(|_: String| Msg::GetEntries);
+        cb.emit("".to_string()); // TODO - what's the right way to handle a message without parameters
+        log::info!("sent message");
         Self {
             fetch_task: None,
-            entries: Some(Vec::<Entry>::new()),
+            entries: None, //Some(Vec::<Entry>::new()),
             link,
             error: None,
         }
+
     }
 
     fn change(&mut self, _props: Self::Properties) -> bool {
@@ -57,6 +72,7 @@ impl Component for App {
 
     fn update(&mut self, msg: Self::Message) -> bool {
         use Msg::*;
+        log::info!("update");
 
         match msg {
             GetEntries => {
@@ -68,14 +84,14 @@ impl Component for App {
                 // define callback
                 let callback =
                     self.link
-                        .callback(|response: Response<Json<Result<Vec<Entry>, anyhow::Error>>>| {
+                        .callback_once(|response: Response<Json<Result<Vec<Entry>, anyhow::Error>>>| {
                             let Json(data) = response.into_body();
                             Msg::ReceiveEntries(data)
                         });
                 // task
                 let task = FetchService::fetch(request, callback).expect("failed to start request");
                 self.fetch_task = Some(task);
-                true // redraw page
+                false // redraw page
             }
             Msg::ReceiveEntries(response) => {
                 match response {
@@ -84,6 +100,8 @@ impl Component for App {
                         self.entries = Some(result);
                     }
                     Err(error) => {
+                        log::info!("receive error, error is:"); 
+                        log::info!("{}", &error.to_string()); 
                         self.error = Some(error.to_string());
                     }
                 }
@@ -123,4 +141,4 @@ impl Component for App {
 pub fn run_app() {
     wasm_logger::init(wasm_logger::Config::default());
     yew::start_app::<App>();
-}
+de_name}
