@@ -141,4 +141,4 @@ impl Component for App {
 pub fn run_app() {
     wasm_logger::init(wasm_logger::Config::default());
     yew::start_app::<App>();
-de_name}
+}
