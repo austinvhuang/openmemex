@@ -5,4 +5,6 @@ fmt:
 	rg --files | entr -s "cargo fmt"
 
 serve:
+	# have a server process running before serving the frontend `cd ../;stack run server` 
 	miniserve ./static/
+
