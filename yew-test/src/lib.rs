@@ -1,7 +1,10 @@
-use wasm_bindgen::prelude::*;
 use serde::Deserialize;
-use yew::{format::{Json, Nothing}, prelude::*};
+use wasm_bindgen::prelude::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
+use yew::{
+    format::{Json, Nothing},
+    prelude::*,
+};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Entry {
@@ -26,25 +29,27 @@ pub struct App {
     error: Option<String>,
 }
 
-
 impl App {
     fn view_entries(&self) -> Html {
-        log::info!("view_entries {:#?}", self.entries);
         match self.entries {
             Some(ref entries) => {
-                log::info!("Fetched ... {:#?}", entries);
-                html! { <div> {"Fetched"} </div> }
+                log::info!("{:#?} results fetched.", entries.len());
+                // log::info!("Fetched ... {:#?}", entries);
+                // html! { <div> {"Fetched"} </div> }
+                html! {
+                    {
+                        for entries.iter().map(|mut item| {
+                            html! {
+                                <div class="card"> { item.content.clone() } </div>
+                            }
+                        })
+                    }
+                }
             }
             None => {
                 html! { <div> {"No Content"} </div> }
             }
         }
-    }
-    fn view_fetching(&self) -> Html {
-        html! { <div> {"No Data"} </div> }
-    }
-    fn view_error(&self) -> Html {
-        html! { <div> {"Error"} </div> }
     }
 }
 
@@ -63,7 +68,6 @@ impl Component for App {
             link,
             error: None,
         }
-
     }
 
     fn change(&mut self, _props: Self::Properties) -> bool {
@@ -82,12 +86,12 @@ impl Component for App {
                     .body(Nothing)
                     .expect("Could not build request.");
                 // define callback
-                let callback =
-                    self.link
-                        .callback_once(|response: Response<Json<Result<Vec<Entry>, anyhow::Error>>>| {
-                            let Json(data) = response.into_body();
-                            Msg::ReceiveEntries(data)
-                        });
+                let callback = self.link.callback_once(
+                    |response: Response<Json<Result<Vec<Entry>, anyhow::Error>>>| {
+                        let Json(data) = response.into_body();
+                        Msg::ReceiveEntries(data)
+                    },
+                );
                 // task
                 let task = FetchService::fetch(request, callback).expect("failed to start request");
                 self.fetch_task = Some(task);
@@ -96,12 +100,12 @@ impl Component for App {
             Msg::ReceiveEntries(response) => {
                 match response {
                     Ok(result) => {
-                        log::info!("Update: {:#?}", result);
+                        // log::info!("Update: {:#?}", result);
                         self.entries = Some(result);
                     }
                     Err(error) => {
-                        log::info!("receive error, error is:"); 
-                        log::info!("{}", &error.to_string()); 
+                        log::info!("receive error, error is:");
+                        log::info!("{}", &error.to_string());
                         self.error = Some(error.to_string());
                     }
                 }
@@ -128,9 +132,7 @@ impl Component for App {
                     { "There" }
                 </div>
                     <>
-                        { self.view_fetching() }
                         { self.view_entries() }
-                        { self.view_error() }
                     </>
             </div>
         }
