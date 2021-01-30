@@ -19,6 +19,7 @@ import GHC.Generics (Generic)
 import System.Directory (copyFile)
 import Text.Printf (printf)
 import System.IO (hPutStrLn, stderr)
+import System.FilePath.Posix (takeBaseName)
 
 data Date = Date
   { year :: String,
@@ -58,7 +59,7 @@ instance ToJSON Tag
 
 -- Cache Tables
 
-data PageTitle = PageTitle String deriving (Show, Eq)
+newtype PageTitle = PageTitle String deriving (Show, Eq)
 
 data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL
 
@@ -85,12 +86,14 @@ data CacheEntry = CacheEntry
   { cacheForeignID :: Int, -- entryID
     cacheUrl :: String,
     cacheContentType :: String, -- CacheContentType,
-    cacheContent :: String
+    cacheContent :: String,
+    cacheScreenShotFile :: String,
+    cacheOCRFile :: String
   }
   deriving (Show, Generic)
 
 instance FromRow CacheEntry where
-  fromRow = CacheEntry <$> field <*> field <*> field <*> field
+  fromRow = CacheEntry <$> field <*> field <*> field <*> field <*> field <*> field
 
 instance ToJSON CacheEntry
 
@@ -105,7 +108,7 @@ date2string year month day = printf "%.4d-%.2d-%.2d" year month day
 queryDate :: Int -> Int -> Int -> IO [Entry]
 queryDate year month day = do
   conn <- open dbFile
-  let queryString = Query $ pack $ "SELECT * FROM entries WHERE date == \"" ++ (date2string year month day) ++ "\""
+  let queryString = Query $ pack $ "SELECT * FROM entries WHERE date == \"" ++ date2string year month day ++ "\""
   r <- query_ conn queryString :: IO [Entry]
   close conn
   pure r
@@ -131,7 +134,7 @@ allTags :: IO [[String]]
 allTags = do
   hPutStrLn stderr "allTags"
   conn <- open dbFile
-  let queryString = Query $ pack $ "SELECT distinct tag from tags order by tag"
+  let queryString = Query $ pack "SELECT distinct tag from tags order by tag"
   r <- query_ conn queryString :: IO [[String]]
   close conn
   pure r
@@ -159,6 +162,10 @@ queryContent query = do
   close conn
   pure r
 
+mkScreenShotFilename = printf "screenshots/%.10d.png"
+mkOCRFilename = printf "ocr/%.10d.txt"
+ss2ocrFilename x = "ocr/" ++ takeBaseName x ++ ".txt"
+
 crawlerOutput2cache :: [(Entry, String, Maybe PageTitle)] -> [CacheEntry]
 crawlerOutput2cache out =
   catMaybes $ convert <$> out
@@ -170,7 +177,9 @@ crawlerOutput2cache out =
           { cacheForeignID = entryID,
             cacheUrl = url,
             cacheContentType = show CachePageTitle, -- TODO - cleanup
-            cacheContent = title
+            cacheContent = title,
+            cacheScreenShotFile = mkScreenShotFilename entryID,
+            cacheOCRFile = mkOCRFilename entryID
           }
 
 backupDB = do

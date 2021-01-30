@@ -50,6 +50,7 @@ executable crawler
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , directory
+                     , filepath
                      , http-conduit
                      , network-uri
                      , pretty-simple

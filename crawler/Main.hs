@@ -7,13 +7,13 @@ import Control.Exception (SomeException, catch)
 import DB
 import Data.Text (isInfixOf, pack, replace, unpack)
 import Network.URI (URI, isURI, parseURI)
-import Text.HTML.Scalpel (Scraper, chroots, scrapeURL, text)
-import Text.Pretty.Simple (pPrint)
-
 import System.Directory
 import System.Process
+import Text.HTML.Scalpel (Scraper, chroots, scrapeURL, text)
+import Text.Pretty.Simple (pPrint)
 import Text.Printf
-
+import Data.List (sort)
+import System.FilePath.Posix (takeBaseName)
 
 -- TODO - this doesn't work yet - need to use the query format
 arxivTransform :: String -> String
@@ -26,13 +26,13 @@ urlTransformations = arxivTransform
 
 idURL :: String -> URLType
 idURL url
-  | "arxiv.org" `isInfixOf` (pack url) = ArxivURL
-  | "twitter.com" `isInfixOf` (pack url) = TwitterURL
-  | "pdf" `isInfixOf` (pack url) = PdfURL
+  | "arxiv.org" `isInfixOf` pack url = ArxivURL
+  | "twitter.com" `isInfixOf` pack url = TwitterURL
+  | "pdf" `isInfixOf` pack url = PdfURL
   | otherwise = GenericURL
 
 getTitle :: String -> IO (Maybe PageTitle)
-getTitle url = fmap (\x -> if not (null x) then head x else PageTitle "") <$> (scrapeURL url title)
+getTitle url = fmap (\x -> if not (null x) then head x else PageTitle "") <$> scrapeURL url title
   where
     title :: Scraper String [PageTitle]
     title = do
@@ -43,8 +43,8 @@ getTitle url = fmap (\x -> if not (null x) then head x else PageTitle "") <$> (s
 catchAny :: IO a -> (SomeException -> IO a) -> IO a
 catchAny = Control.Exception.catch
 
-router :: String -> IO (Maybe PageTitle)
-router url = do
+scrapeTitle :: String -> IO (Maybe PageTitle)
+scrapeTitle url = do
   let urlType = idURL url
   case urlType of
     ArxivURL -> pure Nothing
@@ -54,40 +54,90 @@ router url = do
       result <- getTitle url
       if result == Just (PageTitle "") then pure Nothing else pure result
 
-screenshot :: String -> Int -> IO ()
-screenshot url fileID = do
+newtype Timeout = Timeout Int
+
+screenshot :: Timeout -> String -> Int -> IO ()
+screenshot (Timeout timeout) url fileID = do
   createDirectoryIfMissing True "screenshots"
   fp <- findExecutable "chromium"
-  let result = case fp of 
-                Just _ -> undefined
-                Nothing -> error ""
-  let outFile = printf "%.10d.png" fileID
-  let command =
-        printf "chromium --headless --disable-gpu --screenshot=%s %s" outFile url :: String
-  (code, stdout, stderr) <- readProcessWithExitCode command [] ""
-  print $ "Writing to " ++ outFile
-  pure ()
+  let result = case fp of
+        Just _ -> undefined
+        Nothing -> error ""
+  let outFile = mkScreenShotFilename fileID
+  let args =
+        [ printf "%ds" timeout,
+          "chromium",
+          "--headless",
+          "--disable-gpu",
+          "--window-size=600,800",
+          "--hide-scrollbars",
+          printf "--screenshot=%s" outFile,
+          url
+        ]
+  (code, stdout, stderr) <- readProcessWithExitCode "timeout" args ""
+  print code
+  print $ "Writing to: " ++ outFile
 
-main :: IO ()
-main = do
+cacheEntries :: IO ()
+cacheEntries = do
   entries <- allEntries
-  -- mapM_ (putStrLn . show) entries
   let linkEntries = filter (isURI . content) entries
-  let links = urlTransformations <$> content <$> linkEntries
-  let filt = id
-  -- let filt = take 5 -- for debugging
-
+  let links = urlTransformations . content <$> linkEntries
+  let filt = id -- replace `id` with `take N` when debugging
   titles <-
     mapM
       ( \url -> do
           putStrLn $ "Querying url: " ++ url
-          titles <- catchAny (threadDelay 100000 >> router url) $ \e -> do
+          catchAny (threadDelay 50000 >> scrapeTitle url) $ \e -> do
             putStrLn $ "Got an exception: " ++ show e
             putStrLn "Returning dummy value of Nothing"
             pure $ Just $ PageTitle url
-          pure titles
       )
       (filt links) -- for testing
   let cacheEntries = crawlerOutput2cache $ zip3 (filt linkEntries) (filt links) (filt titles)
   writeCache cacheEntries
   pPrint titles
+
+screenshotEntries :: IO ()
+screenshotEntries = do
+  entries <- allEntries
+  let linkEntries = filter (isURI . content) entries
+  let links = zip (urlTransformations . content <$> linkEntries) (entryID <$> linkEntries)
+  let filt = id -- replace `id` with `take N` when debugging
+  mapM_
+    ( \(url, entryid) -> do
+        exists <- doesFileExist (mkScreenShotFilename entryid)
+        if not exists then do
+          putStrLn $ "Screenshotting url: " ++ url
+          catchAny (threadDelay 50000 >> screenshot (Timeout 10) url entryid) $ \e -> do
+            putStrLn $ "Got an exception: " ++ show e
+            putStrLn "Returning dummy value of Nothing"
+            -- pure $ Just $ PageTitle url
+          else 
+            putStrLn $ "Screenshot already exists for url: " ++ url
+    )
+    (filt links)
+
+ocrShots :: IO ()
+ocrShots = do
+  createDirectoryIfMissing True "ocr"
+  files <- sort <$> listDirectory "screenshots"
+  mapM_ (\file -> do
+    exists <- doesFileExist (ss2ocrFilename file)
+    if not exists then do
+      putStrLn $ "Running OCR for: " ++ file
+      let args = ["10s",
+                "tesseract",
+                "screenshots/" ++ file, 
+                ss2ocrFilename file
+                 ]
+      readProcessWithExitCode "timeout" args ""
+      pure ()
+      else 
+        putStrLn $ "OCR already exists for file: " ++ ss2ocrFilename file
+    ) files 
+
+main = do
+  screenshotEntries
+  ocrShots
+  cacheEntries

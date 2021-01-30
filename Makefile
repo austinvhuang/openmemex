@@ -56,3 +56,19 @@ model-mac-build:
 	diff otool.log.pre otool.log.post; [ $$? -eq 1 ] 
 
 	stack run model
+
+install-chromium-linux:
+	sudo apt install libva-dev
+	sudo snap install chromium
+
+install-tesseract-linux:
+	sudo apt install tesseract-ocr
+	sudo apt install libtesseract-dev
+
+test-screenshot:
+	# chromium --headless --disable-gpu --screenshot=deleteme.png --window-size=600,800 --force-device-scale-factor=4.0 https://www.yahoo.com
+	chromium --headless --disable-gpu --screenshot=deleteme.png --window-size=600,800 --hide-scrollbars https://www.yahoo.com
+	xdg-open deleteme.png
+
+
+
