@@ -59,11 +59,14 @@ instance ToJSON Tag
 
 -- Cache Tables
 
-newtype PageTitle = PageTitle String deriving (Show, Eq)
+data WebPage = WebPage {
+  title :: String,
+  body :: String
+} deriving (Eq, Show, Generic)
 
 data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL
 
-data CacheContentType = CachePageTitle | CacheGenericContent deriving (Show, Generic)
+data CacheContentType = CachePage | CacheGenericContent deriving (Show, Generic)
 
 -- API Service View
 data CacheView = CacheView
@@ -86,22 +89,33 @@ data CacheEntry = CacheEntry
   { cacheForeignID :: Int, -- entryID
     cacheUrl :: String,
     cacheContentType :: String, -- CacheContentType,
-    cacheContent :: String,
-    cacheScreenShotFile :: String,
+    cacheTitle :: String,
+    cacheBody :: String,
+    cacheScreenshotFile :: String,
     cacheOCRFile :: String
   }
   deriving (Show, Generic)
 
 instance FromRow CacheEntry where
-  fromRow = CacheEntry <$> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = CacheEntry <$> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 instance ToJSON CacheEntry
+
+data OCREntry = OCREntry
+  { ocrForeignID :: Int, -- entryID
+    ocrFile :: String,
+    ocrContent :: String } deriving (Generic)
+
+instance FromRow OCREntry where
+  fromRow = OCREntry <$> field <*> field <*> field
 
 dbFile = "note2self.db"
 
 -- Helper functions
 
-date2string year month day = printf "%.4d-%.2d-%.2d" year month day
+-- | date2string year month day
+date2string :: Int -> Int -> Int -> String
+date2string = printf "%.4d-%.2d-%.2d" 
 
 -- Handlers
 
@@ -149,7 +163,7 @@ allEntries = do
 allCache :: IO [CacheView]
 allCache = do
   conn <- open dbFile
-  r <- query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_content, date, time from cache"
+  r <- query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, cache_body, date, time from cache"
   close conn
   pure r
 
@@ -162,23 +176,25 @@ queryContent query = do
   close conn
   pure r
 
-mkScreenShotFilename = printf "screenshots/%.10d.png"
+mkScreenshotFilename = printf "screenshots/%.10d.png"
 mkOCRFilename = printf "ocr/%.10d.txt"
 ss2ocrFilename x = "ocr/" ++ takeBaseName x ++ ".txt"
+ocr2ssFilename x = "screenshots/" ++ takeBaseName x ++ ".png"
 
-crawlerOutput2cache :: [(Entry, String, Maybe PageTitle)] -> [CacheEntry]
+crawlerOutput2cache :: [(Entry, String, Maybe WebPage)] -> [CacheEntry]
 crawlerOutput2cache out =
   catMaybes $ convert <$> out
   where
     convert (_, _, Nothing) = Nothing
-    convert (Entry {..}, url, Just (PageTitle title)) =
+    convert (Entry {..}, url, Just (WebPage title body)) =
       Just
         CacheEntry
           { cacheForeignID = entryID,
             cacheUrl = url,
-            cacheContentType = show CachePageTitle, -- TODO - cleanup
-            cacheContent = title,
-            cacheScreenShotFile = mkScreenShotFilename entryID,
+            cacheContentType = show CachePage, -- TODO - cleanup
+            cacheTitle = title,
+            cacheBody = body,
+            cacheScreenshotFile = mkScreenshotFilename entryID,
             cacheOCRFile = mkOCRFilename entryID
           }
 
@@ -186,6 +202,35 @@ backupDB = do
   now <- getZonedTime
   let timeStamp = formatTime defaultTimeLocale "%Y%m%d_%H%M%S" now
   copyFile dbFile (dbFile ++ ".backup." ++ timeStamp ++ ".db")
+
+writeOCR :: [OCREntry] -> IO ()
+writeOCR ocrEntries = do
+  conn <- open dbFile
+  bracketExecute "DROP TABLE IF EXISTS ocr"
+  executeNamed
+    conn
+    ( Query . pack $
+        "CREATE TABLE ocr"
+          ++ "(ocr_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
+          ++ "ocr_file TEXT, ocr_content TEXT);"
+    )
+    []
+  mapM_
+    ( \OCREntry {..} ->
+        executeNamed
+          conn
+          ( Query . pack $
+              "INSERT INTO OCR"
+                ++ "       (entry_id, ocr_file, ocr_content) "
+                ++ "VALUES (:entryID, :ocrFile, :ocrContent)"
+          )
+          [ ":entryID" := ocrForeignID,
+            ":ocrFile" := ocrFile,
+            ":ocrContent" := ocrContent
+          ]
+    )
+    ocrEntries
+  close conn
 
 writeCache :: [CacheEntry] -> IO ()
 writeCache cacheEntries = do
@@ -213,7 +258,7 @@ writeCache cacheEntries = do
         "CREATE TABLE " ++ tableName -- :cacheTable "
           ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
           ++ "cache_url TEXT, "
-          ++ "cache_content_type TEXT, cache_content TEXT);"
+          ++ "cache_content_type TEXT, cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_ocr_file TEXT);"
     )
     []
   --    [":cacheTable" := tableName]
@@ -225,29 +270,31 @@ writeCache cacheEntries = do
           conn
           ( Query . pack $
               "INSERT INTO " ++ tableName -- :cacheTable "
-                ++ "       (entry_id, cache_url, cache_content_type, cache_content) "
-                ++ "VALUES (:entryID, :cacheUrl, :cacheContentType, :cacheContent)"
+                ++ "       (entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_ocr_file) "
+                ++ "VALUES (:entryID, :cacheUrl, :cacheContentType, :cacheTitle, :cacheBody, :cacheScreenshotFile, :cacheOCRFile)"
           )
           -- [ ":cacheTable" := tableName,
           [ ":entryID" := cacheForeignID,
             ":cacheUrl" := cacheUrl,
             ":cacheContentType" := cacheContentType,
-            ":cacheContent" := cacheContent
+            ":cacheTitle" := cacheTitle,
+            ":cacheBody" := cacheBody,
+            ":cacheScreenshotFile" := cacheScreenshotFile,
+            ":cacheOCRFile" := cacheOCRFile
           ]
     )
     cacheEntries
   bracketExecute "DROP VIEW IF EXISTS cache"
   bracketExecute $
-    "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_content, date, time, content) "
+    "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_ocr_file, date, time, content) "
       ++ "as select cache_entry_id, "
       ++ tableName
-      ++ ".entry_id as entry_id, cache_url, cache_content_type, cache_content, date, time, content "
+      ++ ".entry_id as entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_ocr_file, date, time, content "
       ++ "from "
       ++ tableName
       ++ " left join entries on "
       ++ tableName
       ++ ".entry_id=entries.entry_id;"
-
   close conn
 
 bracketQuery :: FromRow r => String -> IO [r]

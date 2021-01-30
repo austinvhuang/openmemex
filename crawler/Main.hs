@@ -14,6 +14,8 @@ import Text.Pretty.Simple (pPrint)
 import Text.Printf
 import Data.List (sort)
 import System.FilePath.Posix (takeBaseName)
+import Text.Read (readMaybe)
+import Data.Maybe (catMaybes)
 
 -- TODO - this doesn't work yet - need to use the query format
 arxivTransform :: String -> String
@@ -31,28 +33,29 @@ idURL url
   | "pdf" `isInfixOf` pack url = PdfURL
   | otherwise = GenericURL
 
-getTitle :: String -> IO (Maybe PageTitle)
-getTitle url = fmap (\x -> if not (null x) then head x else PageTitle "") <$> scrapeURL url title
+parsePage :: String -> IO (Maybe WebPage)
+parsePage url = fmap (\x -> if not (null x) then head x else WebPage "" "") <$> scrapeURL url title
   where
-    title :: Scraper String [PageTitle]
+    title :: Scraper String [WebPage]
     title = do
       chroots "html" $ do
-        pageTitle <- text "title"
-        return $ PageTitle pageTitle
+        title <- text "title"
+        body <- text "body"
+        return $ WebPage title body
 
 catchAny :: IO a -> (SomeException -> IO a) -> IO a
 catchAny = Control.Exception.catch
 
-scrapeTitle :: String -> IO (Maybe PageTitle)
-scrapeTitle url = do
+scrapePage :: String -> IO (Maybe WebPage)
+scrapePage url = do
   let urlType = idURL url
   case urlType of
     ArxivURL -> pure Nothing
     TwitterURL -> pure Nothing
     PdfURL -> pure Nothing
     _ -> do
-      result <- getTitle url
-      if result == Just (PageTitle "") then pure Nothing else pure result
+      result <- parsePage url
+      if result == Just (WebPage "" "") then pure Nothing else pure result
 
 newtype Timeout = Timeout Int
 
@@ -63,7 +66,7 @@ screenshot (Timeout timeout) url fileID = do
   let result = case fp of
         Just _ -> undefined
         Nothing -> error ""
-  let outFile = mkScreenShotFilename fileID
+  let outFile = mkScreenshotFilename fileID
   let args =
         [ printf "%ds" timeout,
           "chromium",
@@ -84,19 +87,19 @@ cacheEntries = do
   let linkEntries = filter (isURI . content) entries
   let links = urlTransformations . content <$> linkEntries
   let filt = id -- replace `id` with `take N` when debugging
-  titles <-
+  pages <-
     mapM
       ( \url -> do
           putStrLn $ "Querying url: " ++ url
-          catchAny (threadDelay 50000 >> scrapeTitle url) $ \e -> do
+          catchAny (threadDelay 50000 >> scrapePage url) $ \e -> do
             putStrLn $ "Got an exception: " ++ show e
             putStrLn "Returning dummy value of Nothing"
-            pure $ Just $ PageTitle url
+            pure $ Just $ WebPage url ""
       )
       (filt links) -- for testing
-  let cacheEntries = crawlerOutput2cache $ zip3 (filt linkEntries) (filt links) (filt titles)
+  let cacheEntries = crawlerOutput2cache $ zip3 (filt linkEntries) (filt links) (filt pages)
   writeCache cacheEntries
-  pPrint titles
+  pPrint pages
 
 screenshotEntries :: IO ()
 screenshotEntries = do
@@ -106,7 +109,7 @@ screenshotEntries = do
   let filt = id -- replace `id` with `take N` when debugging
   mapM_
     ( \(url, entryid) -> do
-        exists <- doesFileExist (mkScreenShotFilename entryid)
+        exists <- doesFileExist (mkScreenshotFilename entryid)
         if not exists then do
           putStrLn $ "Screenshotting url: " ++ url
           catchAny (threadDelay 50000 >> screenshot (Timeout 10) url entryid) $ \e -> do
@@ -121,6 +124,7 @@ screenshotEntries = do
 ocrShots :: IO ()
 ocrShots = do
   createDirectoryIfMissing True "ocr"
+  -- files <- fmap (\x -> "screenshots/" ++ x) (sort <$> listDirectory "screenshots")
   files <- sort <$> listDirectory "screenshots"
   mapM_ (\file -> do
     exists <- doesFileExist (ss2ocrFilename file)
@@ -136,6 +140,16 @@ ocrShots = do
       else 
         putStrLn $ "OCR already exists for file: " ++ ss2ocrFilename file
     ) files 
+  ocrFiles <- sort <$> listDirectory "ocr"
+  ocrEntries <- mapM (\file -> do
+      content <- readFile $ "ocr/" ++ file
+      let entryid = readMaybe (takeBaseName file) :: Maybe Int
+      case entryid of
+        Just entryid -> pure $ Just (OCREntry entryid (ocr2ssFilename file) content)
+        Nothing -> pure Nothing
+    ) ocrFiles
+  writeOCR (catMaybes ocrEntries) 
+
 
 main = do
   screenshotEntries
