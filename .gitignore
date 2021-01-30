@@ -2,3 +2,5 @@
 *.db.backup
 .stack-work
 *.vim
+.vscode
+

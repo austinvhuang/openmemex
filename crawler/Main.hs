@@ -10,6 +10,11 @@ import Network.URI (URI, isURI, parseURI)
 import Text.HTML.Scalpel (Scraper, chroots, scrapeURL, text)
 import Text.Pretty.Simple (pPrint)
 
+import System.Directory
+import System.Process
+import Text.Printf
+
+
 -- TODO - this doesn't work yet - need to use the query format
 arxivTransform :: String -> String
 arxivTransform url = unpack . replace "arxiv.org" "export.arxiv.org" $ pack url
@@ -49,6 +54,20 @@ router url = do
       result <- getTitle url
       if result == Just (PageTitle "") then pure Nothing else pure result
 
+screenshot :: String -> Int -> IO ()
+screenshot url fileID = do
+  createDirectoryIfMissing True "screenshots"
+  fp <- findExecutable "chromium"
+  let result = case fp of 
+                Just _ -> undefined
+                Nothing -> error ""
+  let outFile = printf "%.10d.png" fileID
+  let command =
+        printf "chromium --headless --disable-gpu --screenshot=%s %s" outFile url :: String
+  (code, stdout, stderr) <- readProcessWithExitCode command [] ""
+  print $ "Writing to " ++ outFile
+  pure ()
+
 main :: IO ()
 main = do
   entries <- allEntries
@@ -65,7 +84,7 @@ main = do
           titles <- catchAny (threadDelay 100000 >> router url) $ \e -> do
             putStrLn $ "Got an exception: " ++ show e
             putStrLn "Returning dummy value of Nothing"
-            pure $ Just $ PageTitle ""
+            pure $ Just $ PageTitle url
           pure titles
       )
       (filt links) -- for testing

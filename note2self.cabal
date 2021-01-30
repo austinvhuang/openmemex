@@ -53,6 +53,7 @@ executable crawler
                      , http-conduit
                      , network-uri
                      , pretty-simple
+                     , process >= 1.6.9.0
                      , scalpel
                      , sqlite-simple
                      , tagsoup
