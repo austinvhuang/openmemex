@@ -1,9 +1,14 @@
-.main {
-  margin: 200px 200px;
+.main-outer {
+margin: 0px 0px;
+}
+
+.main-inner {
+margin: 40px 80px;
 }
 
 .search-input {
   width: 90%;
+  font-size: 20pt;
 }
 
 .card {

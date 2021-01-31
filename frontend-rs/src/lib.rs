@@ -1,3 +1,6 @@
+#![recursion_limit = "1024"]
+// https://github.com/yewstack/yew/issues/513
+
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
@@ -5,6 +8,19 @@ use yew::{
     format::{Json, Nothing},
     prelude::*,
 };
+use yew_router::*;
+
+#[derive(Switch)]
+enum AppRoute {
+    #[to="/cards"]
+    Cards,
+    #[to="/screen"]
+    Screen,
+    #[to="/timeline"]
+    Timeline,
+    #[to="/addnote"]
+    AddNote
+}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Entry {
@@ -15,16 +31,29 @@ pub struct Entry {
     date: String,
 }
 
+#[derive(Deserialize, Debug, Clone)]
+pub struct Cache {
+    #[serde(rename(deserialize = "cvTime"))]
+    time: String,
+    #[serde(rename(deserialize = "cvForeignID"))]
+    entry_id: i32,
+    #[serde(rename(deserialize = "cvContent"))]
+    content: String,
+    #[serde(rename(deserialize = "cvDate"))]
+    date: String,
+}
+
 #[derive(Debug)]
 pub enum Msg {
     GetEntries,
-    ReceiveEntries(Result<Vec<Entry>, anyhow::Error>),
+    ReceiveEntries(Result<Vec<Cache>, anyhow::Error>),
+    KeyDown,
 }
 
 #[derive(Debug)]
 pub struct App {
     fetch_task: Option<FetchTask>,
-    entries: Option<Vec<Entry>>,
+    entries: Option<Vec<Cache>>,
     link: ComponentLink<Self>,
     error: Option<String>,
 }
@@ -40,7 +69,13 @@ impl App {
                     {
                         for entries.iter().map(|mut item| {
                             html! {
-                                <div class="card"> { item.content.clone() } </div>
+                                <div class="card">
+                                    <h4>
+                                        { item.date.clone() }
+                                    </h4>
+                                    <hr/>
+                                    { item.content.clone() }
+                                </div>
                             }
                         })
                     }
@@ -49,6 +84,32 @@ impl App {
             None => {
                 html! { <div> {"No Content"} </div> }
             }
+        }
+    }
+
+    fn view_navbar(&self) -> Html {
+        html! {
+                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                    <a class="navbar-brand" href="#">
+                        { "note2self" }
+                    </a>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                            <ul class="navbar-nav">
+                                <li class="nav-item active">
+                                    <a class="nav-link" href="#">{ "Cards"} </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">{ "Screens" }</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">{ "Timeline" }</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">{ "Add Note" }</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </nav>
         }
     }
 }
@@ -62,6 +123,8 @@ impl Component for App {
         let cb = link.callback_once(|_: String| Msg::GetEntries);
         cb.emit("".to_string()); // TODO - what's the right way to handle a message without parameters
         log::info!("sent message");
+
+        // let kb_cb = link.callback(Msg::KeyDown);
         Self {
             fetch_task: None,
             entries: None, //Some(Vec::<Entry>::new()),
@@ -82,12 +145,12 @@ impl Component for App {
             GetEntries => {
                 // define request
                 log::info!("submitting request"); // TODO: logging doesn't work yet
-                let request = Request::get("http://localhost:3000/all/entries")
+                let request = Request::get("http://localhost:3000/all/cache")
                     .body(Nothing)
                     .expect("Could not build request.");
                 // define callback
                 let callback = self.link.callback_once(
-                    |response: Response<Json<Result<Vec<Entry>, anyhow::Error>>>| {
+                    |response: Response<Json<Result<Vec<Cache>, anyhow::Error>>>| {
                         let Json(data) = response.into_body();
                         Msg::ReceiveEntries(data)
                     },
@@ -112,30 +175,36 @@ impl Component for App {
                 self.fetch_task = None;
                 true // redraw page
             }
+            KeyDown => {
+                log::info!("keydown event");
+                false
+            }
         }
     }
 
     fn view(&self) -> Html {
         html! {
-            <div class="main">
-                <h1>
-                    { "Note2Self" }
-                </h1>
-                <hr/>
-                <p/>
-                <input type="text" class= "search-input"/>
-                <p/>
-                <div class="card">
-                    { "Hey" }
-                </div>
-                <div class="card">
-                    { "There" }
-                </div>
-                    <>
-                        { self.view_entries() }
-                    </>
-            </div>
-        }
+        <div class="main-outer"
+            onkeydown={ self.link.callback(move |e: KeyboardEvent| {
+            e.stop_propagation();
+              Msg::KeyDown
+        })}>
+        { self.view_navbar() }
+
+                <div class="main-inner">
+                  <h1>
+                      { "Note2Self" }
+                  </h1>
+                  <hr/>
+                  <p/>
+                  <input type="text" class= "search-input"/>
+                  <p/>
+                      <>
+                          { self.view_entries() }
+                      </>
+                  </div>
+              </div>
+          }
     }
 }
 
