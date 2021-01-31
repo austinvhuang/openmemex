@@ -163,7 +163,7 @@ allEntries = do
 allCache :: IO [CacheView]
 allCache = do
   conn <- open dbFile
-  r <- query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, cache_body, date, time from cache"
+  r <- query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time from cache"
   close conn
   pure r
 
