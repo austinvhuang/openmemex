@@ -8,6 +8,7 @@ use yew::{
     format::{Json, Nothing},
     prelude::*,
 };
+use yew::events::*;
 use yew_router::*;
 
 #[derive(Switch)]
@@ -48,6 +49,7 @@ pub enum Msg {
     GetEntries,
     ReceiveEntries(Result<Vec<Cache>, anyhow::Error>),
     KeyDown,
+    CardMouseOver(MouseEvent),
 }
 
 #[derive(Debug)]
@@ -69,7 +71,12 @@ impl App {
                     {
                         for entries.iter().map(|mut item| {
                             html! {
-                                <div class="card">
+                                <div class="card" 
+                                    onmouseover=
+                                  self.link.callback(|m| { 
+                                        Msg::CardMouseOver(m)
+                                    })
+                                >
                                     <h4>
                                         { item.date.clone() }
                                     </h4>
@@ -178,6 +185,11 @@ impl Component for App {
             KeyDown => {
                 log::info!("keydown event");
                 false
+            }
+            CardMouseOver(_m) => {
+                log::info!("mouseover event");
+                // log::info!(m);
+                true
             }
         }
     }
