@@ -101,8 +101,8 @@ cacheEntries = do
   writeCache cacheEntries
   pPrint pages
 
-screenshotEntries :: IO ()
-screenshotEntries = do
+screenshotEntries :: Bool -> IO ()
+screenshotEntries deltaOnly = do
   entries <- allEntries
   let linkEntries = filter (isURI . content) entries
   let links = zip (urlTransformations . content <$> linkEntries) (entryID <$> linkEntries)
@@ -110,7 +110,7 @@ screenshotEntries = do
   mapM_
     ( \(url, entryid) -> do
         exists <- doesFileExist (mkScreenshotFilename entryid)
-        if not exists then do
+        if not deltaOnly || not exists then do
           putStrLn $ "Screenshotting url: " ++ url
           catchAny (threadDelay 50000 >> screenshot (Timeout 10) url entryid) $ \e -> do
             putStrLn $ "Got an exception: " ++ show e
@@ -152,6 +152,6 @@ ocrShots = do
 
 
 main = do
-  screenshotEntries
+  screenshotEntries False -- False to reconstruct screenshots directory
   ocrShots
   cacheEntries
