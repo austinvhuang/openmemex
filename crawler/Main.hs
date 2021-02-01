@@ -50,9 +50,9 @@ scrapePage :: String -> IO (Maybe WebPage)
 scrapePage url = do
   let urlType = idURL url
   case urlType of
-    ArxivURL -> pure Nothing
-    TwitterURL -> pure Nothing
-    PdfURL -> pure Nothing
+    ArxivURL -> pure $ Just (WebPage url "")
+    TwitterURL -> pure $ Just (WebPage url "")
+    PdfURL -> pure $ Just (WebPage url "")
     _ -> do
       result <- parsePage url
       if result == Just (WebPage "" "") then pure Nothing else pure result

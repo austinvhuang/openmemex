@@ -42,6 +42,8 @@ pub struct Cache {
     content: String,
     #[serde(rename(deserialize = "cvDate"))]
     date: String,
+    #[serde(rename(deserialize = "cvUrl"))]
+    url: String,
 }
 
 #[derive(Debug)]
@@ -81,7 +83,9 @@ impl App {
                                         { item.date.clone() }
                                     </h4>
                                     <hr/>
+                                    <a href={ item.url.clone() }>
                                     { item.content.clone() }
+                                    </a>
                                 </div>
                             }
                         })
@@ -113,6 +117,9 @@ impl App {
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="#">{ "Add Note" }</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">{ "System" }</a>
                                 </li>
                             </ul>
                         </div>
@@ -209,7 +216,7 @@ impl Component for App {
                   </h1>
                   <hr/>
                   <p/>
-                  <input type="text" class= "search-input"/>
+                  <input type="text" class= "search-input" placeholder="Search"/>
                   <p/>
                       <>
                           { self.view_entries() }
