@@ -3,7 +3,7 @@ let width, height, app
 
 function initDimensions() {
   width = window.innerWidth
-  height = window.innerHeight
+  height = window.innerHeight*10
 }
 
 function initApp() {
@@ -26,11 +26,15 @@ function init() {
   initDimensions()
   initApp()
   initBackground()
-  for (let i=0; i < 1000; i++) {
+  for (let i=0; i < 10; i++) {
+    // TODO - catch file missing exception
     let testImage = PIXI.Sprite.from('./screenshots/' + ('' + i).padStart(10, '0') + '.png')
-    let scale= 0.08;
+//    let scale= 0.08;
+//    let offset = 2;
+//    let ncol = 28;
+    let scale= 0.5;
     let offset = 2;
-    let ncol = 28;
+    let ncol = 4;
     testImage.scale.set(scale, scale);
     testImage.anchor.x = 0
     testImage.anchor.y = 0

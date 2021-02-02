@@ -144,14 +144,14 @@ queryRange startYear startMonth startDay endYear endMonth endDay = do
 
 -- | Returns a unique list of all tags
 -- See https://stackoverflow.com/questions/32098328/no-instance-for-database-sqlite-simple-fromfield-fromfield-char
-allTags :: IO [[String]]
+allTags :: IO [String]
 allTags = do
   hPutStrLn stderr "allTags"
   conn <- open dbFile
   let queryString = Query $ pack "SELECT distinct tag from tags order by tag"
   r <- query_ conn queryString :: IO [[String]]
   close conn
-  pure r
+  pure $ concat r
 
 allEntries :: IO [Entry]
 allEntries = do

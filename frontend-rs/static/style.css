@@ -4,19 +4,20 @@ margin: 0px 0px;
 
 .main-inner {
 margin: 40px 80px;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-column-gap: 1px;
 }
 
 .search-input {
-  width: 90%;
-  font-size: 20pt;
+  width: 100%;
+  font-size: 24pt;
 }
 
 .card {
-  display: block;
   box-shadow 0px 5px 10px 0px rgba(0, 0, 0, 0.2),
     0px 4px 4px 0px rgba(0, 0, 0, 0.15), 0px 2px 2px 0px rgba(0, 0, 0, 0.2);
-  border-radius: 6px;
-  width: 66%;
+  border-radius: 5px;
   float: left;
   margin-bottom: 5px;
   margin-top: 5px;
@@ -24,3 +25,19 @@ margin: 40px 80px;
   text-align: left;
 }
 
+.cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-column-gap: 1px;
+}
+
+.twocol {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-column-gap: 4px;
+}
+
+.picker {
+  width=100%;
+  font-size= 24pt;
+}

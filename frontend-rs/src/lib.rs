@@ -46,18 +46,27 @@ pub struct Cache {
     url: String,
 }
 
+#[derive(Deserialize, Debug, Clone)]
+pub struct Tag {
+    tag_name: String,
+}
+
+
 #[derive(Debug)]
 pub enum Msg {
     GetEntries,
     ReceiveEntries(Result<Vec<Cache>, anyhow::Error>),
+    ReceiveTags(Result<Vec<String>, anyhow::Error>),
     KeyDown,
     CardMouseOver(MouseEvent),
 }
 
 #[derive(Debug)]
 pub struct App {
-    fetch_task: Option<FetchTask>,
+    cache_task: Option<FetchTask>,
+    tag_task: Option<FetchTask>,
     entries: Option<Vec<Cache>>,
+    tags: Option<Vec<String>>,
     link: ComponentLink<Self>,
     error: Option<String>,
 }
@@ -67,17 +76,14 @@ impl App {
         match self.entries {
             Some(ref entries) => {
                 log::info!("{:#?} results fetched.", entries.len());
-                // log::info!("Fetched ... {:#?}", entries);
-                // html! { <div> {"Fetched"} </div> }
                 html! {
                     {
                         for entries.iter().map(|mut item| {
                             html! {
                                 <div class="card" 
-                                    onmouseover=
-                                  self.link.callback(|m| { 
-                                        Msg::CardMouseOver(m)
-                                    })
+                                    onmouseover=self.link.callback(|m| { 
+                                                Msg::CardMouseOver(m)
+                                                })
                                 >
                                     <h4>
                                         { item.date.clone() }
@@ -140,8 +146,10 @@ impl Component for App {
 
         // let kb_cb = link.callback(Msg::KeyDown);
         Self {
-            fetch_task: None,
+            cache_task: None,
+            tag_task: None,
             entries: None, //Some(Vec::<Entry>::new()),
+            tags: None,
             link,
             error: None,
         }
@@ -157,8 +165,9 @@ impl Component for App {
 
         match msg {
             GetEntries => {
+
                 // define request
-                log::info!("submitting request"); // TODO: logging doesn't work yet
+                log::info!("submitting cache request");
                 let request = Request::get("http://localhost:3000/all/cache")
                     .body(Nothing)
                     .expect("Could not build request.");
@@ -171,7 +180,24 @@ impl Component for App {
                 );
                 // task
                 let task = FetchService::fetch(request, callback).expect("failed to start request");
-                self.fetch_task = Some(task);
+                self.cache_task = Some(task);
+
+                // define request
+                log::info!("submitting tag request"); 
+                let request = Request::get("http://localhost:3000/all/tags")
+                    .body(Nothing)
+                    .expect("Could not build request.");
+                // define callback
+                let callback = self.link.callback_once(
+                    |response: Response<Json<Result<Vec<String>, anyhow::Error>>>| {
+                        let Json(data) = response.into_body();
+                        Msg::ReceiveTags(data)
+                    },
+                );
+                // task
+                let task = FetchService::fetch(request, callback).expect("failed to start request");
+                self.tag_task = Some(task);
+
                 false // redraw page
             }
             Msg::ReceiveEntries(response) => {
@@ -181,13 +207,25 @@ impl Component for App {
                         self.entries = Some(result);
                     }
                     Err(error) => {
-                        log::info!("receive error, error is:");
+                        log::info!("cache receive error, error is:");
                         log::info!("{}", &error.to_string());
                         self.error = Some(error.to_string());
                     }
                 }
-                self.fetch_task = None;
-                true // redraw page
+                self.cache_task = None;
+                true
+            }
+            ReceiveTags(response) => {
+                match response {
+                    Ok(result) => { self.tags = Some(result); } 
+                    Err(error) => {
+                        log::info!("tag receive error, error is:");
+                        log::info!("{}", &error.to_string());
+                        self.error = Some(error.to_string());
+                    }
+                }
+                self.tag_task = None;
+                true
             }
             KeyDown => {
                 log::info!("keydown event");
@@ -210,19 +248,58 @@ impl Component for App {
         })}>
         { self.view_navbar() }
 
-                <div class="main-inner">
-                  <h1>
-                      { "Note2Self" }
-                  </h1>
-                  <hr/>
-                  <p/>
-                  <input type="text" class= "search-input" placeholder="Search"/>
-                  <p/>
-                      <>
-                          { self.view_entries() }
-                      </>
-                  </div>
-              </div>
+        <div class="main-inner">
+            <h1>
+              { "Note2Self 0.9 ---" }
+            </h1>
+            <hr/>
+            <p/>
+                <input type="text" class= "search-input" placeholder="Search"/>
+            <p/>
+            <div class="twocol">
+            <div class="cards">
+                { self.view_entries() }
+            </div>
+            <div>
+            { "TEST" }
+            <p/>
+
+            {
+        match self.tags {
+            Some(ref tags) => {
+                log::info!("{:#?} results fetched.", tags.len());
+                html! {
+                    <div>
+                    {
+                        for tags.iter().map(|mut item| {
+                            html! {
+                                <div class="card">
+                                {
+                                    item.clone()
+                                }
+                                </div>
+                            }
+                        })
+                    }
+                    </div>
+                    }
+                    }
+            None => html! { { "No tags" } }
+            }
+            }
+
+            <select class="selectpicker border rounded picker" title="foo" data-live-search="true">
+                  <option data-tokens="one">{"one"}</option>
+                  <option data-tokens="two">{"two"}</option>
+                  <option data-tokens="three">{"three"}</option>
+                  <option data-tokens="four">{"four"}</option>
+            </select>
+
+
+            </div>
+            </div>
+        </div>
+      </div>
           }
     }
 }
