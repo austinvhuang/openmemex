@@ -71,6 +71,9 @@ screenshot (Timeout timeout) url fileID = do
         [ printf "%ds" timeout,
           "chromium",
           "--headless",
+          "--incognito",
+          "--run-all-compositor-stages-before-draw",
+          "--virtual-time-budget=30000",
           "--disable-gpu",
           "--window-size=600,800",
           "--hide-scrollbars",
@@ -110,14 +113,14 @@ screenshotEntries deltaOnly = do
   mapM_
     ( \(url, entryid) -> do
         exists <- doesFileExist (mkScreenshotFilename entryid)
-        if not deltaOnly || not exists then do
+        if (not deltaOnly || not exists) && (idURL url /= PdfURL) then do
           putStrLn $ "Screenshotting url: " ++ url
-          catchAny (threadDelay 50000 >> screenshot (Timeout 10) url entryid) $ \e -> do
+          catchAny (threadDelay 50000 >> screenshot (Timeout 30) url entryid) $ \e -> do
             putStrLn $ "Got an exception: " ++ show e
             putStrLn "Returning dummy value of Nothing"
             -- pure $ Just $ PageTitle url
           else 
-            putStrLn $ "Screenshot already exists for url: " ++ url
+            putStrLn $ "Screenshot already exists or is not possible (eg a pdf) for url: " ++ url
     )
     (filt links)
 

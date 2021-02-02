@@ -64,7 +64,7 @@ data WebPage = WebPage {
   body :: String
 } deriving (Eq, Show, Generic)
 
-data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL
+data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL deriving Eq
 
 data CacheContentType = CachePage | CacheGenericContent deriving (Show, Generic)
 
@@ -75,12 +75,13 @@ data CacheView = CacheView
     cvContentType :: String, -- CacheContentType,
     cvContent :: String,
     cvDate :: String,
-    cvTime :: String
+    cvTime :: String,
+    cvScreenshotFile :: String
   }
   deriving (Show, Generic)
 
 instance FromRow CacheView where
-  fromRow = CacheView <$> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = CacheView <$> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 instance ToJSON CacheView
 
@@ -163,7 +164,7 @@ allEntries = do
 allCache :: IO [CacheView]
 allCache = do
   conn <- open dbFile
-  r <- query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time from cache"
+  r <- query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file from cache"
   close conn
   pure r
 

@@ -44,6 +44,8 @@ pub struct Cache {
     date: String,
     #[serde(rename(deserialize = "cvUrl"))]
     url: String,
+    #[serde(rename(deserialize = "cvScreenshotFile"))]
+    screenshot_file: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -92,6 +94,7 @@ impl App {
                                     <a href={ item.url.clone() }>
                                     { item.content.clone() }
                                     </a>
+                                        <img src=item.screenshot_file.clone()/>
                                 </div>
                             }
                         })
@@ -250,7 +253,7 @@ impl Component for App {
 
         <div class="main-inner">
             <h1>
-              { "Note2Self 0.9 ---" }
+              { "Note2Self" }
             </h1>
             <hr/>
             <p/>
@@ -261,9 +264,6 @@ impl Component for App {
                 { self.view_entries() }
             </div>
             <div>
-            { "TEST" }
-            <p/>
-
             {
         match self.tags {
             Some(ref tags) => {
@@ -273,7 +273,7 @@ impl Component for App {
                     {
                         for tags.iter().map(|mut item| {
                             html! {
-                                <div class="card">
+                                <div class="topic-tag">
                                 {
                                     item.clone()
                                 }
@@ -287,13 +287,6 @@ impl Component for App {
             None => html! { { "No tags" } }
             }
             }
-
-            <select class="selectpicker border rounded picker" title="foo" data-live-search="true">
-                  <option data-tokens="one">{"one"}</option>
-                  <option data-tokens="two">{"two"}</option>
-                  <option data-tokens="three">{"three"}</option>
-                  <option data-tokens="four">{"four"}</option>
-            </select>
 
 
             </div>
