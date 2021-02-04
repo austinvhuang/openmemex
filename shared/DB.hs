@@ -64,6 +64,9 @@ data WebPage = WebPage {
   body :: String
 } deriving (Eq, Show, Generic)
 
+data SortBy = SortTime | SortUrl deriving (Show, Generic)
+data SortDir= SortFwd | SortRev deriving (Show, Generic)
+
 data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL deriving Eq
 
 data CacheContentType = CachePage | CacheGenericContent deriving (Show, Generic)
@@ -161,10 +164,14 @@ allEntries = do
   close conn
   pure r
 
-allCache :: IO [CacheView]
-allCache = do
+allCache :: Maybe SortBy -> Maybe SortDir -> IO [CacheView]
+allCache sortby sortdir = do
   conn <- open dbFile
-  r <- query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file from cache"
+  r <- case (sortby, sortdir) of 
+      (Just SortUrl, Just SortRev) -> query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file from cache ORDER BY cache_url DESC"
+      (Just SortUrl, _) -> query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file from cache ORDER BY cache_url"
+      (Just SortTime, Just SortFwd) -> query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file from cache ORDER BY coalesce(datetime(\"date\"), datetime(\"time\"))"
+      (_, _) -> query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file from cache ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC"
   close conn
   pure r
 

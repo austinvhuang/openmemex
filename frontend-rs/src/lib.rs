@@ -61,6 +61,8 @@ pub enum Msg {
     ReceiveTags(Result<Vec<String>, anyhow::Error>),
     KeyDown,
     CardMouseOver(MouseEvent),
+    SortByDate,
+    SortByUrl,
 }
 
 #[derive(Debug)]
@@ -71,6 +73,7 @@ pub struct App {
     tags: Option<Vec<String>>,
     link: ComponentLink<Self>,
     error: Option<String>,
+    query: String
 }
 
 impl App {
@@ -82,19 +85,15 @@ impl App {
                     {
                         for entries.iter().map(|mut item| {
                             html! {
-                                <div class="card" 
-                                    onmouseover=self.link.callback(|m| { 
-                                                Msg::CardMouseOver(m)
-                                                })
-                                >
+                                <div class="card" onmouseover=self.link.callback(|m| { Msg::CardMouseOver(m) })>
                                     <h4>
                                         { item.date.clone() }
                                     </h4>
                                     <hr/>
+                                    <img src=item.screenshot_file.clone()/>
                                     <a href={ item.url.clone() }>
-                                    { item.content.clone() }
-                                    </a>
-                                        <img src=item.screenshot_file.clone()/>
+                                                                    { item.content.clone() }
+                                                                    </a>
                                 </div>
                             }
                         })
@@ -109,30 +108,28 @@ impl App {
 
     fn view_navbar(&self) -> Html {
         html! {
-                <nav class="navbar navbar-expand-lg navbar-light bg-light">
-                    <a class="navbar-brand" href="#">
-                        { "note2self" }
-                    </a>
-                    <div class="collapse navbar-collapse" id="navbarNav">
-                            <ul class="navbar-nav">
-                                <li class="nav-item active">
-                                    <a class="nav-link" href="#">{ "Cards"} </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="#">{ "Screens" }</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="#">{ "Timeline" }</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="#">{ "Add Note" }</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="#">{ "System" }</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </nav>
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <a class="navbar-brand" href="#"> { "note2self" } </a>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item active">
+                            <a class="nav-link" href="#">{ "Cards"} </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">{ "Screens" }</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">{ "Timeline" }</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">{ "Add Note" }</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">{ "System" }</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
         }
     }
 }
@@ -155,6 +152,7 @@ impl Component for App {
             tags: None,
             link,
             error: None,
+            query: "http://localhost:3000/all/cache".to_string(),
         }
     }
 
@@ -171,7 +169,7 @@ impl Component for App {
 
                 // define request
                 log::info!("submitting cache request");
-                let request = Request::get("http://localhost:3000/all/cache")
+                let request = Request::get(&self.query)
                     .body(Nothing)
                     .expect("Could not build request.");
                 // define callback
@@ -239,60 +237,61 @@ impl Component for App {
                 // log::info!(m);
                 true
             }
+
+            SortByDate => {
+                log::info!("sort date");
+                self.query = "http://localhost:3000/all/cache?sort=date".to_string();
+                // TODO emit msg
+                true
+            }
+            SortByUrl => {
+                log::info!("sort url");
+                self.query = "http://localhost:3000/all/cache?sort=url".to_string();
+                // TODO emit msg
+                true
+            }
         }
     }
 
     fn view(&self) -> Html {
         html! {
-        <div class="main-outer"
-            onkeydown={ self.link.callback(move |e: KeyboardEvent| {
-            e.stop_propagation();
-              Msg::KeyDown
-        })}>
-        { self.view_navbar() }
+            <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
+                { e.stop_propagation(); Msg::KeyDown })}>
+                { self.view_navbar() }
 
-        <div class="main-inner">
-            <h1>
-              { "Note2Self" }
-            </h1>
-            <hr/>
-            <p/>
-                <input type="text" class= "search-input" placeholder="Search"/>
-            <p/>
-            <div class="twocol">
-            <div class="cards">
-                { self.view_entries() }
-            </div>
-            <div>
-            {
-        match self.tags {
-            Some(ref tags) => {
-                log::info!("{:#?} results fetched.", tags.len());
-                html! {
-                    <div>
-                    {
-                        for tags.iter().map(|mut item| {
+                <div class="main-inner">
+
+                    <h1>
+                        { "Note2Self" }
+                    </h1>
+                    <hr/>
+                    <p/>
+                    <input type="text" class="search-input" placeholder="Search" />
+                    <button onclick=self.link.callback(|m| { Msg::SortByDate })>{"Sort by Date"}</button>
+                    <button onclick=self.link.callback(|m| { Msg::SortByUrl })>{"Sort by Url"}</button>
+
+                    <p/>
+                    <div class="twocol">
+                        <div class="cards">
+                            { self.view_entries() }
+                        </div>
+                        <div>
+                            { match self.tags { Some(ref tags) => { log::info!("{:#?} results fetched.", tags.len());
                             html! {
+                            <div>
+                                { for tags.iter().map(|mut item| { html! {
                                 <div class="topic-tag">
-                                {
-                                    item.clone()
-                                }
+                                    { item.clone() }
                                 </div>
-                            }
-                        })
-                    }
+                                }}) }
+                            </div>
+                            } } None => html! { { "No tags" } } } }
+
+
+                        </div>
                     </div>
-                    }
-                    }
-            None => html! { { "No tags" } }
-            }
-            }
-
-
+                </div>
             </div>
-            </div>
-        </div>
-      </div>
           }
     }
 }

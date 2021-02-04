@@ -58,7 +58,7 @@ type AllTagsAPI = "all" :> "tags" :> Get '[JSON] [String]
 
 type AllEntriesAPI = "all" :> "entries" :> Get '[JSON] [Entry]
 
-type AllCacheAPI = "all" :> "cache" :> Get '[JSON] [CacheView]
+type AllCacheAPI = "all" :> "cache" :> QueryParam "sort" SortBy:> QueryParam "sortdir" SortDir :> Get '[JSON] [CacheView]
 
 type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [Entry]
 
@@ -67,9 +67,22 @@ type SubmitAPI = "submit" :> "note" :> ReqBody '[JSON] PostNote :> Post '[JSON] 
 type CombinedAPI =
   RootAPI :<|> DateAPI :<|> RangeAPI :<|> AllTagsAPI :<|> AllEntriesAPI :<|> AllCacheAPI :<|> ContentAPI :<|> SubmitAPI
 
+instance FromHttpApiData SortBy where
+  parseUrlPiece value = case value of 
+    "time" -> Right SortTime
+    "url" -> Right SortUrl
+    _ -> Left "Invalid sort specification"
+
+instance FromHttpApiData SortDir where
+  parseUrlPiece value = case value of 
+    "fwd" -> Right SortFwd
+    "rev" -> Right SortRev
+    _ -> Left "Invalid sort direction"
+
 -- Helper functions
 
-date2string year month day = printf "%.4d-%.2d-%.2d" year month day
+-- year month day
+date2string = printf "%.4d-%.2d-%.2d" :: String
 
 -- Handlers
 
@@ -87,15 +100,15 @@ allTagsH = liftIO allTags
 allEntriesH :: Handler [Entry]
 allEntriesH = liftIO allEntries 
 
-allCacheH :: Handler [CacheView]
-allCacheH = liftIO allCache 
+allCacheH :: Maybe SortBy -> Maybe SortDir -> Handler [CacheView]
+allCacheH sortby sortdir= liftIO (allCache sortby sortdir)
 
 queryContentH q = liftIO $ queryContent q :: Handler [Entry]
 
 
 postNote :: PostNote -> IO Int64
 postNote note = do 
-  putStrLn $ show note
+  print note
   pure 1
 
 postNoteH note = liftIO $ postNote note
