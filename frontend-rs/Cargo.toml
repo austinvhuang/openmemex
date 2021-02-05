@@ -15,6 +15,7 @@ serde = "1.0.120"
 anyhow = "1.0.38"
 wasm-logger = "0.2.0"
 log = "0.4.6"
+url = "2.2.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

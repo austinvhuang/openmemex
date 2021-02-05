@@ -44,18 +44,26 @@ margin: 40px 80px;
   bottom: 0;
 }
 
+.sort-button {
+  border-radius: 10px;
+  width: 120px;
+  float: left;
+  background-color:white;
+}
+
 
 .topic-tag {
-  border-radius: 100px;
+  border-radius: 10px;
   float: left;
   margin-bottom: 5px;
   margin-top: 5px;
   margin-right: 5px;
   padding: 10px;
   text-align: left;
-  background-color=blue;
-  border-style: outset;
-  
+  background-color: white;
+  border-style: solid;
+  border-color: grey;
+  width: 120px;
 }
 
 .twocol {

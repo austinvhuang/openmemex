@@ -10,6 +10,7 @@ use yew::{
 };
 use yew::events::*;
 use yew_router::*;
+use url::*;
 
 #[derive(Switch)]
 enum AppRoute {
@@ -93,7 +94,13 @@ impl App {
                                     <img src=item.screenshot_file.clone()/>
                                     <a href={ item.url.clone() }>
                                                                     { item.content.clone() }
-                                                                    </a>
+                                    </a>
+                                    <p/> { 
+                                        match Url::parse(item.url) {
+                                            Some(x) => { x.host_str() }
+                                            Err => { "" }
+                                        }
+                                    }
                                 </div>
                             }
                         })
@@ -240,14 +247,15 @@ impl Component for App {
 
             SortByDate => {
                 log::info!("sort date");
-                self.query = "http://localhost:3000/all/cache?sort=date".to_string();
-                // TODO emit msg
+                self.query = "http://localhost:3000/all/cache?sort=time".to_string();
+                // self.link.send_self(GetEntries);
+                self.update(GetEntries);
                 true
             }
             SortByUrl => {
                 log::info!("sort url");
                 self.query = "http://localhost:3000/all/cache?sort=url".to_string();
-                // TODO emit msg
+                self.update(GetEntries);
                 true
             }
         }
@@ -267,8 +275,8 @@ impl Component for App {
                     <hr/>
                     <p/>
                     <input type="text" class="search-input" placeholder="Search" />
-                    <button onclick=self.link.callback(|m| { Msg::SortByDate })>{"Sort by Date"}</button>
-                    <button onclick=self.link.callback(|m| { Msg::SortByUrl })>{"Sort by Url"}</button>
+                    <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByDate })>{"Sort by Date"}</button>
+                    <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByUrl })>{"Sort by Url"}</button>
 
                     <p/>
                     <div class="twocol">
