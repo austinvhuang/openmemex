@@ -62,6 +62,7 @@ pub enum Msg {
     ReceiveTags(Result<Vec<String>, anyhow::Error>),
     KeyDown,
     CardMouseOver(MouseEvent),
+    TagMouseOver(MouseEvent),
     SortByDate,
     SortByUrl,
 }
@@ -78,6 +79,7 @@ pub struct App {
 }
 
 impl App {
+
     fn view_entries(&self) -> Html {
         match self.entries {
             Some(ref entries) => {
@@ -85,6 +87,7 @@ impl App {
                 html! {
                     {
                         for entries.iter().map(|mut item| {
+                            let parsed = Url::parse(&item.url);
                             html! {
                                 <div class="card" onmouseover=self.link.callback(|m| { Msg::CardMouseOver(m) })>
                                     <h4>
@@ -93,12 +96,12 @@ impl App {
                                     <hr/>
                                     <img src=item.screenshot_file.clone()/>
                                     <a href={ item.url.clone() }>
-                                                                    { item.content.clone() }
+                                        { item.content.clone() }
                                     </a>
                                     <p/> { 
-                                        match Url::parse(item.url) {
-                                            Some(x) => { x.host_str() }
-                                            Err => { "" }
+                                        match &parsed {
+                                            Ok(x) => { x.host_str().unwrap() }
+                                            Err(error) => { "" }
                                         }
                                     }
                                 </div>
@@ -240,8 +243,11 @@ impl Component for App {
                 false
             }
             CardMouseOver(_m) => {
-                log::info!("mouseover event");
-                // log::info!(m);
+                log::info!("card mouseover event");
+                true
+            }
+            TagMouseOver(m) => {
+                log::info!("tag mouseover event");
                 true
             }
 
@@ -249,13 +255,13 @@ impl Component for App {
                 log::info!("sort date");
                 self.query = "http://localhost:3000/all/cache?sort=time".to_string();
                 // self.link.send_self(GetEntries);
-                self.update(GetEntries);
+                self.link.send_message(GetEntries);
                 true
             }
             SortByUrl => {
                 log::info!("sort url");
                 self.query = "http://localhost:3000/all/cache?sort=url".to_string();
-                self.update(GetEntries);
+                self.link.send_message(GetEntries);
                 true
             }
         }

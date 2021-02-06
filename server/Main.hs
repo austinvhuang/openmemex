@@ -55,17 +55,37 @@ type RangeAPI =
     :> Get '[JSON] [Entry]
 
 type AllTagsAPI = "all" :> "tags" :> Get '[JSON] [String]
-
 type AllEntriesAPI = "all" :> "entries" :> Get '[JSON] [Entry]
+type AllCacheAPI = "all" :> "cache" :> QueryParam "sort" SortBy :> QueryParam "sortdir" SortDir :> Get '[JSON] [CacheView]
 
-type AllCacheAPI = "all" :> "cache" :> QueryParam "sort" SortBy:> QueryParam "sortdir" SortDir :> Get '[JSON] [CacheView]
-
-type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [Entry]
+type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [CacheView]
 
 type SubmitAPI = "submit" :> "note" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
 
+type FrontendAPI = "frontend" :> Raw
+
+type AllAPI = AllTagsAPI :<|> AllEntriesAPI :<|> AllCacheAPI
+
+type LinkEntryTagsAPI = "link" :> "entry" :> "tags" :> QueryParams "filter" String :> Get '[JSON] [EntryTag]
+
 type CombinedAPI =
-  RootAPI :<|> DateAPI :<|> RangeAPI :<|> AllTagsAPI :<|> AllEntriesAPI :<|> AllCacheAPI :<|> ContentAPI :<|> SubmitAPI
+  RootAPI :<|> DateAPI :<|> RangeAPI :<|> AllTagsAPI :<|> AllEntriesAPI :<|> AllCacheAPI :<|> ContentAPI :<|> SubmitAPI :<|> FrontendAPI :<|> LinkEntryTagsAPI  
+
+combinedApi :: Proxy CombinedAPI
+combinedApi = Proxy
+
+server :: Server CombinedAPI
+server =
+  getRoot
+    :<|> queryDateH
+    :<|> queryRangeH
+    :<|> allTagsH
+    :<|> allEntriesH
+    :<|> allCacheH
+    :<|> queryContentH
+    :<|> postNoteH
+    :<|> frontendH
+    :<|> linkEntryTagsH
 
 instance FromHttpApiData SortBy where
   parseUrlPiece value = case value of 
@@ -103,8 +123,11 @@ allEntriesH = liftIO allEntries
 allCacheH :: Maybe SortBy -> Maybe SortDir -> Handler [CacheView]
 allCacheH sortby sortdir= liftIO (allCache sortby sortdir)
 
-queryContentH q = liftIO $ queryContent q :: Handler [Entry]
+frontendH = serveDirectoryWebApp "./frontend-rs/static/"
 
+queryContentH q = liftIO $ queryContent q :: Handler [CacheView]
+
+linkEntryTagsH filterTag = liftIO $ linkEntryTags filterTag
 
 postNote :: PostNote -> IO Int64
 postNote note = do 
@@ -112,22 +135,6 @@ postNote note = do
   pure 1
 
 postNoteH note = liftIO $ postNote note
-
--- App definition
-
-combinedApi :: Proxy CombinedAPI
-combinedApi = Proxy
-
-server :: Server CombinedAPI
-server =
-  getRoot
-    :<|> queryDateH
-    :<|> queryRangeH
-    :<|> allTagsH
-    :<|> allEntriesH
-    :<|> allCacheH
-    :<|> queryContentH
-    :<|> postNoteH
 
 mkApp :: IO Application
 mkApp = return $ simpleCors $ serve combinedApi server

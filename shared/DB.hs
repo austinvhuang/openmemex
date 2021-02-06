@@ -9,6 +9,7 @@
 
 module DB where
 
+import Data.List (intercalate)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (ToJSON)
 import Data.Maybe (catMaybes)
@@ -56,6 +57,18 @@ instance FromRow Tag where
   fromRow = Tag <$> field <*> field <*> field
 
 instance ToJSON Tag
+
+-- Link entries to tags
+
+data EntryTag = EntryTag {
+  etEntryID :: Int,
+  etTag :: String
+  } deriving (Show, Generic)
+
+instance FromRow EntryTag where
+  fromRow = EntryTag <$> field <*> field
+
+instance ToJSON EntryTag
 
 -- Cache Tables
 
@@ -175,14 +188,27 @@ allCache sortby sortdir = do
   close conn
   pure r
 
-queryContent :: String -> IO [Entry]
+queryContent :: String -> IO [CacheView]
 queryContent query = do
   conn <- open dbFile
   let queryString =
-        Query $ pack $ "SELECT * FROM entries WHERE content LIKE '%" ++ query ++ "%'"
-  r <- query_ conn queryString :: IO [Entry]
+        Query $ pack $ "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file from cache ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC WHERE cache_title LIKE '%" ++ query ++ "%'"
+  r <- query_ conn queryString
   close conn
   pure r
+
+linkEntryTags :: [String] -> IO [EntryTag]
+linkEntryTags filterTags = do
+  conn <- open dbFile
+  let query = if filterTags == [] then 
+              -- TODO - why does this return a runtime error for the empty case
+              -- ConversionFailed {errSQLType = "NULL", errHaskellType = "[Char]", errMessage = "expecting SQLText column type"}
+              "SELECT entries.entry_id, tag FROM entries LEFT JOIN tags on entries.entry_id=tags.entry_id"
+            else
+              "SELECT entries.entry_id, tag FROM entries LEFT JOIN tags on entries.entry_id=tags.entry_id WHERE tag IN " ++ filterList
+  query_ conn (Query . pack $ query)
+  where
+    filterList = "(" ++ intercalate "," filterTags ++ ")"
 
 mkScreenshotFilename = printf "screenshots/%.10d.png"
 mkOCRFilename = printf "ocr/%.10d.txt"
