@@ -35,7 +35,7 @@ margin: 40px 80px;
 
 .cards {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   grid-column-gap: 4px;
 }
 
@@ -62,8 +62,8 @@ margin: 40px 80px;
   text-align: left;
   background-color: white;
   border-style: solid;
-  border-color: grey;
-  width: 120px;
+  border-color: #cccccc;
+  width: 100px;
 }
 
 .twocol {

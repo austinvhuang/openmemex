@@ -62,7 +62,7 @@ pub enum Msg {
     ReceiveTags(Result<Vec<String>, anyhow::Error>),
     KeyDown,
     CardMouseOver(MouseEvent),
-    TagMouseOver(MouseEvent),
+    TagMouseOver(MouseEvent, String),
     SortByDate,
     SortByUrl,
 }
@@ -246,8 +246,10 @@ impl Component for App {
                 log::info!("card mouseover event");
                 true
             }
-            TagMouseOver(m) => {
+            TagMouseOver(m, tag_name) => {
                 log::info!("tag mouseover event");
+                log::info!("{:?}", tag_name);
+                log::info!("{:?}", m.to_string());
                 true
             }
 
@@ -267,7 +269,7 @@ impl Component for App {
         }
     }
 
-    fn view(&self) -> Html {
+    fn view<'a>(&'a self) -> Html {
         html! {
             <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
                 { e.stop_propagation(); Msg::KeyDown })}>
@@ -293,8 +295,10 @@ impl Component for App {
                             { match self.tags { Some(ref tags) => { log::info!("{:#?} results fetched.", tags.len());
                             html! {
                             <div>
-                                { for tags.iter().map(|mut item| { html! {
-                                <div class="topic-tag">
+                                { for tags.iter().map(|mut item| { 
+                                                                     html! {
+
+                                <div class="topic-tag" onmouseover=self.link.callback(|m| { Msg::TagMouseOver(m, item.clone()) })>
                                     { item.clone() }
                                 </div>
                                 }}) }
