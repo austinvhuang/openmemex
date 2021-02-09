@@ -142,6 +142,21 @@ impl App {
             </nav>
         }
     }
+
+    fn view_topic_tag(&self, item: &'static String) -> Html {
+        html! {
+        <div class="topic-tag" onmouseover=self.link.callback(move |m| Msg::TagMouseOver(m, item.clone()) )>
+         { item.clone() }
+        </div>
+        }
+        /*
+        html! {
+        <div class="topic-tag" onmouseover=self.link.callback(move |m| Msg::TagMouseOver(m, item.clone()) )>
+         { item.clone() }
+        </div>
+        }
+        */
+    }
 }
 
 impl Component for App {
@@ -269,7 +284,8 @@ impl Component for App {
         }
     }
 
-    fn view<'a>(&'a self) -> Html {
+
+    fn view(&self) -> Html {
         html! {
             <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
                 { e.stop_propagation(); Msg::KeyDown })}>
@@ -278,7 +294,7 @@ impl Component for App {
                 <div class="main-inner">
 
                     <h1>
-                        { "Note2Self" }
+                        { "Blahblah" }
                     </h1>
                     <hr/>
                     <p/>
@@ -292,20 +308,22 @@ impl Component for App {
                             { self.view_entries() }
                         </div>
                         <div>
-                            { match self.tags { Some(ref tags) => { log::info!("{:#?} results fetched.", tags.len());
-                            html! {
-                            <div>
-                                { for tags.iter().map(|mut item| { 
-                                                                     html! {
-
-                                <div class="topic-tag" onmouseover=self.link.callback(|m| { Msg::TagMouseOver(m, item.clone()) })>
-                                    { item.clone() }
-                                </div>
-                                }}) }
-                            </div>
-                            } } None => html! { { "No tags" } } } }
-
-
+                            { 
+                              match &self.tags { 
+                                  Some(ref mut exist_tags) => { 
+                                        log::info!("{:#?} results fetched.", exist_tags.len());
+                                        // let link = self.link.clone();
+                                        html! {
+                                        <div>
+                                            { 
+                                                for exist_tags.iter().map(|item| { self.view_topic_tag(item) } )
+                                                // self.view_topic_tag(&"hello".to_string())
+                                            }
+                                        </div>
+                                    } 
+                                } 
+                                None => html! { { "No tags" } } } 
+                            }
                         </div>
                     </div>
                 </div>
