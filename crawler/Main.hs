@@ -5,7 +5,7 @@ module Main where
 import Control.Concurrent (threadDelay)
 import Control.Exception (SomeException, catch)
 import DB
-import Data.Text (isInfixOf, pack, replace, unpack)
+import Data.Text (isInfixOf, isSuffixOf, pack, replace, unpack)
 import Network.URI (URI, isURI, parseURI)
 import System.Directory
 import System.Process
@@ -28,9 +28,9 @@ urlTransformations = arxivTransform
 
 idURL :: String -> URLType
 idURL url
+  | "pdf" `isInfixOf` pack url = PdfURL -- order here should come before arxivurl to take precedence
   | "arxiv.org" `isInfixOf` pack url = ArxivURL
   | "twitter.com" `isInfixOf` pack url = TwitterURL
-  | "pdf" `isInfixOf` pack url = PdfURL
   | otherwise = GenericURL
 
 parsePage :: String -> IO (Maybe WebPage)
@@ -155,6 +155,6 @@ ocrShots = do
 
 
 main = do
-  screenshotEntries False -- False to reconstruct screenshots directory
+  screenshotEntries True -- False to reconstruct screenshots directory
   ocrShots
   cacheEntries

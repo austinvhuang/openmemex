@@ -80,7 +80,7 @@ data WebPage = WebPage {
 data SortBy = SortTime | SortUrl deriving (Show, Generic)
 data SortDir= SortFwd | SortRev deriving (Show, Generic)
 
-data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL deriving Eq
+data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL deriving (Eq, Show)
 
 data CacheContentType = CachePage | CacheGenericContent deriving (Show, Generic)
 
