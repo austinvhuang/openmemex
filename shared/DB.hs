@@ -87,12 +87,12 @@ data CacheContentType = CachePage | CacheGenericContent deriving (Show, Generic)
 -- API Service View
 data CacheView = CacheView
   { cvForeignID :: Int, -- entryID
-    cvUrl :: String,
-    cvContentType :: String, -- CacheContentType,
-    cvContent :: String,
+    cvUrl :: Maybe String,
+    cvContentType :: Maybe String, -- CacheContentType,
+    cvContent :: Maybe String, -- TODO - should this be cvCacheTitle or cvTitle to be consistent with the query?
     cvDate :: String,
     cvTime :: String,
-    cvScreenshotFile :: String
+    cvScreenshotFile :: Maybe String
   }
   deriving (Show, Generic)
 
@@ -182,7 +182,7 @@ allCache sortby sortdir = do
   conn <- open dbFile
   r <- case (sortby, sortdir) of 
       (Just SortUrl, Just SortRev) -> query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file from cache ORDER BY cache_url DESC"
-      (Just SortUrl, _) -> query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file from cache ORDER BY cache_url"
+      (Just SortUrl, _) -> query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file from cache ORDER BY cache_url"
       (Just SortTime, Just SortFwd) -> query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file from cache ORDER BY coalesce(datetime(\"date\"), datetime(\"time\"))"
       (_, _) -> query_ conn "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file from cache ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC"
   close conn
@@ -213,6 +213,7 @@ linkEntryTags filterTags = do
 mkScreenshotFilename = printf "screenshots/%.10d.png"
 mkOCRFilename = printf "ocr/%.10d.txt"
 ss2ocrFilename x = "ocr/" ++ takeBaseName x ++ ".txt"
+ss2ocrPrefix x = "ocr/" ++ takeBaseName x
 ocr2ssFilename x = "screenshots/" ++ takeBaseName x ++ ".png"
 
 crawlerOutput2cache :: [(Entry, String, Maybe WebPage)] -> [CacheEntry]
@@ -322,11 +323,9 @@ writeCache cacheEntries = do
   bracketExecute $
     "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_ocr_file, date, time, content) "
       ++ "as select cache_entry_id, "
-      ++ tableName
-      ++ ".entry_id as entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_ocr_file, date, time, content "
-      ++ "from "
-      ++ tableName
-      ++ " left join entries on "
+      ++ "entries.entry_id as entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_ocr_file, date, time, content "
+      ++ "from entries"
+      ++ " left join " ++ tableName ++ " on "
       ++ tableName
       ++ ".entry_id=entries.entry_id;"
   close conn

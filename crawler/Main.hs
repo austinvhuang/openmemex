@@ -93,7 +93,7 @@ cacheEntries = do
   pages <-
     mapM
       ( \url -> do
-          putStrLn $ "Querying url: " ++ url
+          putStrLn $ "Caching content at url: " ++ url
           catchAny (threadDelay 50000 >> scrapePage url) $ \e -> do
             putStrLn $ "Got an exception: " ++ show e
             putStrLn "Returning dummy value of Nothing"
@@ -136,7 +136,7 @@ ocrShots = do
       let args = ["10s",
                 "tesseract",
                 "screenshots/" ++ file, 
-                ss2ocrFilename file
+                ss2ocrPrefix file
                  ]
       readProcessWithExitCode "timeout" args ""
       pure ()

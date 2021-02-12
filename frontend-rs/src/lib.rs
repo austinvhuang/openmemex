@@ -143,9 +143,9 @@ impl App {
         }
     }
 
-    fn view_topic_tag(&self, item: &'static String) -> Html {
+    fn view_topic_tag(&self, item: &String) -> Html {
         html! {
-        <div class="topic-tag" onmouseover=self.link.callback(move |m| Msg::TagMouseOver(m, item.clone()) )>
+        <div class="topic-tag">
          { item.clone() }
         </div>
         }
@@ -157,7 +157,9 @@ impl App {
         }
         */
     }
+
 }
+
 
 impl Component for App {
     type Message = Msg;
@@ -284,7 +286,6 @@ impl Component for App {
         }
     }
 
-
     fn view(&self) -> Html {
         html! {
             <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
@@ -309,9 +310,9 @@ impl Component for App {
                         </div>
                         <div>
                             { 
-                              match &self.tags { 
-                                  Some(ref mut exist_tags) => { 
-                                        log::info!("{:#?} results fetched.", exist_tags.len());
+                              match self.tags { 
+                                  Some(ref exist_tags) => { 
+                                        // log::info!("{:#?} results fetched.", exist_tags.len());
                                         // let link = self.link.clone();
                                         html! {
                                         <div>
