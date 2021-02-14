@@ -141,14 +141,15 @@ impl App {
     }
 
     fn view_topic_tag(&self, item: &str) -> Html {
+        let callback_fn = |m| Msg::TagMouseOver(m, item.to_string().clone());
         html! {
-        <div class="topic-tag">
+        <div class="topic-tag"> 
          { item.clone() }
         </div>
         }
         /*
         html! {
-        <div class="topic-tag" onmouseover=self.clone().link.clone().callback(|m| Msg::TagMouseOver(m, item.to_string().clone()) )>
+        <div class="topic-tag" onmouseover=self.clone().link.clone().callback(move |m| Msg::TagMouseOver(m, item.to_string().clone()) )>
         // <div class="topic-tag" onmouseover=self.link.callback(|m| Msg::TagMouseOver(m, item.to_string().clone()) )>
          { item.clone() }
         </div>
@@ -285,16 +286,18 @@ impl Component for App {
 
     fn view(&self) -> Html {
 
-
         let render_tags = |exist_tags: &Vec<String>| {
             html! {
             <div>
               {
-                for exist_tags.iter().map(|item| { self.view_topic_tag(item) } )
+                for exist_tags.iter().map(|item: &String| { self.view_topic_tag(&item.clone()) } )
               }
             </div>
             }
         };
+
+        let empty_vec  = &[].to_vec();
+        let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
         html! {
           <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
               { e.stop_propagation(); Msg::KeyDown })}>
@@ -318,6 +321,8 @@ impl Component for App {
                       </div>
                       <div>
                           {
+                            render_tags(&exist_tags)
+                            /*
 
                             match &self.tags {
                                 Some(exist_tags) => {
@@ -336,6 +341,7 @@ impl Component for App {
                                       */
                               }
                               None => html! { { "No tags" } } }
+                          */
                           }
                       </div>
                   </div>
