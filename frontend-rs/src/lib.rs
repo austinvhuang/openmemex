@@ -2,26 +2,26 @@
 // https://github.com/yewstack/yew/issues/513
 
 use serde::Deserialize;
+use url::*;
 use wasm_bindgen::prelude::*;
+use yew::events::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{
     format::{Json, Nothing},
     prelude::*,
 };
-use yew::events::*;
 use yew_router::*;
-use url::*;
 
 #[derive(Switch)]
 enum AppRoute {
-    #[to="/cards"]
+    #[to = "/cards"]
     Cards,
-    #[to="/screen"]
+    #[to = "/screen"]
     Screen,
-    #[to="/timeline"]
+    #[to = "/timeline"]
     Timeline,
-    #[to="/addnote"]
-    AddNote
+    #[to = "/addnote"]
+    AddNote,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -40,20 +40,19 @@ pub struct Cache {
     #[serde(rename(deserialize = "cvForeignID"))]
     entry_id: i32,
     #[serde(rename(deserialize = "cvContent"))]
-    content: String,
+    content: Option<String>,
     #[serde(rename(deserialize = "cvDate"))]
     date: String,
     #[serde(rename(deserialize = "cvUrl"))]
-    url: String,
+    url: Option<String>,
     #[serde(rename(deserialize = "cvScreenshotFile"))]
-    screenshot_file: String,
+    screenshot_file: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Tag {
     tag_name: String,
 }
-
 
 #[derive(Debug)]
 pub enum Msg {
@@ -75,11 +74,10 @@ pub struct App {
     tags: Option<Vec<String>>,
     link: ComponentLink<Self>,
     error: Option<String>,
-    query: String
+    query: String,
 }
 
 impl App {
-
     fn view_entries(&self) -> Html {
         match self.entries {
             Some(ref entries) => {
@@ -87,18 +85,19 @@ impl App {
                 html! {
                     {
                         for entries.iter().map(|mut item| {
-                            let parsed = Url::parse(&item.url);
+                            // TODO - handle None for options
+                            let parsed = Url::parse(item.url.as_ref().unwrap());
                             html! {
                                 <div class="card" onmouseover=self.link.callback(|m| { Msg::CardMouseOver(m) })>
                                     <h4>
                                         { item.date.clone() }
                                     </h4>
                                     <hr/>
-                                    <img src=item.screenshot_file.clone()/>
-                                    <a href={ item.url.clone() }>
-                                        { item.content.clone() }
+                                    <img src=item.screenshot_file.clone().unwrap()/>
+                                    <a href={ item.url.as_ref().unwrap().clone() }>
+                                        { item.content.clone().unwrap() }
                                     </a>
-                                    <p/> { 
+                                    <p/> {
                                         match &parsed {
                                             Ok(x) => { x.host_str().unwrap() }
                                             Err(error) => { "" }
@@ -157,9 +156,7 @@ impl App {
         }
         */
     }
-
 }
-
 
 impl Component for App {
     type Message = Msg;
@@ -193,7 +190,6 @@ impl Component for App {
 
         match msg {
             GetEntries => {
-
                 // define request
                 log::info!("submitting cache request");
                 let request = Request::get(&self.query)
@@ -211,7 +207,7 @@ impl Component for App {
                 self.cache_task = Some(task);
 
                 // define request
-                log::info!("submitting tag request"); 
+                log::info!("submitting tag request");
                 let request = Request::get("http://localhost:3000/all/tags")
                     .body(Nothing)
                     .expect("Could not build request.");
@@ -245,7 +241,9 @@ impl Component for App {
             }
             ReceiveTags(response) => {
                 match response {
-                    Ok(result) => { self.tags = Some(result); } 
+                    Ok(result) => {
+                        self.tags = Some(result);
+                    }
                     Err(error) => {
                         log::info!("tag receive error, error is:");
                         log::info!("{}", &error.to_string());
@@ -288,48 +286,48 @@ impl Component for App {
 
     fn view(&self) -> Html {
         html! {
-            <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
-                { e.stop_propagation(); Msg::KeyDown })}>
-                { self.view_navbar() }
+          <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
+              { e.stop_propagation(); Msg::KeyDown })}>
+              { self.view_navbar() }
 
-                <div class="main-inner">
+              <div class="main-inner">
 
-                    <h1>
-                        { "Blahblah" }
-                    </h1>
-                    <hr/>
-                    <p/>
-                    <input type="text" class="search-input" placeholder="Search" />
-                    <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByDate })>{"Sort by Date"}</button>
-                    <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByUrl })>{"Sort by Url"}</button>
+                  <h1>
+                      { "note2self" }
+                  </h1>
+                  <hr/>
+                  <p/>
+                  <input type="text" class="search-input" placeholder="Search" />
+                  <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByDate })>{"Sort by Date"}</button>
+                  <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByUrl })>{"Sort by Url"}</button>
 
-                    <p/>
-                    <div class="twocol">
-                        <div class="cards">
-                            { self.view_entries() }
-                        </div>
-                        <div>
-                            { 
-                              match self.tags { 
-                                  Some(ref exist_tags) => { 
-                                        // log::info!("{:#?} results fetched.", exist_tags.len());
-                                        // let link = self.link.clone();
-                                        html! {
-                                        <div>
-                                            { 
-                                                for exist_tags.iter().map(|item| { self.view_topic_tag(item) } )
-                                                // self.view_topic_tag(&"hello".to_string())
-                                            }
-                                        </div>
-                                    } 
-                                } 
-                                None => html! { { "No tags" } } } 
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-          }
+                  <p/>
+                  <div class="twocol">
+                      <div class="cards">
+                          { self.view_entries() }
+                      </div>
+                      <div>
+                          {
+                            match self.tags {
+                                Some(ref exist_tags) => {
+                                      // log::info!("{:#?} results fetched.", exist_tags.len());
+                                      // let link = self.link.clone();
+                                      html! {
+                                      <div>
+                                          {
+                                              for exist_tags.iter().map(|item| { self.view_topic_tag(item) } )
+                                              // self.view_topic_tag(&"hello".to_string())
+                                          }
+                                      </div>
+                                      }
+                              }
+                              None => html! { { "No tags" } } }
+                          }
+                      </div>
+                  </div>
+              </div>
+          </div>
+        }
     }
 }
 
