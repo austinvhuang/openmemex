@@ -123,7 +123,7 @@ allEntriesH = liftIO allEntries
 allCacheH :: Maybe SortBy -> Maybe SortDir -> Handler [CacheView]
 allCacheH sortby sortdir= liftIO (allCache sortby sortdir)
 
-frontendH = serveDirectoryWebApp "./frontend-rs/static/"
+frontendH = serveDirectoryFileServer "./frontend-rs/static/"
 
 queryContentH q = liftIO $ queryContent q :: Handler [CacheView]
 
