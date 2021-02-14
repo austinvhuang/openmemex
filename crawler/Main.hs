@@ -17,18 +17,20 @@ import System.FilePath.Posix (takeBaseName)
 import Text.Read (readMaybe)
 import Data.Maybe (catMaybes)
 
--- TODO - this doesn't work yet - need to use the query format
+-- TODO - user arxiv API
 arxivTransform :: String -> String
 arxivTransform url = unpack . replace "arxiv.org" "export.arxiv.org" $ pack url
 
--- arxivTransform url = "http://export.arxiv.org/api/query?id_list=cs/9901002v1"
-
 -- TODO - add other transformations
+urlTransformations :: String -> String
 urlTransformations = arxivTransform
+
+newtype Timeout = Timeout Int
 
 idURL :: String -> URLType
 idURL url
-  | "pdf" `isInfixOf` pack url = PdfURL -- order here should come before arxivurl to take precedence
+  -- order of pdf should come before arxivurl to take precedence
+  | "pdf" `isInfixOf` pack url = PdfURL 
   | "arxiv.org" `isInfixOf` pack url = ArxivURL
   | "twitter.com" `isInfixOf` pack url = TwitterURL
   | otherwise = GenericURL
@@ -44,7 +46,7 @@ parsePage url = fmap (\x -> if not (null x) then head x else WebPage "" "") <$> 
         return $ WebPage title body
 
 catchAny :: IO a -> (SomeException -> IO a) -> IO a
-catchAny = Control.Exception.catch
+catchAny = catch -- specialize types
 
 scrapePage :: String -> IO (Maybe WebPage)
 scrapePage url = do
@@ -56,8 +58,6 @@ scrapePage url = do
     _ -> do
       result <- parsePage url
       if result == Just (WebPage "" "") then pure Nothing else pure result
-
-newtype Timeout = Timeout Int
 
 screenshot :: Timeout -> String -> Int -> IO ()
 screenshot (Timeout timeout) url fileID = do
@@ -88,8 +88,8 @@ cacheEntries :: IO ()
 cacheEntries = do
   entries <- allEntries
   let linkEntries = filter (isURI . content) entries
-  let links = urlTransformations . content <$> linkEntries
-  let filt = id -- replace `id` with `take N` when debugging
+      links = urlTransformations . content <$> linkEntries
+      filt = id -- replace `id` with `take N` when debugging
   pages <-
     mapM
       ( \url -> do
@@ -104,8 +104,8 @@ cacheEntries = do
   writeCache cacheEntries
   pPrint pages
 
-screenshotEntries :: Bool -> IO ()
-screenshotEntries deltaOnly = do
+screenshotEntries :: Bool -> Timeout -> IO ()
+screenshotEntries deltaOnly timeout = do
   entries <- allEntries
   let linkEntries = filter (isURI . content) entries
   let links = zip (urlTransformations . content <$> linkEntries) (entryID <$> linkEntries)
@@ -115,10 +115,10 @@ screenshotEntries deltaOnly = do
         exists <- doesFileExist (mkScreenshotFilename entryid)
         if (not deltaOnly || not exists) && (idURL url /= PdfURL) then do
           putStrLn $ "Screenshotting url: " ++ url
-          catchAny (threadDelay 50000 >> screenshot (Timeout 30) url entryid) $ \e -> do
+          catchAny (threadDelay 50000 >> screenshot timeout url entryid) $ \e -> do
             putStrLn $ "Got an exception: " ++ show e
             putStrLn "Returning dummy value of Nothing"
-            -- pure $ Just $ PageTitle url
+            -- pure $ Just $ PageTitle url)
           else 
             putStrLn $ "Screenshot already exists or is not possible (eg a pdf) for url: " ++ url
     )
@@ -126,8 +126,8 @@ screenshotEntries deltaOnly = do
 
 ocrShots :: IO ()
 ocrShots = do
+  -- make ocr output files from screenshots
   createDirectoryIfMissing True "ocr"
-  -- files <- fmap (\x -> "screenshots/" ++ x) (sort <$> listDirectory "screenshots")
   files <- sort <$> listDirectory "screenshots"
   mapM_ (\file -> do
     exists <- doesFileExist (ss2ocrFilename file)
@@ -143,6 +143,7 @@ ocrShots = do
       else 
         putStrLn $ "OCR already exists for file: " ++ ss2ocrFilename file
     ) files 
+  -- read ocr content from file
   ocrFiles <- sort <$> listDirectory "ocr"
   ocrEntries <- mapM (\file -> do
       content <- readFile $ "ocr/" ++ file
@@ -151,10 +152,11 @@ ocrShots = do
         Just entryid -> pure $ Just (OCREntry entryid (ocr2ssFilename file) content)
         Nothing -> pure Nothing
     ) ocrFiles
+  -- write entries to database
   writeOCR (catMaybes ocrEntries) 
 
 
 main = do
-  screenshotEntries True -- False to reconstruct screenshots directory
+  screenshotEntries True (Timeout 30) -- False to reconstruct screenshots directory
   ocrShots
   cacheEntries
