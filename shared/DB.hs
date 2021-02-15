@@ -9,18 +9,18 @@
 
 module DB where
 
-import Data.List (intercalate)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (ToJSON)
+import Data.List (intercalate)
 import Data.Maybe (catMaybes)
 import Data.Text (Text, pack, unpack)
 import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
 import Database.SQLite.Simple
 import GHC.Generics (Generic)
+import OCR
 import System.Directory (copyFile)
-import Text.Printf (printf)
 import System.IO (hPutStrLn, stderr)
-import System.FilePath.Posix (takeBaseName)
+import Text.Printf (printf)
 
 data Date = Date
   { year :: String,
@@ -60,10 +60,11 @@ instance ToJSON Tag
 
 -- Link entries to tags
 
-data EntryTag = EntryTag {
-  etEntryID :: Int,
-  etTag :: String
-  } deriving (Show, Generic)
+data EntryTag = EntryTag
+  { etEntryID :: Int,
+    etTag :: String
+  }
+  deriving (Show, Generic)
 
 instance FromRow EntryTag where
   fromRow = EntryTag <$> field <*> field
@@ -72,13 +73,15 @@ instance ToJSON EntryTag
 
 -- Cache Tables
 
-data WebPage = WebPage {
-  title :: String,
-  body :: String
-} deriving (Eq, Show, Generic)
+data WebPage = WebPage
+  { title :: String,
+    body :: String
+  }
+  deriving (Eq, Show, Generic)
 
 data SortBy = SortTime | SortUrl deriving (Show, Generic)
-data SortDir= SortFwd | SortRev deriving (Show, Generic)
+
+data SortDir = SortFwd | SortRev deriving (Show, Generic)
 
 data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL deriving (Eq, Show)
 
@@ -121,7 +124,9 @@ instance ToJSON CacheEntry
 data OCREntry = OCREntry
   { ocrForeignID :: Int, -- entryID
     ocrFile :: String,
-    ocrContent :: String } deriving (Generic)
+    ocrContent :: String
+  }
+  deriving (Generic)
 
 instance FromRow OCREntry where
   fromRow = OCREntry <$> field <*> field <*> field
@@ -132,7 +137,7 @@ dbFile = "note2self.db"
 
 -- | date2string year month day
 date2string :: Int -> Int -> Int -> String
-date2string = printf "%.4d-%.2d-%.2d" 
+date2string = printf "%.4d-%.2d-%.2d"
 
 -- Handlers
 
@@ -181,15 +186,16 @@ allCache :: Maybe SortBy -> Maybe SortDir -> [Text] -> IO [CacheView]
 allCache sortby sortdir filterTags = do
   conn <- open dbFile
   let query = case filterTags of
-              [] -> "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file from cache "
-              lst -> let tagList = "('" ++ (intercalate "','" $ unpack <$> lst) ++ "')" in
-                "SELECT cache.entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file from tags LEFT JOIN cache ON cache.entry_id=tags.entry_id where tag in " ++ tagList ++ " "
+        [] -> "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file from cache "
+        lst ->
+          let tagList = "('" ++ (intercalate "','" $ unpack <$> lst) ++ "')"
+           in "SELECT cache.entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file from tags LEFT JOIN cache ON cache.entry_id=tags.entry_id where tag in " ++ tagList ++ " "
   -- let query = "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file from cache "
-  r <- case (sortby, sortdir) of 
-      (Just SortUrl, Just SortRev) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url DESC")
-      (Just SortUrl, _) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url")
-      (Just SortTime, Just SortFwd) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\"))")
-      (_, _) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC")
+  r <- case (sortby, sortdir) of
+    (Just SortUrl, Just SortRev) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url DESC")
+    (Just SortUrl, _) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url")
+    (Just SortTime, Just SortFwd) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\"))")
+    (_, _) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC")
   close conn
   pure r
 
@@ -205,21 +211,15 @@ queryContent query = do
 linkEntryTags :: [String] -> IO [EntryTag]
 linkEntryTags filterTags = do
   conn <- open dbFile
-  let query = if filterTags == [] then 
-              -- TODO - why does this return a runtime error for the empty case
-              -- ConversionFailed {errSQLType = "NULL", errHaskellType = "[Char]", errMessage = "expecting SQLText column type"}
-              "SELECT entries.entry_id, tag FROM entries LEFT JOIN tags on entries.entry_id=tags.entry_id"
-            else
-              "SELECT entries.entry_id, tag FROM entries LEFT JOIN tags on entries.entry_id=tags.entry_id WHERE tag IN " ++ filterList
+  let query =
+        if filterTags == []
+          then -- TODO - why does this return a runtime error for the empty case
+          -- ConversionFailed {errSQLType = "NULL", errHaskellType = "[Char]", errMessage = "expecting SQLText column type"}
+            "SELECT entries.entry_id, tag FROM entries LEFT JOIN tags on entries.entry_id=tags.entry_id"
+          else "SELECT entries.entry_id, tag FROM entries LEFT JOIN tags on entries.entry_id=tags.entry_id WHERE tag IN " ++ filterList
   query_ conn (Query . pack $ query)
   where
     filterList = "(" ++ intercalate "," filterTags ++ ")"
-
-mkScreenshotFilename = printf "screenshots/%.10d.png"
-mkOCRFilename = printf "ocr/%.10d.txt"
-ss2ocrFilename x = "ocr/" ++ takeBaseName x ++ ".txt"
-ss2ocrPrefix x = "ocr/" ++ takeBaseName x
-ocr2ssFilename x = "screenshots/" ++ takeBaseName x ++ ".png"
 
 crawlerOutput2cache :: [(Entry, String, Maybe WebPage)] -> [CacheEntry]
 crawlerOutput2cache out =
@@ -330,7 +330,9 @@ writeCache cacheEntries = do
       ++ "as select cache_entry_id, "
       ++ "entries.entry_id as entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_ocr_file, date, time, content "
       ++ "from entries"
-      ++ " left join " ++ tableName ++ " on "
+      ++ " left join "
+      ++ tableName
+      ++ " on "
       ++ tableName
       ++ ".entry_id=entries.entry_id;"
   close conn
@@ -370,4 +372,3 @@ replaceTag fromTag toTag = do
   backupDB
   -- TODO - fill-in
   pure ()
-
