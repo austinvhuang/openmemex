@@ -9,20 +9,6 @@ use yew::{
 };
 use yew_router::*;
 
-use crate::api::*;
-
-#[derive(Switch)]
-enum AppRoute {
-    #[to = "/cards"]
-    Cards,
-    #[to = "/screen"]
-    Screen,
-    #[to = "/timeline"]
-    Timeline,
-    #[to = "/addnote"]
-    AddNote,
-}
-
 #[derive(Debug)]
 pub enum Msg {
     GetEntries,
@@ -36,7 +22,7 @@ pub enum Msg {
 }
 
 #[derive(Debug)]
-pub struct App {
+pub struct Cards {
     cache_task: Option<FetchTask>,
     tag_task: Option<FetchTask>,
     entries: Option<Vec<Cache>>,
@@ -46,7 +32,7 @@ pub struct App {
     query: String,
 }
 
-impl App {
+impl Cards {
     fn view_entries(&self) -> Html {
         match self.entries {
             Some(ref entries) => {
@@ -112,7 +98,7 @@ impl App {
     }
 }
 
-impl Component for App {
+impl Component for Cards {
     type Message = Msg;
     type Properties = ();
 

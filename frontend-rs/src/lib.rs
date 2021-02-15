@@ -2,6 +2,9 @@
 // https://github.com/yewstack/yew/issues/513
 
 mod app;
+mod post;
+mod api;
+
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(start)]

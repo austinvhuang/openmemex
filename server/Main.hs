@@ -56,7 +56,7 @@ type RangeAPI =
 
 type AllTagsAPI = "all" :> "tags" :> Get '[JSON] [String]
 type AllEntriesAPI = "all" :> "entries" :> Get '[JSON] [Entry]
-type AllCacheAPI = "all" :> "cache" :> QueryParam "sort" SortBy :> QueryParam "sortdir" SortDir :> Get '[JSON] [CacheView]
+type AllCacheAPI = "all" :> "cache" :> QueryParam "sort" SortBy :> QueryParam "sortdir" SortDir :> QueryParams "tag" Text :> Get '[JSON] [CacheView]
 
 type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [CacheView]
 
@@ -120,8 +120,8 @@ allTagsH = liftIO allTags
 allEntriesH :: Handler [Entry]
 allEntriesH = liftIO allEntries 
 
-allCacheH :: Maybe SortBy -> Maybe SortDir -> Handler [CacheView]
-allCacheH sortby sortdir= liftIO (allCache sortby sortdir)
+allCacheH :: Maybe SortBy -> Maybe SortDir -> [Text] -> Handler [CacheView]
+allCacheH sortby sortdir filterTags = liftIO (allCache sortby sortdir filterTags)
 
 frontendH = serveDirectoryFileServer "./frontend-rs/static/"
 
