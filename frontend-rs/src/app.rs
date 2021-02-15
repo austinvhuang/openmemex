@@ -140,22 +140,6 @@ impl App {
         }
     }
 
-    fn view_topic_tag(&self, item: &str) -> Html {
-        let callback_fn = |m| Msg::TagMouseOver(m, item.to_string().clone());
-        html! {
-        <div class="topic-tag"> 
-         { item.clone() }
-        </div>
-        }
-        /*
-        html! {
-        <div class="topic-tag" onmouseover=self.clone().link.clone().callback(move |m| Msg::TagMouseOver(m, item.to_string().clone()) )>
-        // <div class="topic-tag" onmouseover=self.link.callback(|m| Msg::TagMouseOver(m, item.to_string().clone()) )>
-         { item.clone() }
-        </div>
-        }
-        */
-    }
 }
 
 impl Component for App {
@@ -285,26 +269,15 @@ impl Component for App {
     }
 
     fn view(&self) -> Html {
-
-        let render_tags = |exist_tags: &Vec<String>| {
-            html! {
-            <div>
-              {
-                for exist_tags.iter().map(|item: &String| { self.view_topic_tag(&item.clone()) } )
-              }
-            </div>
-            }
-        };
-
         let empty_vec  = &[].to_vec();
         let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
+        let callback = |item: String| self.link.callback((move |m| Msg::TagMouseOver(m, item.to_string().to_string())));
         html! {
           <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
               { e.stop_propagation(); Msg::KeyDown })}>
               { self.view_navbar() }
 
               <div class="main-inner">
-
                   <h1>
                       { "note2self" }
                   </h1>
@@ -313,7 +286,6 @@ impl Component for App {
                   <input type="text" class="search-input" placeholder="Search" />
                   <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByDate })>{"Sort by Date"}</button>
                   <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByUrl })>{"Sort by Url"}</button>
-
                   <p/>
                   <div class="twocol">
                       <div class="cards">
@@ -321,27 +293,19 @@ impl Component for App {
                       </div>
                       <div>
                           {
-                            render_tags(&exist_tags)
-                            /*
-
-                            match &self.tags {
-                                Some(exist_tags) => {
-                                      // log::info!("{:#?} results fetched.", exist_tags.len());
-                                      // let link = self.link.clone();
-                                      render_tags(&exist_tags)
-                                      /*
-                                      html! {
-                                      <div>
-                                          {
-                                              for exist_tags.iter().map(|item| { self.view_topic_tag(item) } )
-                                              // self.view_topic_tag(&"hello".to_string())
-                                          }
-                                      </div>
-                                      }
-                                      */
+                            html! {
+                            <div>
+                              {
+                                for exist_tags.iter().map((|item: &String| { 
+                                    html! {
+                                    <div class="topic-tag" onmouseover=callback(item.clone()).clone()>
+                                     { item.clone() }
+                                    </div>
+                                    }
+                                }).clone() )
                               }
-                              None => html! { { "No tags" } } }
-                          */
+                            </div>
+                            }
                           }
                       </div>
                   </div>
