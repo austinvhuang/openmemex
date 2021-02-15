@@ -182,6 +182,39 @@ allEntries = do
   close conn
   pure r
 
+-- Tiny String Builder
+
+newtype SqlCol = SqlCol { sqlColname :: String }
+newtype SqlCond = SqlCond { sqlCond :: String }
+newtype SqlFrom = SqlFrom { sqlFromTable :: String } -- TODO: expand this representation
+data SqlOrder = SqlAscending SqlCol | SqlDescending SqlCol | SqlDirFunction String
+
+data SqlQuery = SqlQuery {
+  sqlSelect :: [SqlCol],
+  sqlFrom :: SqlFrom,
+  sqlWhere :: [SqlCond],
+  sqlOrder :: Maybe SqlOrder
+}
+
+
+sql2string :: SqlQuery -> String
+sql2string SqlQuery{..} =
+  "SELECT" 
+    ++ (intercalate "," (sqlColname <$>  sqlSelect)) 
+    ++ (sqlFromTable sqlFrom) ++ " " 
+    ++ whereClause ++ " " 
+    ++ orderClause
+  where
+    whereClause = case sqlWhere of
+      [] -> ""
+      lst -> " " ++ (intercalate " AND " (sqlCond <$> lst)) ++ " "
+    orderClause = case sqlOrder of
+      Nothing -> ""
+      Just (SqlAscending (SqlCol colName)) -> "ORDER BY " ++ colName
+      Just (SqlDescending (SqlCol colName)) -> "ORDER BY " ++ colName ++ "DESC"
+
+-- handlers
+
 allCache :: Maybe SortBy -> Maybe SortDir -> [Text] -> IO [CacheView]
 allCache sortby sortdir filterTags = do
   conn <- open dbFile
