@@ -9,6 +9,8 @@ use yew::{
 };
 use yew_router::*;
 
+use crate::api::*;
+
 #[derive(Debug)]
 pub enum Msg {
     GetEntries,
@@ -23,13 +25,13 @@ pub enum Msg {
 
 #[derive(Debug)]
 pub struct Cards {
-    cache_task: Option<FetchTask>,
-    tag_task: Option<FetchTask>,
-    entries: Option<Vec<Cache>>,
-    tags: Option<Vec<String>>,
-    link: ComponentLink<Self>,
-    error: Option<String>,
-    query: String,
+    pub cache_task: Option<FetchTask>,
+    pub tag_task: Option<FetchTask>,
+    pub entries: Option<Vec<Cache>>,
+    pub tags: Option<Vec<String>>,
+    pub link: ComponentLink<Self>,
+    pub error: Option<String>,
+    pub query: String,
 }
 
 impl Cards {
@@ -236,9 +238,6 @@ impl Component for Cards {
                 .callback((move |m| Msg::TagMouseOver(m, item.to_string().to_string())))
         };
         html! {
-          <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
-              { e.stop_propagation(); Msg::KeyDown })}>
-              { self.view_navbar() }
 
               <div class="main-inner">
                   <h1>
@@ -273,7 +272,6 @@ impl Component for Cards {
                       </div>
                   </div>
               </div>
-          </div>
         }
     }
 }

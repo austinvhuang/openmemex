@@ -10,6 +10,7 @@ use yew::{
 use yew_router::*;
 
 use crate::api::*;
+use crate::cards::*;
 
 #[derive(Switch)]
 enum AppRoute {
@@ -23,17 +24,7 @@ enum AppRoute {
     AddNote,
 }
 
-#[derive(Debug)]
-pub enum Msg {
-    GetEntries,
-    ReceiveEntries(Result<Vec<Cache>, anyhow::Error>),
-    ReceiveTags(Result<Vec<String>, anyhow::Error>),
-    KeyDown,
-    CardMouseOver(MouseEvent),
-    TagMouseOver(MouseEvent, String),
-    SortByDate,
-    SortByUrl,
-}
+// TODO use cards component
 
 #[derive(Debug)]
 pub struct App {
