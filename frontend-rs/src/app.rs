@@ -1,4 +1,3 @@
-
 use serde::Deserialize;
 use url::*;
 use wasm_bindgen::prelude::*;
@@ -139,7 +138,6 @@ impl App {
             </nav>
         }
     }
-
 }
 
 impl Component for App {
@@ -269,9 +267,12 @@ impl Component for App {
     }
 
     fn view(&self) -> Html {
-        let empty_vec  = &[].to_vec();
+        let empty_vec = &[].to_vec();
         let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
-        let callback = |item: String| self.link.callback((move |m| Msg::TagMouseOver(m, item.to_string().to_string())));
+        let callback = |item: String| {
+            self.link
+                .callback((move |m| Msg::TagMouseOver(m, item.to_string().to_string())))
+        };
         html! {
           <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
               { e.stop_propagation(); Msg::KeyDown })}>
@@ -296,7 +297,7 @@ impl Component for App {
                             html! {
                             <div>
                               {
-                                for exist_tags.iter().map((|item: &String| { 
+                                for exist_tags.iter().map((|item: &String| {
                                     html! {
                                     <div class="topic-tag" onmouseover=callback(item.clone()).clone()>
                                      { item.clone() }
