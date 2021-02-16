@@ -196,7 +196,7 @@ impl Component for App {
                     }
                 }
                 self.tag_task = None;
-                true
+                false
             }
             KeyDown => {
                 log::info!("keydown event");
@@ -204,7 +204,7 @@ impl Component for App {
             }
             CardMouseOver(_m) => {
                 log::info!("card mouseover event");
-                true
+                false
             }
             TagMouseOver(m, tag_name) => {
                 log::info!("tag mouseover event");
