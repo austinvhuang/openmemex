@@ -11,6 +11,7 @@ use yew_router::*;
 
 use crate::api::*;
 use crate::cards::*;
+use std::path::Path;
 
 #[derive(Switch)]
 enum AppRoute {
@@ -37,6 +38,12 @@ pub struct App {
     query: String,
 }
 
+/*
+fn get_thumbnail(&filename) {
+    Path::new(filename).file_stem().unwrap()
+}
+*/
+
 impl App {
     fn view_entries(&self) -> Html {
         match self.entries {
@@ -47,13 +54,20 @@ impl App {
                         for entries.iter().map(|mut item| {
                             // TODO - handle None for options
                             let parsed = Url::parse(item.url.as_ref().unwrap_or(&"".to_owned()));
+
+                            let screenshot_file = item.screenshot_file.clone().unwrap_or("".to_owned());
+                            log::info!("{:?}", screenshot_file);
+                            // let path = Path::new(&screenshot_file).file_stem().unwrap().to_os_string().into_string().unwrap();
+                            // log::info!("{:?}", path);
+                            // let thumbnail_file = format!("{}_tn.png", path);
+                            // log::info!("{:?}", thumbnail_file);
                             html! {
                                 <div class="card" onmouseover=self.link.callback(|m| { Msg::CardMouseOver(m) })>
                                     <h4>
                                         { item.date.clone() }
                                     </h4>
                                     <hr/>
-                                    <img src=item.screenshot_file.clone().unwrap_or("".to_owned())/>
+                                    <img src=screenshot_file/>
                                     {
                                         match &parsed {
                                             Ok(x) => { x.host_str().unwrap() }

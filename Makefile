@@ -16,6 +16,9 @@ crawler-run:
 crawler-build:
 	~/.local/bin/ghcid -c "stack ghci note2self:exe:crawler"
 
+thumbnails:
+	crawler/Thumbnails.hs
+
 clean-backups:
 	rm note2self.db.backup.20*.db
 
@@ -57,13 +60,12 @@ model-mac-build:
 
 	stack run model
 
-install-chromium-linux:
-	sudo apt install libva-dev
-	sudo snap install chromium
-
-install-tesseract-linux:
+install-dependencies:
 	sudo apt install tesseract-ocr
 	sudo apt install libtesseract-dev
+	sudo apt-install imagemagick
+	sudo apt install libva-dev
+	sudo snap install chromium
 
 test-screenshot:
 	# chromium --headless --disable-gpu --screenshot=deleteme.png --window-size=600,800 --force-device-scale-factor=4.0 https://www.yahoo.com
