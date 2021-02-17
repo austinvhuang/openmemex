@@ -54,20 +54,22 @@ impl App {
                         for entries.iter().map(|mut item| {
                             // TODO - handle None for options
                             let parsed = Url::parse(item.url.as_ref().unwrap_or(&"".to_owned()));
-
-                            let screenshot_file = item.screenshot_file.clone().unwrap_or("".to_owned());
-                            log::info!("{:?}", screenshot_file);
-                            // let path = Path::new(&screenshot_file).file_stem().unwrap().to_os_string().into_string().unwrap();
-                            // log::info!("{:?}", path);
-                            // let thumbnail_file = format!("{}_tn.png", path);
-                            // log::info!("{:?}", thumbnail_file);
+                            let mut screenshot_file = item.screenshot_file.clone().unwrap_or("".to_owned());
+                            let suffix: &str = "_tn.png";
+                            screenshot_file.truncate(screenshot_file.len() - 4);
+                            screenshot_file.push_str(suffix); 
+                            // TODO - replace prefix with thumbnails/ !!
+                            log::info!("screenshot: {:?}", screenshot_file);
+                            log::info!("thumbnail: {:?}", screenshot_file);
                             html! {
                                 <div class="card" onmouseover=self.link.callback(|m| { Msg::CardMouseOver(m) })>
                                     <h4>
                                         { item.date.clone() }
                                     </h4>
                                     <hr/>
+                                    <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
                                     <img src=screenshot_file/>
+                                    </a>
                                     {
                                         match &parsed {
                                             Ok(x) => { x.host_str().unwrap() }

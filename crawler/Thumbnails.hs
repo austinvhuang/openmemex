@@ -7,14 +7,18 @@ import System.Directory
 import System.FilePath.Posix (takeBaseName)
 import System.Process
 
-main = do
+thumbnails = do
   files <- listDirectory "screenshots"
   mapM_ ( \file -> do
     let outFile = (takeBaseName file) ++ "_tn.png"
-    let args = ["-resize", "50%", "screenshots/" ++ file, "screenshots/" ++ outFile]
+    createDirectoryIfMissing True "thumbnails"
+    let args = ["-resize", "50%", "screenshots/" ++ file, "thumbnails/" ++ outFile]
     putStrLn file
     putStrLn outFile
     (code, stdout, stderr) <- readProcessWithExitCode "convert" args ""
     pure ()
     ) files
+
+main = do
+  thumbnails
   putStrLn "Done"

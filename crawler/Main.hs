@@ -163,7 +163,20 @@ ocrShots = do
   -- write entries to database
   writeOCR (catMaybes ocrEntries)
 
+thumbnails = do
+  files <- listDirectory "screenshots"
+  mapM_ ( \file -> do
+    let outFile = (takeBaseName file) ++ "_tn.png"
+    createDirectoryIfMissing True "thumbnails"
+    let args = ["-resize", "50%", "screenshots/" ++ file, "thumbnails/" ++ outFile]
+    putStrLn file
+    putStrLn outFile
+    (code, stdout, stderr) <- readProcessWithExitCode "convert" args ""
+    pure ()
+    ) files
+
 main = do
   screenshotEntries True (Timeout 30) -- False to reconstruct screenshots directory
+  thumbnails
   ocrShots
   cacheEntries
