@@ -260,15 +260,17 @@ impl Component for App {
 
               <div class="main-inner">
                   <div class="main-top">
-                  <h1>
+                  <h1 class="big-title">
                       { "note2self" }
                   </h1>
                   <hr/>
                   <p/>
                   <input type="text" class="search-input" placeholder="Search" />
                   </div>
+                  <div class="btn-group">
                   <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByDate })>{"Sort by Date"}</button>
                   <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByUrl })>{"Sort by Url"}</button>
+                  </div>
                   <p/>
                   <div class="twocol">
                       <div class="cards">

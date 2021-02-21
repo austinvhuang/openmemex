@@ -368,7 +368,7 @@ writeCache cacheEntries = do
   bracketExecute $
     "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "
       ++ "as select cache_entry_id, "
-      ++ "entries.entry_id as entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content "
+      ++ "entries.entry_id as entry_id, cache_url, cache_content_type, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content "
       ++ "from entries"
       ++ " left join "
       ++ tableName

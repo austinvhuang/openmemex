@@ -45,10 +45,13 @@ margin: 40px 80px;
 }
 
 .sort-button {
-  border-radius: 10px;
-  width: 120px;
-  float: left;
+  width: 300px;
+  float: center;
   background-color:white;
+  font-size: 16pt;
+  border-color: #cccccc;
+  border-radius: 5px;
+  border-width: 1px;
 }
 
 .main-top {
@@ -99,4 +102,12 @@ margin: 40px 80px;
 .picker {
   width=100%;
   font-size= 24pt;
+}
+
+.btn-group button {
+  float: left; /* Float the buttons side by side */
+}
+
+.big-title {
+  font-size: 48pt;
 }
