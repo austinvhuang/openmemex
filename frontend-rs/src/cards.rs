@@ -50,7 +50,7 @@ impl Cards {
                                         { item.date.clone() }
                                     </h4>
                                     <hr/>
-                                    <img src=item.screenshot_file.clone().unwrap_or("".to_owned())/>
+                                    <img src=item.thumbnail_file.clone().unwrap_or("".to_owned())/>
                                     {
                                         match &parsed {
                                             Ok(x) => { x.host_str().unwrap() }

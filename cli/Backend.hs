@@ -39,6 +39,10 @@ initDB = do
   execute_ conn "CREATE TABLE entries (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT, content TEXT);"
   execute_ conn "CREATE TABLE tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
   execute_ conn "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
+  execute_ conn "CREATE INDEX idx_tags_entry_id ON tags(entry_id);"
+  execute_ conn "CREATE INDEX idx_entries_time on entries(time);"
+  execute_ conn "CREATE INDEX idx_tags_tag ON tags(tag);"
+  execute_ conn "CREATE UNIQUE INDEX idx_entries_entry_id ON entries(entry_id);"
   close conn
 
 addEntry :: Entry -> IO Int64

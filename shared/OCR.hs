@@ -8,6 +8,9 @@ import Text.Printf (printf)
 mkScreenshotFilename :: Int -> String
 mkScreenshotFilename = printf "screenshots/%.10d.png"
 
+mkThumbnailFilename :: Int -> String
+mkThumbnailFilename = printf "thumbnails/%.10d.png"
+
 mkOCRFilename :: Int -> String
 mkOCRFilename = printf "ocr/%.10d.txt"
 

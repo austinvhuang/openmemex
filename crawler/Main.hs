@@ -85,12 +85,14 @@ screenshot (Timeout timeout) url fileID = do
   print code
   print $ "Writing to: " ++ outFile
 
+-- filt = take 5 -- debugging
+filt = id
+
 cacheEntries :: IO ()
 cacheEntries = do
   entries <- allEntries
   let linkEntries = filter (isURI . content) entries
       links = urlTransformations . content <$> linkEntries
-      filt = id -- replace `id` with `take N` when debugging
   pages <-
     mapM
       ( \url -> do
@@ -110,7 +112,6 @@ screenshotEntries deltaOnly timeout = do
   entries <- allEntries
   let linkEntries = filter (isURI . content) entries
   let links = zip (urlTransformations . content <$> linkEntries) (entryID <$> linkEntries)
-  let filt = id -- replace `id` with `take N` when debugging
   mapM_
     ( \(url, entryid) -> do
         exists <- doesFileExist (mkScreenshotFilename entryid)
@@ -168,7 +169,7 @@ thumbnails = do
   mapM_ ( \file -> do
     let outFile = (takeBaseName file) ++ "_tn.png"
     createDirectoryIfMissing True "thumbnails"
-    let args = ["-resize", "50%", "screenshots/" ++ file, "thumbnails/" ++ outFile]
+    let args = ["-resize", "30%", "screenshots/" ++ file, "thumbnails/" ++ outFile]
     putStrLn file
     putStrLn outFile
     (code, stdout, stderr) <- readProcessWithExitCode "convert" args ""

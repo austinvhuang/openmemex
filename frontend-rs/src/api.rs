@@ -30,8 +30,8 @@ pub struct Cache {
     pub date: String,
     #[serde(rename(deserialize = "cvUrl"))]
     pub url: Option<String>,
-    #[serde(rename(deserialize = "cvScreenshotFile"))]
-    pub screenshot_file: Option<String>,
+    #[serde(rename(deserialize = "cvThumbnailFile"))]
+    pub thumbnail_file: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]

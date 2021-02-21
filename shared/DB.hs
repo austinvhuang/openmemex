@@ -95,12 +95,13 @@ data CacheView = CacheView
     cvContent :: Maybe String, -- TODO - should this be cvCacheTitle or cvTitle to be consistent with the query?
     cvDate :: String,
     cvTime :: String,
-    cvScreenshotFile :: Maybe String
+    cvScreenshotFile :: Maybe String,
+    cvThumbnailFile :: Maybe String
   }
   deriving (Show, Generic)
 
 instance FromRow CacheView where
-  fromRow = CacheView <$> field <*> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = CacheView <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 instance ToJSON CacheView
 
@@ -112,12 +113,13 @@ data CacheEntry = CacheEntry
     cacheTitle :: String,
     cacheBody :: String,
     cacheScreenshotFile :: String,
+    cacheThumbnailFile :: String,
     cacheOCRFile :: String
   }
   deriving (Show, Generic)
 
 instance FromRow CacheEntry where
-  fromRow = CacheEntry <$> field <*> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = CacheEntry <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 instance ToJSON CacheEntry
 
@@ -219,10 +221,10 @@ allCache :: Maybe SortBy -> Maybe SortDir -> [Text] -> IO [CacheView]
 allCache sortby sortdir filterTags = do
   conn <- open dbFile
   let query = case filterTags of
-        [] -> "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file from cache "
+        [] -> "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from cache "
         lst ->
           let tagList = "('" ++ (intercalate "','" $ unpack <$> lst) ++ "')"
-           in "SELECT cache.entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file from tags LEFT JOIN cache ON cache.entry_id=tags.entry_id where tag in " ++ tagList ++ " "
+           in "SELECT cache.entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from tags LEFT JOIN cache ON cache.entry_id=tags.entry_id where tag in " ++ tagList ++ " "
   -- let query = "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file from cache "
   r <- case (sortby, sortdir) of
     (Just SortUrl, Just SortRev) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url DESC")
@@ -236,7 +238,7 @@ queryContent :: String -> IO [CacheView]
 queryContent query = do
   conn <- open dbFile
   let queryString =
-        Query $ pack $ "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file from cache ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC WHERE cache_title LIKE '%" ++ query ++ "%'"
+        Query $ pack $ "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file, cache_thumbnail_file from cache ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC WHERE cache_title LIKE '%" ++ query ++ "%'"
   r <- query_ conn queryString
   close conn
   pure r
@@ -268,6 +270,7 @@ crawlerOutput2cache out =
             cacheTitle = title,
             cacheBody = body,
             cacheScreenshotFile = mkScreenshotFilename entryID,
+            cacheThumbnailFile = mkThumbnailFilename entryID,
             cacheOCRFile = mkOCRFilename entryID
           }
 
@@ -331,7 +334,7 @@ writeCache cacheEntries = do
         "CREATE TABLE " ++ tableName -- :cacheTable "
           ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
           ++ "cache_url TEXT, "
-          ++ "cache_content_type TEXT, cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_ocr_file TEXT);"
+          ++ "cache_content_type TEXT, cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT, cache_ocr_file TEXT);"
     )
     []
   --    [":cacheTable" := tableName]
@@ -343,8 +346,8 @@ writeCache cacheEntries = do
           conn
           ( Query . pack $
               "INSERT INTO " ++ tableName -- :cacheTable "
-                ++ "       (entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_ocr_file) "
-                ++ "VALUES (:entryID, :cacheUrl, :cacheContentType, :cacheTitle, :cacheBody, :cacheScreenshotFile, :cacheOCRFile)"
+                ++ "       (entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file) "
+                ++ "VALUES (:entryID, :cacheUrl, :cacheContentType, :cacheTitle, :cacheBody, :cacheScreenshotFile, :cacheThumbnailFile, :cacheOCRFile)"
           )
           -- [ ":cacheTable" := tableName,
           [ ":entryID" := cacheForeignID,
@@ -353,15 +356,19 @@ writeCache cacheEntries = do
             ":cacheTitle" := cacheTitle,
             ":cacheBody" := cacheBody,
             ":cacheScreenshotFile" := cacheScreenshotFile,
+            ":cacheThumbnailFile" := cacheThumbnailFile,
             ":cacheOCRFile" := cacheOCRFile
           ]
     )
     cacheEntries
+  bracketExecute "DROP INDEX IF EXISTS idx_cache_entry_id;"
+  bracketExecute $ "CREATE UNIQUE INDEX idx_cache_entry_id ON " ++ tableName ++ "(entry_id);"
+
   bracketExecute "DROP VIEW IF EXISTS cache"
   bracketExecute $
-    "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_ocr_file, date, time, content) "
+    "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "
       ++ "as select cache_entry_id, "
-      ++ "entries.entry_id as entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_ocr_file, date, time, content "
+      ++ "entries.entry_id as entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content "
       ++ "from entries"
       ++ " left join "
       ++ tableName

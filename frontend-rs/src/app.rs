@@ -12,6 +12,7 @@ use yew_router::*;
 use crate::api::*;
 use crate::cards::*;
 use std::path::Path;
+use std::collections::HashSet;
 
 #[derive(Switch)]
 enum AppRoute {
@@ -33,16 +34,11 @@ pub struct App {
     tag_task: Option<FetchTask>,
     entries: Option<Vec<Cache>>,
     tags: Option<Vec<String>>,
+    selected_tags: HashSet<String>,
     link: ComponentLink<Self>,
     error: Option<String>,
     query: String,
 }
-
-/*
-fn get_thumbnail(&filename) {
-    Path::new(filename).file_stem().unwrap()
-}
-*/
 
 impl App {
     fn view_entries(&self) -> Html {
@@ -54,13 +50,13 @@ impl App {
                         for entries.iter().map(|mut item| {
                             // TODO - handle None for options
                             let parsed = Url::parse(item.url.as_ref().unwrap_or(&"".to_owned()));
-                            let mut screenshot_file = item.screenshot_file.clone().unwrap_or("".to_owned());
+                            let mut thumbnail_file = item.thumbnail_file.clone().unwrap_or("".to_owned());
                             let suffix: &str = "_tn.png";
-                            screenshot_file.truncate(screenshot_file.len() - 4);
-                            screenshot_file.push_str(suffix); 
+                            thumbnail_file.truncate(thumbnail_file.len() - 4);
+                            thumbnail_file.push_str(suffix); 
                             // TODO - replace prefix with thumbnails/ !!
-                            log::info!("screenshot: {:?}", screenshot_file);
-                            log::info!("thumbnail: {:?}", screenshot_file);
+                            log::info!("screenshot: {:?}", thumbnail_file);
+                            log::info!("thumbnail: {:?}", thumbnail_file);
                             html! {
                                 <div class="card" onmouseover=self.link.callback(|m| { Msg::CardMouseOver(m) })>
                                     <h4>
@@ -68,7 +64,7 @@ impl App {
                                     </h4>
                                     <hr/>
                                     <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
-                                    <img src=screenshot_file/>
+                                    <img src=thumbnail_file width="100%"/>
                                     </a>
                                     {
                                         match &parsed {
@@ -135,6 +131,7 @@ impl Component for App {
             tag_task: None,
             entries: None, //Some(Vec::<Entry>::new()),
             tags: None,
+            selected_tags: HashSet::new(),
             link,
             error: None,
             query: "http://localhost:3000/all/cache".to_string(),
@@ -262,12 +259,14 @@ impl Component for App {
               { self.view_navbar() }
 
               <div class="main-inner">
+                  <div class="main-top">
                   <h1>
                       { "note2self" }
                   </h1>
                   <hr/>
                   <p/>
                   <input type="text" class="search-input" placeholder="Search" />
+                  </div>
                   <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByDate })>{"Sort by Date"}</button>
                   <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByUrl })>{"Sort by Url"}</button>
                   <p/>
@@ -275,14 +274,14 @@ impl Component for App {
                       <div class="cards">
                           { self.view_entries() }
                       </div>
-                      <div>
+                      <div class="topic-tags">
                           {
                             html! {
                             <div>
                               {
                                 for exist_tags.iter().map((|item: &String| {
                                     html! {
-                                    <div class="topic-tag" onmouseover=callback(item.clone()).clone()>
+                                    <div class="topic-tag" onclick=callback(item.clone()).clone()>
                                      { item.clone() }
                                     </div>
                                     }

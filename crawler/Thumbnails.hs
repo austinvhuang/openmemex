@@ -12,7 +12,7 @@ thumbnails = do
   mapM_ ( \file -> do
     let outFile = (takeBaseName file) ++ "_tn.png"
     createDirectoryIfMissing True "thumbnails"
-    let args = ["-resize", "50%", "screenshots/" ++ file, "thumbnails/" ++ outFile]
+    let args = ["-resize", "30%", "screenshots/" ++ file, "thumbnails/" ++ outFile]
     putStrLn file
     putStrLn outFile
     (code, stdout, stderr) <- readProcessWithExitCode "convert" args ""
