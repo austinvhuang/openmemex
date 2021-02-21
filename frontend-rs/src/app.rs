@@ -8,7 +8,6 @@ use yew::{
     prelude::*,
 };
 use yew_router::*;
-
 use crate::api::*;
 use crate::cards::*;
 use std::path::Path;
@@ -40,52 +39,19 @@ pub struct App {
     query: String,
 }
 
+#[derive(Debug)]
+pub enum AppMsg {
+    GetEntries,
+    ReceiveEntries(Result<Vec<Cache>, anyhow::Error>),
+    ReceiveTags(Result<Vec<String>, anyhow::Error>),
+    KeyDown,
+    CardMouseOver(MouseEvent),
+    TagMouseOver(MouseEvent, String),
+    SortByDate,
+    SortByUrl,
+}
+
 impl App {
-    fn view_entries(&self) -> Html {
-        match self.entries {
-            Some(ref entries) => {
-                log::info!("{:#?} results fetched.", entries.len());
-                html! {
-                    {
-                        for entries.iter().map(|mut item| {
-                            // TODO - handle None for options
-                            let parsed = Url::parse(item.url.as_ref().unwrap_or(&"".to_owned()));
-                            let mut thumbnail_file = item.thumbnail_file.clone().unwrap_or("".to_owned());
-                            let suffix: &str = "_tn.png";
-                            thumbnail_file.truncate(thumbnail_file.len() - 4);
-                            thumbnail_file.push_str(suffix); 
-                            // TODO - replace prefix with thumbnails/ !!
-                            log::info!("screenshot: {:?}", thumbnail_file);
-                            log::info!("thumbnail: {:?}", thumbnail_file);
-                            html! {
-                                <div class="card" onmouseover=self.link.callback(|m| { Msg::CardMouseOver(m) })>
-                                    <h4>
-                                        { item.date.clone() }
-                                    </h4>
-                                    <hr/>
-                                    <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
-                                    <img src=thumbnail_file width="100%"/>
-                                    </a>
-                                    {
-                                        match &parsed {
-                                            Ok(x) => { x.host_str().unwrap() }
-                                            Err(error) => { "" }
-                                        }
-                                    }
-                                    <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
-                                        { item.content.clone().unwrap_or("".to_owned()) }
-                                    </a>
-                                </div>
-                            }
-                        })
-                    }
-                }
-            }
-            None => {
-                html! { <div> {"No Content"} </div> }
-            }
-        }
-    }
 
     fn view_navbar(&self) -> Html {
         html! {
@@ -116,15 +82,14 @@ impl App {
 }
 
 impl Component for App {
-    type Message = Msg;
+    type Message = AppMsg;
     type Properties = ();
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
         log::info!("Creating component");
-        let cb = link.callback_once(|_: String| Msg::GetEntries);
+        let cb = link.callback_once(|_: String| AppMsg::GetEntries);
         cb.emit("".to_string()); // TODO - what's the right way to handle a message without parameters
         log::info!("sent message");
-
         // let kb_cb = link.callback(Msg::KeyDown);
         Self {
             cache_task: None,
@@ -143,9 +108,8 @@ impl Component for App {
     }
 
     fn update(&mut self, msg: Self::Message) -> bool {
-        use Msg::*;
+        use AppMsg::*;
         log::info!("update");
-
         match msg {
             GetEntries => {
                 // define request
@@ -157,13 +121,12 @@ impl Component for App {
                 let callback = self.link.callback_once(
                     |response: Response<Json<Result<Vec<Cache>, anyhow::Error>>>| {
                         let Json(data) = response.into_body();
-                        Msg::ReceiveEntries(data)
+                        AppMsg::ReceiveEntries(data)
                     },
                 );
                 // task
                 let task = FetchService::fetch(request, callback).expect("failed to start request");
                 self.cache_task = Some(task);
-
                 // define request
                 log::info!("submitting tag request");
                 let request = Request::get("http://localhost:3000/all/tags")
@@ -173,16 +136,15 @@ impl Component for App {
                 let callback = self.link.callback_once(
                     |response: Response<Json<Result<Vec<String>, anyhow::Error>>>| {
                         let Json(data) = response.into_body();
-                        Msg::ReceiveTags(data)
+                        AppMsg::ReceiveTags(data)
                     },
                 );
                 // task
                 let task = FetchService::fetch(request, callback).expect("failed to start request");
                 self.tag_task = Some(task);
-
                 false // redraw page
             }
-            Msg::ReceiveEntries(response) => {
+            AppMsg::ReceiveEntries(response) => {
                 match response {
                     Ok(result) => {
                         // log::info!("Update: {:#?}", result);
@@ -229,7 +191,6 @@ impl Component for App {
                 self.link.send_message(GetEntries);
                 false
             }
-
             SortByDate => {
                 log::info!("sort date");
                 self.query = "http://localhost:3000/all/cache?sort=time".to_string();
@@ -251,13 +212,12 @@ impl Component for App {
         let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
         let callback = |item: String| {
             self.link
-                .callback((move |m| Msg::TagMouseOver(m, item.to_string().to_string())))
+                .callback((move |m| AppMsg::TagMouseOver(m, item.to_string().to_string())))
         };
         html! {
           <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
-              { e.stop_propagation(); Msg::KeyDown })}>
+              { e.stop_propagation(); AppMsg::KeyDown })}>
               { self.view_navbar() }
-
               <div class="main-inner">
                   <div class="main-top">
                   <h1 class="big-title">
@@ -268,14 +228,12 @@ impl Component for App {
                   <input type="text" class="search-input" placeholder="Search" />
                   </div>
                   <div class="btn-group">
-                  <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByDate })>{"Sort by Date"}</button>
-                  <button class="sort-button" onclick=self.link.callback(|m| { Msg::SortByUrl })>{"Sort by Url"}</button>
+                  <button class="sort-button" onclick=self.link.callback(|m| { AppMsg::SortByDate })>{"Sort by Date"}</button>
+                  <button class="sort-button" onclick=self.link.callback(|m| { AppMsg::SortByUrl })>{"Sort by Url"}</button>
                   </div>
                   <p/>
                   <div class="twocol">
-                      <div class="cards">
-                          { self.view_entries() }
-                      </div>
+                      <Cards/> 
                       <div class="topic-tags">
                           {
                             html! {
@@ -298,4 +256,5 @@ impl Component for App {
           </div>
         }
     }
+
 }
