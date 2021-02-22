@@ -1,31 +1,16 @@
-use serde::Deserialize;
-use url::*;
-use wasm_bindgen::prelude::*;
-use yew::events::*;
-use yew::services::fetch::{FetchService, FetchTask, Request, Response};
-use yew::{
-    format::{Json, Nothing},
-    prelude::*,
-};
-use yew_router::*;
 use crate::api::*;
-use std::collections::HashSet;
+use url::*;
+use yew::prelude::*;
 
 #[derive(Debug)]
 pub enum CardsMsg {
-    GetEntries,
-    ReceiveEntries(Result<Vec<Cache>, anyhow::Error>),
     CardMouseOver(MouseEvent),
 }
 
-
 #[derive(Debug)]
 pub struct Cards {
-    pub cache_task: Option<FetchTask>,
     pub link: ComponentLink<Self>,
     pub entries: Option<Vec<Cache>>,
-    pub error: Option<String>,
-    pub query: String,
 }
 
 #[derive(Clone, Properties)]
@@ -46,7 +31,7 @@ impl Cards {
                             let mut thumbnail_file = item.thumbnail_file.clone().unwrap_or("".to_owned());
                             let suffix: &str = "_tn.png";
                             thumbnail_file.truncate(thumbnail_file.len() - 4);
-                            thumbnail_file.push_str(suffix); 
+                            thumbnail_file.push_str(suffix);
                             // TODO - replace prefix with thumbnails/ !!
                             log::info!("screenshot: {:?}", thumbnail_file);
                             log::info!("thumbnail: {:?}", thumbnail_file);
@@ -82,24 +67,16 @@ impl Cards {
 }
 
 impl Component for Cards {
-
     type Message = CardsMsg;
     type Properties = Props;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         log::info!("Creating component");
-        let cb = link.callback_once(|_: String| CardsMsg::GetEntries);
-        cb.emit("".to_string()); // TODO - what's the right way to handle a message without parameters
-        log::info!("sent message");
         Self {
-            cache_task: None,
             link,
             entries: props.entries,
-            error: None,
-            query: "http://localhost:3000/all/cache".to_string(),
         }
     }
-
 
     fn change(&mut self, props: Self::Properties) -> bool {
         self.entries = props.entries;
@@ -110,48 +87,12 @@ impl Component for Cards {
         use CardsMsg::*;
         log::info!("update");
         match msg {
-
-            GetEntries => {
-                // define request
-                log::info!("submitting cache request");
-                let request = Request::get(&self.query)
-                    .body(Nothing)
-                    .expect("Could not build request.");
-                // define callback
-                let callback = self.link.callback_once(
-                    |response: Response<Json<Result<Vec<Cache>, anyhow::Error>>>| {
-                        let Json(data) = response.into_body();
-                        CardsMsg::ReceiveEntries(data)
-                    },
-                );
-                // task
-                let task = FetchService::fetch(request, callback).expect("failed to start request");
-                self.cache_task = Some(task);
-                false // redraw page
-            }
-            CardsMsg::ReceiveEntries(response) => {
-                match response {
-                    Ok(result) => {
-                        // log::info!("Update: {:#?}", result);
-                        self.entries = Some(result);
-                    }
-                    Err(error) => {
-                        log::info!("cache receive error, error is:");
-                        log::info!("{}", &error.to_string());
-                        self.error = Some(error.to_string());
-                    }
-                }
-                self.cache_task = None;
-                true
-            }
-
             CardMouseOver(_m) => {
                 log::info!("card mouseover event");
                 false
             }
         }
     }
-
 
     fn view(&self) -> Html {
         html! {
@@ -160,5 +101,4 @@ impl Component for Cards {
                       </div>
         }
     }
-
 }

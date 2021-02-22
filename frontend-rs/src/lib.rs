@@ -1,10 +1,10 @@
 #![recursion_limit = "1024"]
 // https://github.com/yewstack/yew/issues/513
 
-mod app;
-mod post;
 mod api;
+mod app;
 mod cards;
+mod post;
 
 use wasm_bindgen::prelude::*;
 

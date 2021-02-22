@@ -1,4 +1,9 @@
+use crate::api::*;
+use crate::cards::*;
+// use crate::tags::*; // why doesn't this resolve?
 use serde::Deserialize;
+use std::collections::HashSet;
+use std::path::Path;
 use url::*;
 use wasm_bindgen::prelude::*;
 use yew::events::*;
@@ -8,10 +13,6 @@ use yew::{
     prelude::*,
 };
 use yew_router::*;
-use crate::api::*;
-use crate::cards::*;
-use std::path::Path;
-use std::collections::HashSet;
 
 #[derive(Switch)]
 enum AppRoute {
@@ -45,14 +46,12 @@ pub enum AppMsg {
     ReceiveEntries(Result<Vec<Cache>, anyhow::Error>),
     ReceiveTags(Result<Vec<String>, anyhow::Error>),
     KeyDown,
-    CardMouseOver(MouseEvent),
-    TagMouseOver(MouseEvent, String),
+    TagClick(MouseEvent, String),
     SortByDate,
     SortByUrl,
 }
 
 impl App {
-
     fn view_navbar(&self) -> Html {
         html! {
             <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -60,7 +59,7 @@ impl App {
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
                         <li class="nav-item active">
-                            <a class="nav-link" href="#">{ "Cards"} </a>
+                            <a class="nav-link" href="#">{ "Cards" } </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">{ "Screens" }</a>
@@ -177,11 +176,7 @@ impl Component for App {
                 log::info!("keydown event");
                 false
             }
-            CardMouseOver(_m) => {
-                log::info!("card mouseover event");
-                false
-            }
-            TagMouseOver(m, tag_name) => {
+            TagClick(m, tag_name) => {
                 log::info!("tag mouseover event");
                 log::info!("{:?}", tag_name);
                 log::info!("{:?}", m.to_string());
@@ -212,7 +207,7 @@ impl Component for App {
         let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
         let callback = |item: String| {
             self.link
-                .callback((move |m| AppMsg::TagMouseOver(m, item.to_string().to_string())))
+                .callback(move |m| AppMsg::TagClick(m, item.to_string().to_string()))
         };
         html! {
           <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
@@ -233,7 +228,7 @@ impl Component for App {
                   </div>
                   <p/>
                   <div class="twocol">
-                      <Cards entries=self.entries.clone()/> 
+                      <Cards entries=self.entries.clone()/>
                       <div class="topic-tags">
                           {
                             html! {
@@ -256,5 +251,4 @@ impl Component for App {
           </div>
         }
     }
-
 }

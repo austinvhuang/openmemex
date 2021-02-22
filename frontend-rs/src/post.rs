@@ -1,6 +1,4 @@
-use yew::{
-    prelude::*,
-};
+use yew::prelude::*;
 
 pub enum PostMsg {
     SubmitNote,
@@ -30,9 +28,9 @@ impl Component for Post {
 
     fn view(&self) -> Html {
         html! {
-<div>
-{ "Hello" }
-</div>
-        }
+        <div>
+        { "Hello" }
+        </div>
+                }
     }
 }

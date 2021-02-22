@@ -1,13 +1,6 @@
 use serde::Deserialize;
-use url::*;
 use wasm_bindgen::prelude::*;
-use yew::events::*;
-use yew::services::fetch::{FetchService, FetchTask, Request, Response};
-use yew::{
-    format::{Json, Nothing},
-    prelude::*,
-};
-use yew_router::*;
+use yew::prelude::*;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Entry {
