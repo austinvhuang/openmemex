@@ -233,7 +233,7 @@ impl Component for App {
                   </div>
                   <p/>
                   <div class="twocol">
-                      <Cards/> 
+                      <Cards entries=self.entries.clone()/> 
                       <div class="topic-tags">
                           {
                             html! {

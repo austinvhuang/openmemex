@@ -37,6 +37,7 @@ margin: 40px 80px;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   grid-column-gap: 4px;
+  animation: fade 2s linear;
 }
 
 .card-image {

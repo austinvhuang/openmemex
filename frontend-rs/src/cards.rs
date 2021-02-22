@@ -9,7 +9,6 @@ use yew::{
 };
 use yew_router::*;
 use crate::api::*;
-use std::path::Path;
 use std::collections::HashSet;
 
 #[derive(Debug)]
@@ -23,12 +22,15 @@ pub enum CardsMsg {
 #[derive(Debug)]
 pub struct Cards {
     pub cache_task: Option<FetchTask>,
-    pub tag_task: Option<FetchTask>,
-    pub entries: Option<Vec<Cache>>,
-    selected_tags: HashSet<String>,
     pub link: ComponentLink<Self>,
+    pub entries: Option<Vec<Cache>>,
     pub error: Option<String>,
     pub query: String,
+}
+
+#[derive(Clone, Properties)]
+pub struct Props {
+    pub entries: Option<Vec<Cache>>,
 }
 
 impl Cards {
@@ -82,33 +84,33 @@ impl Cards {
 impl Component for Cards {
 
     type Message = CardsMsg;
-    type Properties = ();
+    type Properties = Props;
 
-    fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         log::info!("Creating component");
         let cb = link.callback_once(|_: String| CardsMsg::GetEntries);
         cb.emit("".to_string()); // TODO - what's the right way to handle a message without parameters
         log::info!("sent message");
         Self {
             cache_task: None,
-            tag_task: None,
-            entries: None, //Some(Vec::<Entry>::new()),
-            selected_tags: HashSet::new(),
             link,
+            entries: props.entries,
             error: None,
             query: "http://localhost:3000/all/cache".to_string(),
         }
     }
 
 
-    fn change(&mut self, _props: Self::Properties) -> bool {
-        false
+    fn change(&mut self, props: Self::Properties) -> bool {
+        self.entries = props.entries;
+        true
     }
 
     fn update(&mut self, msg: Self::Message) -> bool {
         use CardsMsg::*;
         log::info!("update");
         match msg {
+
             GetEntries => {
                 // define request
                 log::info!("submitting cache request");
@@ -142,6 +144,7 @@ impl Component for Cards {
                 self.cache_task = None;
                 true
             }
+
             CardMouseOver(_m) => {
                 log::info!("card mouseover event");
                 false
