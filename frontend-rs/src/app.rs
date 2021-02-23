@@ -1,6 +1,6 @@
 use crate::api::*;
 use crate::cards::*;
-// use crate::tags::*; // why doesn't this resolve?
+use crate::tags::*; // why doesn't this resolve?
 use serde::Deserialize;
 use std::collections::HashSet;
 use std::path::Path;
@@ -12,21 +12,6 @@ use yew::{
     format::{Json, Nothing},
     prelude::*,
 };
-use yew_router::*;
-
-#[derive(Switch)]
-enum AppRoute {
-    #[to = "/cards"]
-    Cards,
-    #[to = "/screen"]
-    Screen,
-    #[to = "/timeline"]
-    Timeline,
-    #[to = "/addnote"]
-    AddNote,
-}
-
-// TODO use cards component
 
 #[derive(Debug)]
 pub struct App {

@@ -4,6 +4,7 @@
 mod api;
 mod app;
 mod cards;
+mod tags;
 mod post;
 
 use wasm_bindgen::prelude::*;
