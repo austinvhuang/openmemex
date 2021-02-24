@@ -126,8 +126,8 @@ allEntriesH = liftIO allEntries
 allCacheH :: Maybe SortBy -> Maybe SortDir -> [Text] -> Handler [CacheView]
 allCacheH sortby sortdir filterTags = liftIO (allCache sortby sortdir filterTags)
 
-frontendH = serveDirectoryFileServer "./frontend-rs/static/."
--- frontendH = serveDirectoryWebApp "./frontend-rs/static/"
+-- frontendH = serveDirectoryFileServer "./frontend-rs/static/."
+frontendH = serveDirectoryWebApp "./frontend-rs/static/"
 
 queryContentH q = liftIO $ queryContent q :: Handler [CacheView]
 

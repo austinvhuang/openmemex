@@ -1,4 +1,5 @@
 use crate::api::*;
+use crate::app_router::*;
 use crate::cards::*;
 use crate::tags::*; // why doesn't this resolve?
 use serde::Deserialize;
@@ -12,6 +13,9 @@ use yew::{
     format::{Json, Nothing},
     prelude::*,
 };
+
+use yew_router::prelude::*;
+use yew_router::*;
 
 #[derive(Debug)]
 pub struct App {
@@ -194,7 +198,9 @@ impl Component for App {
             self.link
                 .callback(move |m| AppMsg::TagClick(m, item.to_string().to_string()))
         };
-        html! {
+
+
+        let home = html! {
           <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
               { e.stop_propagation(); AppMsg::KeyDown })}>
               { self.view_navbar() }
@@ -234,6 +240,19 @@ impl Component for App {
                   </div>
               </div>
           </div>
+        };
+
+
+        let render = Router::render(move |switch: AppRoute| match switch {
+            AppRoute::Home => home.clone(),
+            AppRoute::AddNote => html! { { "Add note" } } // TODO - fix servant server to be able to reach this route
+            
+        }); 
+
+        html! {
+            <div>
+            <Router<AppRoute, ()> render=render/>
+            </div>
         }
     }
 }
