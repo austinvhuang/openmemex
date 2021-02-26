@@ -57,7 +57,7 @@ impl App {
                             <a class="nav-link" href="#">{ "Timeline" }</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">{ "Add Note" }</a>
+                            <a class="nav-link" href="/frontend/addnote">{ "Add Note" }</a> // TODO client side routing doesn't work as intended
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">{ "System" }</a>
