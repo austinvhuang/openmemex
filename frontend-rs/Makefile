@@ -2,7 +2,7 @@ build:
 	wasm-pack build --target web --out-name wasm --out-dir ./static
 
 watch:
-	rg --files | entr -s "wasm-pack build --target web --out-name wasm --out-dir ./static"
+	rg --files | entr -s "wasm-pack build --target web --out-name wasm --out-dir --dev ./static"
 
 fmt:
 	rg --files | entr -s "cargo fmt"

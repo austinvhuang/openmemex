@@ -17,6 +17,8 @@ use yew::{
 use yew_router::prelude::*;
 use yew_router::*;
 
+pub type Link = RouterAnchor<AppRoute>;
+
 #[derive(Debug)]
 pub struct App {
     cache_task: Option<FetchTask>,
@@ -57,7 +59,7 @@ impl App {
                             <a class="nav-link" href="#">{ "Timeline" }</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/frontend/addnote">{ "Add Note" }</a> // TODO client side routing doesn't work as intended
+                            <Link route=AppRoute::AddNote><div class="nav-link">{ "Add Note" }</div></Link>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">{ "System" }</a>
@@ -210,6 +212,7 @@ impl Component for App {
                       { "note2self" }
                   </h1>
                   <hr/>
+
                   <p/>
                   <input type="text" class="search-input" placeholder="Search" />
                   </div>
@@ -238,6 +241,7 @@ impl Component for App {
                           }
                       </div>
                   </div>
+
               </div>
           </div>
         };
