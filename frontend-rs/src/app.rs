@@ -33,7 +33,7 @@ pub enum AppMsg {
     ReceiveEntries(Result<Vec<Cache>, anyhow::Error>),
     ReceiveTags(Result<Vec<String>, anyhow::Error>),
     KeyDown,
-    TagClick(MouseEvent, String),
+    TagClick(String),
     SortByDate,
     SortByUrl,
 }
@@ -163,10 +163,9 @@ impl Component for App {
                 log::info!("keydown event");
                 false
             }
-            TagClick(m, tag_name) => {
-                log::info!("tag mouseover event");
+            TagClick(tag_name) => {
+                log::info!("tag click event");
                 log::info!("{:?}", tag_name);
-                log::info!("{:?}", m.to_string());
                 let query = format!("http://localhost:3000/all/cache?sort=time&tag={}", tag_name);
                 log::info!("Query is: {:?}", &query);
                 self.query = query; // TODO - make queryparams compose
@@ -193,10 +192,14 @@ impl Component for App {
         let empty_vec = &[].to_vec();
         let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
 
+        /*
         let callback = |item: String| {
             self.link
-                .callback(move |m| AppMsg::TagClick(m, item.to_string().to_string()))
+                .callback(move |m| AppMsg::TagClick(item.to_string().to_string()))
         };
+        */
+
+        let callback = self.link.callback(move |tag| AppMsg::TagClick(tag));
 
 
         let home = html! {
@@ -220,27 +223,9 @@ impl Component for App {
                   <p/>
                   <div class="twocol">
                       <Cards entries=self.entries.clone()/>
-
-                      <div class="topic-tags">
-                          {
-                            html! {
-                            <div>
-                              {
-                                for exist_tags.iter().map((|item: &String| {
-                                    html! {
-                                    <div class="topic-tag" onclick=callback(item.clone()).clone()>
-                                     { item.clone() }
-                                    </div>
-                                    }
-                                }).clone() )
-                              }
-                            </div>
-                            }
-                          }
-                      </div>
+                      <Tags tags=exist_tags tag_click_callback=callback/>
 
                   </div>
-
               </div>
           </div>
         };

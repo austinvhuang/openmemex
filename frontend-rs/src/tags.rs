@@ -10,11 +10,13 @@ pub enum TagsMsg {
 pub struct Tags {
     pub link: ComponentLink<Self>,
     tags: Option<Vec<String>>,
+    pub tag_click_callback: Callback<String>,
 }
 
 #[derive(Properties, PartialEq, Clone)]
 pub struct Props {
-    tags: Option<Vec<String>>,
+    pub tags: Option<Vec<String>>,
+    pub tag_click_callback: Callback<String>,
 }
 
 impl Tags {
@@ -29,16 +31,26 @@ impl Component for Tags {
         Self {
             link: link,
             tags: props.tags,
+            tag_click_callback: props.tag_click_callback,
         }
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         self.tags = props.tags;
+        self.tag_click_callback= props.tag_click_callback;
         true
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        false
+        use TagsMsg::*;
+        log::info!("tags update");
+        match msg {
+            TagClick(m, tag_name) => {
+                log::info!("tag click event");
+                self.tag_click_callback.emit(tag_name);
+                false
+            }
+        }
     }
 
     fn view(&self) -> Html {
