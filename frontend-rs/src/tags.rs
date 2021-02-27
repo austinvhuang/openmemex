@@ -1,9 +1,8 @@
 use yew::prelude::*;
 use yew::Properties;
-use yew::events::*;
 
 pub enum TagsMsg {
-    TagClick(MouseEvent, String)
+    TagClick(MouseEvent, String),
 }
 
 #[derive(Debug)]
@@ -19,8 +18,7 @@ pub struct Props {
     pub tag_click_callback: Callback<String>,
 }
 
-impl Tags {
-}
+impl Tags {}
 
 impl Component for Tags {
     type Message = TagsMsg;
@@ -37,7 +35,7 @@ impl Component for Tags {
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         self.tags = props.tags;
-        self.tag_click_callback= props.tag_click_callback;
+        self.tag_click_callback = props.tag_click_callback;
         true
     }
 
@@ -45,7 +43,7 @@ impl Component for Tags {
         use TagsMsg::*;
         log::info!("tags update");
         match msg {
-            TagClick(m, tag_name) => {
+            TagClick(_m, tag_name) => {
                 log::info!("tag click event");
                 self.tag_click_callback.emit(tag_name);
                 false
@@ -75,5 +73,4 @@ impl Component for Tags {
             </div>
         }
     }
-
 }

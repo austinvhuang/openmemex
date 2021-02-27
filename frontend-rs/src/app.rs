@@ -1,9 +1,9 @@
 use crate::api::*;
 use crate::app_router::*;
+use crate::add_note::*;
 use crate::cards::*;
 use crate::tags::*; // why doesn't this resolve?
 use std::collections::HashSet;
-use wasm_bindgen::prelude::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{
     format::{Json, Nothing},
@@ -11,7 +11,6 @@ use yew::{
 };
 
 use yew_router::prelude::*;
-use yew_router::*;
 
 pub type Link = RouterAnchor<AppRoute>;
 
@@ -46,10 +45,7 @@ impl App {
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
                         <li class="nav-item active">
-                            <a class="nav-link" href="#">{ "Cards" } </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">{ "Screens" }</a>
+                            <Link route=AppRoute::Gallery><div class="nav-link">{ "Gallery" }</div></Link>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">{ "Timeline" }</a>
@@ -192,54 +188,43 @@ impl Component for App {
         let empty_vec = &[].to_vec();
         let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
 
-        /*
-        let callback = |item: String| {
-            self.link
-                .callback(move |m| AppMsg::TagClick(item.to_string().to_string()))
-        };
-        */
-
         let callback = self.link.callback(move |tag| AppMsg::TagClick(tag));
 
-
-        let home = html! {
-          <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
-              { e.stop_propagation(); AppMsg::KeyDown })}>
-              { self.view_navbar() }
-              <div class="main-inner">
-                  <div class="main-top">
-                  <h1 class="big-title">
-                      { "note2self" }
-                  </h1>
-                  <hr/>
-
-                  <p/>
-                  <input type="text" class="search-input" placeholder="Search" />
-                  </div>
-                  <div class="btn-group">
-                  <button class="sort-button" onclick=self.link.callback(|m| { AppMsg::SortByDate })>{"Sort by Date"}</button>
-                  <button class="sort-button" onclick=self.link.callback(|m| { AppMsg::SortByUrl })>{"Sort by Url"}</button>
-                  </div>
-                  <p/>
-                  <div class="twocol">
-                      <Cards entries=self.entries.clone()/>
-                      <Tags tags=exist_tags tag_click_callback=callback/>
-
-                  </div>
-              </div>
-          </div>
+        let gallery = html! {
+            <div>
+                <div>
+                    <input type="text" class="search-input" placeholder="Search" />
+                </div>
+                <div class="btn-group">
+                    <button class="sort-button" onclick=self.link.callback(|m| { AppMsg::SortByDate
+                        })>{"Sort by Date"}</button>
+                    <button class="sort-button" onclick=self.link.callback(|m| { AppMsg::SortByUrl
+                        })>{"Sort by Url"}</button>
+                </div>
+                <p/>
+                <div class="twocol">
+                    <Cards entries=self.entries.clone()/>
+                    <Tags tags=exist_tags tag_click_callback=callback/>
+                </div>
+            </div>
         };
 
-
         let render = Router::render(move |switch: AppRoute| match switch {
-            AppRoute::Home => home.clone(),
-            AppRoute::AddNote => html! { { "Add note" } } // TODO - fix servant server to be able to reach this route
-            
-        }); 
+            AppRoute::Gallery => gallery.clone(),
+            AppRoute::AddNote => html! { <div><AddNote/></div> },
+        });
 
         html! {
-            <div>
-            <Router<AppRoute, ()> render=render/>
+            <div class="main-outer" onkeydown={ self.link.callback(move |e: KeyboardEvent|
+                { e.stop_propagation(); AppMsg::KeyDown })}>
+                { self.view_navbar() }
+                <div class="main-inner">
+                    <div class="main-top">
+                        <h1 class="big-title"> { "note2self" } </h1>
+                        <hr/>
+                        <Router<AppRoute, ()> render=render/>
+                    </div>
+                </div>
             </div>
         }
     }

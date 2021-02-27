@@ -1,6 +1,4 @@
-use yew::prelude::*;
 use yew_router::prelude::*;
-use yew_router::*;
 
 #[derive(Switch, Debug, Clone)]
 pub enum AppRoute {
@@ -10,8 +8,8 @@ pub enum AppRoute {
     #[to = "/timeline"]
     Timeline,
     */
-    #[to = "/addnote"]
+    #[to = "/frontend/addnote"]
     AddNote,
-    #[to = "/"]
-    Home,
+    #[to = "/frontend/"]
+    Gallery,
 }

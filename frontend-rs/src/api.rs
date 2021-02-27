@@ -1,6 +1,4 @@
 use serde::Deserialize;
-use wasm_bindgen::prelude::*;
-use yew::prelude::*;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Entry {

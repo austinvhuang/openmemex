@@ -1,12 +1,12 @@
 #![recursion_limit = "1024"]
 // https://github.com/yewstack/yew/issues/513
 
+mod add_note;
 mod api;
 mod app;
+mod app_router;
 mod cards;
 mod tags;
-mod post;
-mod app_router;
 
 use wasm_bindgen::prelude::*;
 
