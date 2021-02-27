@@ -22,16 +22,28 @@ impl Cards {
     fn view_entries(&self) -> Html {
         match self.entries {
             Some(ref entries) => {
+                log::info!("hello there");
                 log::info!("{:#?} results fetched.", entries.len());
+
                 html! {
                     {
                         for entries.iter().map(|mut item| {
+                            log::info!("{:#?} : item.", item);
                             // TODO - handle None for options
                             let parsed = Url::parse(item.url.as_ref().unwrap_or(&"".to_owned()));
                             let mut thumbnail_file = item.thumbnail_file.clone().unwrap_or("".to_owned());
+
+                            // TODO - pattern match on Nothing / Some instead of unwrap_or
+
                             let suffix: &str = "_tn.png";
-                            thumbnail_file.truncate(thumbnail_file.len() - 4);
-                            thumbnail_file.push_str(suffix);
+                            log::info!("{:#?} : suffix.", suffix);
+                            log::info!("{:#?} : len", thumbnail_file.len());
+                            log::info!("{:#?} : file", thumbnail_file);
+                            if (thumbnail_file.len() >= 4) {
+                                thumbnail_file.truncate(thumbnail_file.len() - 4);
+                                thumbnail_file.push_str(suffix);
+                            }
+                            log::info!("{:#?} : thumbnail_file.", thumbnail_file);
                             // TODO - replace prefix with thumbnails/ !!
                             log::info!("screenshot: {:?}", thumbnail_file);
                             log::info!("thumbnail: {:?}", thumbnail_file);
@@ -71,7 +83,7 @@ impl Component for Cards {
     type Properties = Props;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        log::info!("Creating component");
+        log::info!("Creating cards component");
         Self {
             link,
             entries: props.entries,
@@ -96,9 +108,9 @@ impl Component for Cards {
 
     fn view(&self) -> Html {
         html! {
-                      <div class="cards">
-                          { self.view_entries() }
-                      </div>
+              <div class="cards">
+                  { self.view_entries() }
+              </div>
         }
     }
 }

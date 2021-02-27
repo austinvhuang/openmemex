@@ -2,12 +2,8 @@ use crate::api::*;
 use crate::app_router::*;
 use crate::cards::*;
 use crate::tags::*; // why doesn't this resolve?
-use serde::Deserialize;
 use std::collections::HashSet;
-use std::path::Path;
-use url::*;
 use wasm_bindgen::prelude::*;
-use yew::events::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{
     format::{Json, Nothing},
@@ -196,6 +192,7 @@ impl Component for App {
     fn view(&self) -> Html {
         let empty_vec = &[].to_vec();
         let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
+
         let callback = |item: String| {
             self.link
                 .callback(move |m| AppMsg::TagClick(m, item.to_string().to_string()))
@@ -223,6 +220,7 @@ impl Component for App {
                   <p/>
                   <div class="twocol">
                       <Cards entries=self.entries.clone()/>
+
                       <div class="topic-tags">
                           {
                             html! {
@@ -240,6 +238,7 @@ impl Component for App {
                             }
                           }
                       </div>
+
                   </div>
 
               </div>

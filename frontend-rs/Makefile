@@ -1,8 +1,16 @@
 build:
 	wasm-pack build --target web --out-name wasm --out-dir ./static
 
-watch:
-	rg --files | entr -s "wasm-pack build --target web --out-name wasm --out-dir --dev ./static"
+watch-dev:
+	rg --files | entr -s "wasm-pack build --target web --out-name wasm --dev --out-dir ./static"
+
+watch-rel:
+	rg --files | entr -s "wasm-pack build --target web --out-name wasm --release --out-dir ./static"
+
+watch-prof:
+	rg --files | entr -s "wasm-pack build --target web --out-name wasm --profiling --out-dir ./static"
+
+watch: watch-dev
 
 fmt:
 	rg --files | entr -s "cargo fmt"
