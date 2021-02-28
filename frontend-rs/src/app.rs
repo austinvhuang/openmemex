@@ -90,10 +90,9 @@ impl Component for App {
     }
 
     fn update(&mut self, msg: Self::Message) -> bool {
-        use AppMsg::*;
         log::info!("update");
         match msg {
-            GetEntries => {
+            AppMsg::GetEntries => {
                 // define request
                 log::info!("submitting cache request");
                 let request = Request::get(&self.query)
@@ -141,7 +140,7 @@ impl Component for App {
                 self.cache_task = None;
                 true
             }
-            ReceiveTags(response) => {
+            AppMsg::ReceiveTags(response) => {
                 match response {
                     Ok(result) => {
                         self.tags = Some(result);
@@ -155,30 +154,29 @@ impl Component for App {
                 self.tag_task = None;
                 false
             }
-            KeyDown => {
+            AppMsg::KeyDown => {
                 log::info!("keydown event");
                 false
             }
-            TagClick(tag_name) => {
+            AppMsg::TagClick(tag_name) => {
                 log::info!("tag click event");
                 log::info!("{:?}", tag_name);
                 let query = format!("http://localhost:3000/all/cache?sort=time&tag={}", tag_name);
                 log::info!("Query is: {:?}", &query);
                 self.query = query; // TODO - make queryparams compose
-                self.link.send_message(GetEntries);
+                self.link.send_message(AppMsg::GetEntries);
                 false
             }
-            SortByDate => {
+            AppMsg::SortByDate => {
                 log::info!("sort date");
                 self.query = "http://localhost:3000/all/cache?sort=time".to_string();
-                // self.link.send_self(GetEntries);
-                self.link.send_message(GetEntries);
+                self.link.send_message(AppMsg::GetEntries);
                 false
             }
-            SortByUrl => {
+            AppMsg::SortByUrl => {
                 log::info!("sort url");
                 self.query = "http://localhost:3000/all/cache?sort=url".to_string();
-                self.link.send_message(GetEntries);
+                self.link.send_message(AppMsg::GetEntries);
                 false
             }
         }
