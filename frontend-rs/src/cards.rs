@@ -22,31 +22,24 @@ impl Cards {
     fn view_entries(&self) -> Html {
         match self.entries {
             Some(ref entries) => {
-                log::info!("hello there");
                 log::info!("{:#?} results fetched.", entries.len());
 
                 html! {
                     {
                         for entries.iter().map(|mut item| {
-                            log::info!("{:#?} : item.", item);
-                            // TODO - handle None for options
+                            // log::info!("{:#?} : item.", item);
                             let parsed = Url::parse(item.url.as_ref().unwrap_or(&"".to_owned()));
-                            let mut thumbnail_file = item.thumbnail_file.clone().unwrap_or("".to_owned());
 
-                            // TODO - pattern match on Nothing / Some instead of unwrap_or
+                            let mut thumbnail_file = match item.thumbnail_file.clone() {
+                                Some(mut value) => {
+                                    value.truncate(value.len() - 4);
+                                    let suffix: &str = "_tn.png";
+                                    value.push_str(suffix);
+                                    value
+                                },
+                                Nothing => "".to_string()
+                            };
 
-                            let suffix: &str = "_tn.png";
-                            log::info!("{:#?} : suffix.", suffix);
-                            log::info!("{:#?} : len", thumbnail_file.len());
-                            log::info!("{:#?} : file", thumbnail_file);
-                            if (thumbnail_file.len() >= 4) {
-                                thumbnail_file.truncate(thumbnail_file.len() - 4);
-                                thumbnail_file.push_str(suffix);
-                            }
-                            log::info!("{:#?} : thumbnail_file.", thumbnail_file);
-                            // TODO - replace prefix with thumbnails/ !!
-                            log::info!("screenshot: {:?}", thumbnail_file);
-                            log::info!("thumbnail: {:?}", thumbnail_file);
                             html! {
                                 <div class="card" onmouseover=self.link.callback(|m| { CardsMsg::CardMouseOver(m) })>
                                     <h4>

@@ -10,6 +10,6 @@ pub enum AppRoute {
     */
     #[to = "/frontend/addnote"]
     AddNote,
-    #[to = "/frontend/"]
+    #[to = "/frontend/index.html"]
     Gallery,
 }

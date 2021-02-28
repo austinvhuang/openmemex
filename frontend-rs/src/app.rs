@@ -76,7 +76,7 @@ impl Component for App {
         Self {
             cache_task: None,
             tag_task: None,
-            entries: None, //Some(Vec::<Entry>::new()),
+            entries: None,
             tags: None,
             selected_tags: HashSet::new(),
             link,
@@ -185,7 +185,6 @@ impl Component for App {
     fn view(&self) -> Html {
         let empty_vec = &[].to_vec();
         let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
-
         let callback = self.link.callback(move |tag| AppMsg::TagClick(tag));
 
         let gallery = html! {
