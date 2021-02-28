@@ -9,6 +9,7 @@
 
 module DB where
 
+import GHC.Int (Int64)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (ToJSON)
 import Data.List (intercalate)
@@ -43,6 +44,16 @@ instance FromRow Entry where
   fromRow = Entry <$> field <*> field <*> field <*> field
 
 instance ToJSON Entry
+
+-- Used for DB writes, note entryID is inferred by the database
+-- so isn't part of the ADT
+data WriteEntry = WriteEntry
+  { 
+    weDate :: String,
+    weTime :: String,
+    weContent :: String
+  }
+  deriving (Eq, Show, Generic)
 
 -- tag entries
 
@@ -412,3 +423,34 @@ replaceTag fromTag toTag = do
   backupDB
   -- TODO - fill-in
   pure ()
+
+addEntryInferDate :: String -> [String] -> IO Int64
+addEntryInferDate entry tags = do
+  now <- getZonedTime
+  let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
+  let tm = formatTime defaultTimeLocale "%H:%M:%S" now
+  entryID <- addEntry $ WriteEntry dt tm entry
+  mapM_ (addTag entryID) tags
+  pure entryID
+
+addEntry :: WriteEntry -> IO Int64
+addEntry WriteEntry {..} = do
+  conn <- open dbFile
+  executeNamed
+    conn
+    "INSERT INTO entries (date, time, content) VALUES (:date, :time, :content)"
+    [":date" := weDate, ":time" := weTime, ":content" := weContent]
+  r <- lastInsertRowId conn
+  close conn
+  pure r
+
+addTag :: Int64 -> String -> IO Int64
+addTag entryID tag = do
+  conn <- open dbFile
+  executeNamed
+    conn
+    "INSERT INTO tags (entry_id, tag) VALUES (:entryID, :tag)"
+    [":entryID" := entryID, ":tag" := tag]
+  r <- lastInsertRowId conn
+  close conn
+  pure r

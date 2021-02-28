@@ -29,8 +29,8 @@ import Text.Printf (printf)
 -- API Types
 
 data PostNote = PostNote
-  { content :: String,
-    tags :: [String]
+  { pnContent :: String,
+    pnTags :: [String]
   }
   deriving (Show, Generic)
 
@@ -135,8 +135,9 @@ linkEntryTagsH filterTag = liftIO $ linkEntryTags filterTag
 
 postNote :: PostNote -> IO Int64
 postNote note = do
+  putStrLn "Adding note"
   print note
-  pure 1
+  addEntryInferDate (pnContent note) (pnTags note)
 
 postNoteH note = liftIO $ postNote note
 

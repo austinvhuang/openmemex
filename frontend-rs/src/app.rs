@@ -54,7 +54,7 @@ impl App {
                             <Link route=AppRoute::AddNote><div class="nav-link">{ "Add Note" }</div></Link>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">{ "System" }</a>
+                            <a class="nav-link" href="#">{ "Queue" }</a>
                         </li>
                     </ul>
                 </div>
@@ -190,7 +190,7 @@ impl Component for App {
         let gallery = html! {
             <div>
                 <div>
-                    <input type="text" class="search-input" placeholder="Search" />
+                    <input type="text" class="search-input" placeholder="Search" accesskey="/" />
                 </div>
                 <div class="btn-group">
                     <button class="sort-button" onclick=self.link.callback(|m| { AppMsg::SortByDate

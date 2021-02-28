@@ -1,7 +1,8 @@
 use yew::prelude::*;
+use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 
 pub enum AddNoteMsg {
-    SubmitNote,
+    SubmitNote(FocusEvent),
     EditNote(String),
     KeyDown(KeyboardEvent),
     AddTag(String),
@@ -12,6 +13,7 @@ pub struct AddNote {
     tags: Vec<String>,
     // ops: String,
     link: ComponentLink<Self>,
+    submit_task: Option<FetchTask>
 }
 
 impl Component for AddNote {
@@ -23,6 +25,7 @@ impl Component for AddNote {
             content: "Note goes here".to_string(),
             tags: [].to_vec(),
             link: link,
+            submit_task: None,
         }
     }
     fn change(&mut self, props: Self::Properties) -> bool {
@@ -31,10 +34,6 @@ impl Component for AddNote {
 
     fn update(&mut self, msg: Self::Message) -> bool {
         match msg {
-            AddNoteMsg::SubmitNote => {
-                log::info!("submitting note");
-                false
-            },
             AddNoteMsg::EditNote(content) => {
                 log::info!("edit note {:?}", content);
                 false
@@ -47,6 +46,10 @@ impl Component for AddNote {
                 log::info!("adding tag {:?}", tag_name);
                 self.tags.push(tag_name);
                 false
+            },
+            AddNoteMsg::SubmitNote(event) => {
+                log::info!("submit {:?}", event);
+                false
             }
         }
     }
@@ -56,7 +59,9 @@ fn view(&self) -> Html {
             <div>
                 <textarea rows="8" class="note-input" 
                     oninput={ self.link.callback(move |e: InputData| AddNoteMsg::EditNote(e.value)) }
-                    onkeydown={ self.link.callback(move |e: KeyboardEvent| AddNoteMsg::KeyDown(e)) }>
+                    onkeydown={ self.link.callback(move |e: KeyboardEvent| AddNoteMsg::KeyDown(e)) }
+                    onsubmit={ self.link.callback(move |e: FocusEvent| AddNoteMsg::SubmitNote(e)) }
+                    >
                 </textarea>
             <input type="text" class="tag-input" placeholder="tag"/>
             </div>

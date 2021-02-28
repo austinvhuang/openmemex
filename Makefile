@@ -72,5 +72,5 @@ test-screenshot:
 	chromium --headless --disable-gpu --screenshot=deleteme.png --window-size=600,800 --hide-scrollbars https://www.yahoo.com
 	xdg-open deleteme.png
 
-
-
+test-post:
+	curl -g --header "Content-Type: application/json" --request POST --data '{"pnContent":"https://monoskop.org/images/5/51/Wiener_Norbert_The_Human_Use_of_Human_Beings.pdf", "pnTags":["book"]}' --request POST http://localhost:3000/submit/note
