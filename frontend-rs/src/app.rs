@@ -1,8 +1,8 @@
+use crate::add_note::*;
 use crate::api::*;
 use crate::app_router::*;
-use crate::add_note::*;
 use crate::cards::*;
-use crate::tags::*; // why doesn't this resolve?
+use crate::tags::*;
 use std::collections::HashSet;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{
@@ -208,7 +208,7 @@ impl Component for App {
 
         let render = Router::render(move |switch: AppRoute| match switch {
             AppRoute::Gallery => gallery.clone(),
-            AppRoute::AddNote => html! { <div><AddNote/></div> },
+            AppRoute::AddNote => html! { <AddNote/> },
         });
 
         html! {
