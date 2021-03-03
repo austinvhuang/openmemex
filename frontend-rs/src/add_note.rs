@@ -43,7 +43,10 @@ impl Component for AddNote {
                 false
             }
             AddNoteMsg::NoteKeyDown(keypress) => {
-                log::info!("note keydown {:?}", keypress);
+                log::info!("note keydown {:?}", keypress.key());
+                if keypress.key() == "Enter" {
+                    self.link.send_message(AddNoteMsg::SubmitNote);
+                }
                 false
             }
 
@@ -52,7 +55,10 @@ impl Component for AddNote {
                 false
             }
             AddNoteMsg::TagKeyDown(keypress) => {
-                log::info!("tag key down {:?}", keypress);
+                log::info!("tag key down {:?}", keypress.key());
+                if keypress.key() == "Enter" {
+                    self.link.send_message(AddNoteMsg::AddTag("".to_string())); // todo save typed in tag
+                }
                 false
             }
 
