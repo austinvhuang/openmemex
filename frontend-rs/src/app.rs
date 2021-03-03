@@ -90,7 +90,6 @@ impl Component for App {
     }
 
     fn update(&mut self, msg: Self::Message) -> bool {
-        log::info!("update");
         match msg {
             AppMsg::GetEntries => {
                 // define request
