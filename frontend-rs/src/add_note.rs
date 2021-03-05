@@ -1,6 +1,16 @@
-use yew::prelude::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
+use yew::{
+    format::{Json, Nothing},
+    prelude::*,
+};
+use serde::Deserialize;
 
+#[derive(Deserialize, Debug, Clone)]
+pub struct NoteResponse {
+    pub code: i32,
+}
+
+#[derive(Debug)]
 pub enum AddNoteMsg {
 
     NoteEdit(String),
@@ -11,6 +21,7 @@ pub enum AddNoteMsg {
     TagKeyDown(KeyboardEvent),
     AddTag(String),
 
+    SubmitResponse(Result<Vec<NoteResponse>, anyhow::Error>),
 }
 
 pub struct AddNote {
@@ -64,6 +75,23 @@ impl Component for AddNote {
 
             AddNoteMsg::SubmitNote => {
                 log::info!("submit");
+                let query = "http://localhost:3000/submit/note";
+                let request = Request::post(query)
+                    .body(Nothing)
+                    .expect("Could not build request.");
+                let callback = self.link.callback_once(
+                    |response: Response<Json<Result<Vec<NoteResponse>, anyhow::Error>>>| {
+                        let Json(data) = response.into_body();
+                        AddNoteMsg::SubmitResponse(data)
+                    },
+                );
+                // let task = FetchService::fetch(request, callback).expect("failed to start request");
+                // self.cache_task = Some(task);
+                false
+            }
+
+            AddNoteMsg::SubmitResponse(data) => {
+                log::info!("note was submitted");
                 false
             }
 
@@ -82,7 +110,13 @@ impl Component for AddNote {
             <div>
                 <textarea rows="8" class="note-input" 
                     oninput={ self.link.callback(move |e: InputData| AddNoteMsg::NoteEdit(e.value)) }
-                    onkeydown={ self.link.callback(move |e: KeyboardEvent| AddNoteMsg::NoteKeyDown(e)) }
+                    onkeydown={ self.link.batch_callback(move 
+                        |e: KeyboardEvent| 
+                            if e.key() == "Enter" {
+                                vec![AddNoteMsg::NoteKeyDown(e)]
+                            } else {
+                                vec![]
+                            }) }
                     onsubmit={ self.link.callback(move |e: FocusEvent| AddNoteMsg::SubmitNote) }>
                 </textarea>
                 <input type="text" class="tag-input" placeholder="tag" 

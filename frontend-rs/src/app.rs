@@ -50,11 +50,11 @@ impl App {
                         <li class="nav-item">
                             <a class="nav-link" href="#">{ "Timeline" }</a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item" accesskey="a">
                             <Link route=AppRoute::AddNote><div class="nav-link">{ "Add Note" }</div></Link>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">{ "Queue" }</a>
+                            <a class="nav-link" href="#" accesskey="q">{ "Queue" }</a>
                         </li>
                     </ul>
                 </div>
