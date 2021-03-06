@@ -25,7 +25,8 @@ pub enum AddNoteMsg {
 }
 
 pub struct AddNote {
-    content: String,
+    content: String, // holds text in the note input
+    tag: String, // holds text in the tag input
     tags: Vec<String>,
     link: ComponentLink<Self>,
     submit_task: Option<FetchTask>,
@@ -38,6 +39,7 @@ impl Component for AddNote {
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
             content: "Note goes here".to_string(),
+            tag: String::from(""),
             tags: [].to_vec(),
             link: link,
             submit_task: None,
@@ -63,12 +65,16 @@ impl Component for AddNote {
 
             AddNoteMsg::TagEdit(content) => {
                 log::info!("tag edit {:?}", content);
+                self.tag = content;
                 false
             }
+
             AddNoteMsg::TagKeyDown(keypress) => {
                 log::info!("tag key down {:?}", keypress.key());
                 if keypress.key() == "Enter" {
-                    self.link.send_message(AddNoteMsg::AddTag("".to_string())); // todo save typed in tag
+                    log::info!("self.tag {:?}", self.tag);
+                    log::info!("self.tag.clone() {:?}", self.tag.clone());
+                    self.link.send_message(AddNoteMsg::AddTag(self.tag.clone())); // todo save typed in tag
                 }
                 false
             }
@@ -91,14 +97,14 @@ impl Component for AddNote {
             }
 
             AddNoteMsg::SubmitResponse(data) => {
-                log::info!("note was submitted");
+                log::info!("submitted");
                 false
             }
-
 
             AddNoteMsg::AddTag(tag_name) => {
                 log::info!("adding tag {:?}", tag_name);
                 self.tags.push(tag_name);
+                log::info!("tag list: {:?}", self.tags);
                 false
             }
 
