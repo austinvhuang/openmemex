@@ -2,8 +2,11 @@ use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{
     format::{Json, Nothing},
     prelude::*,
+    utils::*,
 };
 use serde::Deserialize;
+use wasm_bindgen::prelude::*;
+
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct NoteResponse {
@@ -53,6 +56,7 @@ impl Component for AddNote {
         match msg {
             AddNoteMsg::NoteEdit(content) => {
                 log::info!("note edit {:?}", content);
+                self.content = content;
                 false
             }
             AddNoteMsg::NoteKeyDown(keypress) => {
@@ -75,12 +79,19 @@ impl Component for AddNote {
                     log::info!("self.tag {:?}", self.tag);
                     log::info!("self.tag.clone() {:?}", self.tag.clone());
                     self.link.send_message(AddNoteMsg::AddTag(self.tag.clone())); // todo save typed in tag
+
+                    log::info!("reset input element");
+                    self.tag = String::from("");
+
                 }
-                false
+                true
             }
 
             AddNoteMsg::SubmitNote => {
-                log::info!("submit");
+                self.content.truncate(self.content.len() - 1); // truncate trailing \n
+                log::info!("self.content {:?}", self.content);
+                log::info!("self.content.clone() {:?}", self.content.clone());
+                log::info!("submit note: {:?}", self.content);
                 let query = "http://localhost:3000/submit/note";
                 let request = Request::post(query)
                     .body(Nothing)
@@ -114,6 +125,13 @@ impl Component for AddNote {
     fn view(&self) -> Html {
         html! {
             <div>
+
+                <input type="text" class="tag-input" placeholder="tag" id="tagInput"
+                    value = { &self.tag }
+                    oninput = { self.link.callback(move |e: InputData| AddNoteMsg::TagEdit(e.value)) }
+                    onkeydown={ self.link.callback(move |e: KeyboardEvent| AddNoteMsg::TagKeyDown(e)) } />
+                <p/>
+
                 <textarea rows="8" class="note-input" 
                     oninput={ self.link.callback(move |e: InputData| AddNoteMsg::NoteEdit(e.value)) }
                     onkeydown={ self.link.batch_callback(move 
@@ -125,13 +143,6 @@ impl Component for AddNote {
                             }) }
                     onsubmit={ self.link.callback(move |e: FocusEvent| AddNoteMsg::SubmitNote) }>
                 </textarea>
-                <input type="text" class="tag-input" placeholder="tag" 
-                    oninput = { self.link.callback(move |e: InputData| AddNoteMsg::TagEdit(e.value)) }
-                    onkeydown={ self.link.callback(move |e: KeyboardEvent| AddNoteMsg::TagKeyDown(e)) } />
-                <p/>
-                <button type="submit" onclick=self.link.callback(move |e: MouseEvent| AddNoteMsg::SubmitNote)>
-                { "Add Note" }
-                </button>
             </div>
         }
     }
