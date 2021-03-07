@@ -47,15 +47,19 @@ impl App {
                         <li class="nav-item active">
                             <Link route=AppRoute::Gallery><div class="nav-link">{ "Gallery" }</div></Link>
                         </li>
+                        /*
                         <li class="nav-item">
                             <a class="nav-link" href="#">{ "Timeline" }</a>
                         </li>
+                        */
                         <li class="nav-item" accesskey="a">
                             <Link route=AppRoute::AddNote><div class="nav-link">{ "Add Note" }</div></Link>
                         </li>
+                        /*
                         <li class="nav-item">
                             <a class="nav-link" href="#" accesskey="q">{ "Queue" }</a>
                         </li>
+                        */
                     </ul>
                 </div>
             </nav>
@@ -122,7 +126,7 @@ impl Component for App {
                 // task
                 let task = FetchService::fetch(request, callback).expect("failed to start request");
                 self.tag_task = Some(task);
-                false // redraw page
+                true // redraw page
             }
             AppMsg::ReceiveEntries(response) => {
                 match response {

@@ -142,7 +142,7 @@ postNote note = do
 postNoteH note = liftIO $ postNote note
 
 mkApp :: IO Application
-mkApp = return $ simpleCors $ serve combinedApi server
+mkApp = pure $ serve combinedApi server
 
 runServer :: IO ()
 runServer = do

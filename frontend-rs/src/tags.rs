@@ -56,7 +56,7 @@ impl Component for Tags {
         let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
         let callback = |item: String| {
             self.link
-                .callback(move |m| TagsMsg::TagClick(m, item.to_string().to_string()))
+                .callback(move |m| TagsMsg::TagClick(m, item.to_string()))
         };
 
         html! {
