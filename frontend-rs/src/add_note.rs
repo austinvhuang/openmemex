@@ -4,7 +4,7 @@ use yew::{
     prelude::*,
     utils::*,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 
@@ -27,6 +27,14 @@ pub enum AddNoteMsg {
     SubmitResponse(Result<Vec<NoteResponse>, anyhow::Error>),
 }
 
+#[derive(Serialize, Deserialize)]
+struct Payload {
+    #[serde(rename(serialize = "pnContent", deserialize="pnContent"))]
+    note_content: String,
+    #[serde(rename(serialize = "pnTags", deserialize="pnTags"))]
+    tags: Vec<String>,
+}
+
 pub struct AddNote {
     content: String, // holds text in the note input
     tag: String, // holds text in the tag input
@@ -41,7 +49,7 @@ impl Component for AddNote {
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
-            content: "Note goes here".to_string(),
+            content: "".to_string(),
             tag: String::from(""),
             tags: [].to_vec(),
             link: link,
@@ -82,7 +90,6 @@ impl Component for AddNote {
 
                     log::info!("reset input element");
                     self.tag = String::from("");
-
                 }
                 true
             }
@@ -102,21 +109,23 @@ impl Component for AddNote {
                         AddNoteMsg::SubmitResponse(data)
                     },
                 );
+                self.content = String::from(""); // TODO - oninput callback still fires and we're left with a black note
+                log::info!("request is {:?}", request);
                 // let task = FetchService::fetch(request, callback).expect("failed to start request");
                 // self.cache_task = Some(task);
-                false
+                true
             }
 
             AddNoteMsg::SubmitResponse(data) => {
                 log::info!("submitted");
-                false
+                true
             }
 
             AddNoteMsg::AddTag(tag_name) => {
                 log::info!("adding tag {:?}", tag_name);
                 self.tags.push(tag_name);
                 log::info!("tag list: {:?}", self.tags);
-                false
+                true
             }
 
         }
@@ -132,7 +141,8 @@ impl Component for AddNote {
                     onkeydown={ self.link.callback(move |e: KeyboardEvent| AddNoteMsg::TagKeyDown(e)) } />
                 <p/>
 
-                <textarea rows="8" class="note-input" 
+                <textarea rows="8" class="note-input"  placeholder="Enter to submit" id="noteContent"
+                    value = { &self.content } 
                     oninput={ self.link.callback(move |e: InputData| AddNoteMsg::NoteEdit(e.value)) }
                     onkeydown={ self.link.batch_callback(move 
                         |e: KeyboardEvent| 
@@ -143,6 +153,15 @@ impl Component for AddNote {
                             }) }
                     onsubmit={ self.link.callback(move |e: FocusEvent| AddNoteMsg::SubmitNote) }>
                 </textarea>
+
+                <div>
+                {
+                    for self.tags.iter().map(|mut curr_tag| {
+                        html!{ <div>{ curr_tag }</div> }
+                    })
+                }
+                </div>
+
             </div>
         }
     }
