@@ -5,12 +5,13 @@ use yew::{
     utils::*,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use wasm_bindgen::prelude::*;
 
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct NoteResponse {
-    pub code: i32,
+    pub code: i64,
 }
 
 #[derive(Debug)]
@@ -27,7 +28,7 @@ pub enum AddNoteMsg {
     SubmitResponse(Result<Vec<NoteResponse>, anyhow::Error>),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct Payload {
     #[serde(rename(serialize = "pnContent", deserialize="pnContent"))]
     note_content: String,
@@ -56,7 +57,7 @@ impl Component for AddNote {
             submit_task: None,
         }
     }
-    fn change(&mut self, props: Self::Properties) -> bool {
+    fn change(&mut self, _props: Self::Properties) -> bool {
         false
     }
 
@@ -95,14 +96,25 @@ impl Component for AddNote {
             }
 
             AddNoteMsg::SubmitNote => {
-                self.content.truncate(self.content.len() - 1); // truncate trailing \n
+                // self.content.truncate(self.content.len() - 1); // truncate trailing \n (... note
+                // this doesn't
+                // work since the submitnote triggers before editnote)
                 log::info!("self.content {:?}", self.content);
                 log::info!("self.content.clone() {:?}", self.content.clone());
                 log::info!("submit note: {:?}", self.content);
                 let query = "http://localhost:3000/submit/note";
+                let payload = Payload {
+                    note_content: self.content.clone(),
+                    tags: self.tags.clone(),
+                };
+                let body = json!({"pnContent": self.content.clone(),
+                                       "pnTags": self.tags.clone()});
                 let request = Request::post(query)
-                    .body(Nothing)
+                    .header("Content-Type", "application/json")
+                    .body(Json(&body))
                     .expect("Could not build request.");
+                log::info!("request is {:?}", request);
+
                 let callback = self.link.callback_once(
                     |response: Response<Json<Result<Vec<NoteResponse>, anyhow::Error>>>| {
                         let Json(data) = response.into_body();
@@ -110,14 +122,14 @@ impl Component for AddNote {
                     },
                 );
                 self.content = String::from(""); // TODO - oninput callback still fires and we're left with a black note
-                log::info!("request is {:?}", request);
-                // let task = FetchService::fetch(request, callback).expect("failed to start request");
-                // self.cache_task = Some(task);
+                log::info!("request payload {:?}", payload);
+                let task = FetchService::fetch(request, callback).expect("failed to start request");
+                self.submit_task = Some(task);
                 true
             }
 
             AddNoteMsg::SubmitResponse(data) => {
-                log::info!("submitted");
+                log::info!("submitted, response code received {:?}", data);
                 true
             }
 
@@ -138,7 +150,8 @@ impl Component for AddNote {
                 <input type="text" class="tag-input" placeholder="tag" id="tagInput"
                     value = { &self.tag }
                     oninput = { self.link.callback(move |e: InputData| AddNoteMsg::TagEdit(e.value)) }
-                    onkeydown={ self.link.callback(move |e: KeyboardEvent| AddNoteMsg::TagKeyDown(e)) } />
+                    onkeydown= { self.link.callback(move |e: KeyboardEvent| AddNoteMsg::TagKeyDown(e)) }
+                />
                 <p/>
 
                 <textarea rows="8" class="note-input"  placeholder="Enter to submit" id="noteContent"
@@ -157,7 +170,7 @@ impl Component for AddNote {
                 <div>
                 {
                     for self.tags.iter().map(|mut curr_tag| {
-                        html!{ <div>{ curr_tag }</div> }
+                        html!{ <div class="topic-tag">{ curr_tag }</div> }
                     })
                 }
                 </div>

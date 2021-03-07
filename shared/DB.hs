@@ -454,3 +454,9 @@ addTag entryID tag = do
   r <- lastInsertRowId conn
   close conn
   pure r
+
+wipeTesting :: IO ()
+wipeTesting = do
+  putStrLn "removing entries and tags where tags==\"testing\""
+  bracketExecute "delete from entries where entries.entry_id in (select tags.entry_id from tags where tag==\"testing\")";
+  bracketExecute "delete from tags where tag==\"testing\"";
