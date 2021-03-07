@@ -8,6 +8,7 @@ use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{
     format::{Json, Nothing},
     prelude::*,
+    utils::host
 };
 
 use yew_router::prelude::*;
@@ -72,6 +73,7 @@ impl Component for App {
     type Properties = ();
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let server = host().unwrap();
         log::info!("Creating component");
         let cb = link.callback_once(|_: String| AppMsg::GetEntries);
         cb.emit("".to_string()); // TODO - what's the right way to handle a message without parameters
@@ -85,7 +87,7 @@ impl Component for App {
             selected_tags: HashSet::new(),
             link,
             error: None,
-            query: "http://localhost:3000/all/cache".to_string(),
+            query: format!("http://{}/all/cache", server).to_string(),
         }
     }
 
@@ -94,6 +96,8 @@ impl Component for App {
     }
 
     fn update(&mut self, msg: Self::Message) -> bool {
+        let server = host().unwrap();
+        log::info!("host is {:?}", server);
         match msg {
             AppMsg::GetEntries => {
                 // define request
@@ -113,7 +117,7 @@ impl Component for App {
                 self.cache_task = Some(task);
                 // define request
                 log::info!("submitting tag request");
-                let request = Request::get("http://localhost:3000/all/tags")
+                let request = Request::get(format!("http://{}/all/tags", server))
                     .body(Nothing)
                     .expect("Could not build request.");
                 // define callback
@@ -164,7 +168,7 @@ impl Component for App {
             AppMsg::TagClick(tag_name) => {
                 log::info!("tag click event");
                 log::info!("{:?}", tag_name);
-                let query = format!("http://localhost:3000/all/cache?sort=time&tag={}", tag_name);
+                let query = format!("http://{}/all/cache?sort=time&tag={}", server, tag_name);
                 log::info!("Query is: {:?}", &query);
                 self.query = query; // TODO - make queryparams compose
                 self.link.send_message(AppMsg::GetEntries);
@@ -172,13 +176,13 @@ impl Component for App {
             }
             AppMsg::SortByDate => {
                 log::info!("sort date");
-                self.query = "http://localhost:3000/all/cache?sort=time".to_string();
+                self.query = format!("http://{}/all/cache?sort=time", server).to_string();
                 self.link.send_message(AppMsg::GetEntries);
                 false
             }
             AppMsg::SortByUrl => {
                 log::info!("sort url");
-                self.query = "http://localhost:3000/all/cache?sort=url".to_string();
+                self.query = format!("http://{}/all/cache?sort=url", server).to_string();
                 self.link.send_message(AppMsg::GetEntries);
                 false
             }

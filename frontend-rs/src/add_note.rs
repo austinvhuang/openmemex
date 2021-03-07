@@ -62,6 +62,7 @@ impl Component for AddNote {
     }
 
     fn update(&mut self, msg: Self::Message) -> bool {
+        let server = host().unwrap();
         match msg {
             AddNoteMsg::NoteEdit(content) => {
                 log::info!("note edit {:?}", content);
@@ -102,7 +103,7 @@ impl Component for AddNote {
                 log::info!("self.content {:?}", self.content);
                 log::info!("self.content.clone() {:?}", self.content.clone());
                 log::info!("submit note: {:?}", self.content);
-                let query = "http://localhost:3000/submit/note";
+                let query = format!("http://{}/submit/note", server);
                 let payload = Payload {
                     note_content: self.content.clone(),
                     tags: self.tags.clone(),

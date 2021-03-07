@@ -42,9 +42,7 @@ impl Cards {
 
                             html! {
                                 <div class="card" onmouseover=self.link.callback(|m| { CardsMsg::CardMouseOver(m) })>
-                                    <h4>
                                         { item.date.clone() }
-                                    </h4>
                                     <hr/>
                                     <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
                                     <img src=thumbnail_file width="100%"/>

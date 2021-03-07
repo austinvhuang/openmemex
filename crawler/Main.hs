@@ -28,6 +28,32 @@ urlTransformations = arxivTransform
 
 newtype Timeout = Timeout Int
 
+data Config = Config {
+  windowSize :: (Int, Int),
+  timeBudget :: Int,
+  dirScreenshots :: String,
+  dirThumbnails :: String,
+  dirOCR :: String
+} deriving Show
+
+configDefault = Config {
+  windowSize = (600, 800),
+  timeBudget = 30000,
+  dirScreenshots = "screenshots",
+  dirThumbnails = "thumbnails",
+  dirOCR = "ocr"
+  }
+
+configBig = Config {
+  windowSize = (1024, 2048),
+  timeBudget = 30000,
+  dirScreenshots = "screenshots_lrg",
+  dirThumbnails = "thumbnails_lrg",
+  dirOCR = "ocr_lrg"
+  }
+
+-- TODO - use a configuration
+
 idURL :: String -> URLType
 idURL url
   -- order of pdf should come before arxivurl to take precedence
