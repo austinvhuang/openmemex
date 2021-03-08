@@ -42,6 +42,15 @@ impl App {
     fn view_navbar(&self) -> Html {
         html! {
             <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                /*
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbarNav">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span> 
+                    </button>
+                </div>
+                */
                 <a class="navbar-brand" href="#"> { "note2self" } </a>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
