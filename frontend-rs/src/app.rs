@@ -57,13 +57,11 @@ impl App {
                         <li class="nav-item active">
                             <Link route=AppRoute::Gallery><div class="nav-link">{ "Gallery" }</div></Link>
                         </li>
-                        /*
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">{ "Timeline" }</a>
-                        </li>
-                        */
                         <li class="nav-item" accesskey="a">
                             <Link route=AppRoute::AddNote><div class="nav-link">{ "Add Note" }</div></Link>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">{ "Detail" }</a>
                         </li>
                         /*
                         <li class="nav-item">
