@@ -45,7 +45,10 @@ impl Cards {
                                         { item.date.clone() }
                                     <hr/>
                                     <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
-                                    <img src=thumbnail_file width="100%"/>
+                                    // <img src=thumbnail_file width="100%" style="height: 100px; overflow: hidden;"/>
+                                    <center>
+                                        <img src=thumbnail_file style="height: 200px; overflow: hidden;"/>
+                                    </center>
                                     </a>
                                     {
                                         match &parsed {

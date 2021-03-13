@@ -33,19 +33,20 @@ margin: 40px 80px;
 }
 
 .card {
-  box-shadow 0px 5px 10px 0px rgba(0, 0, 0, 0.2),
-    0px 4px 4px 0px rgba(0, 0, 0, 0.15), 0px 2px 2px 0px rgba(0, 0, 0, 0.2);
+  box-shadow 0px 5px 10px 0px rgba(0, 0, 0, 0.2);
   border-radius: 5px;
   float: left;
-  margin-bottom: 5px;
-  margin-top: 5px;
+  margin-bottom: 25px;
+  margin-top: 0px;
+  margin-left: 10px;
+  margin-right: 10px;
   padding: 10px;
   text-align: left;
 }
 
 .cards {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   grid-column-gap: 4px;
   animation: fade 2s linear;
 }
@@ -88,6 +89,35 @@ margin: 40px 80px;
   font-size: 10pt;
 }
 
+@keyframes anim-hover-color {
+  from {background-color: #ffffff;}
+  to {background-color: #ccccff;}
+}
+
+@keyframes anim-select-color {
+  from {background-color: #ccccff;}
+  to {background-color: #bbbbbb;}
+}
+
+.topic-tag-hover {
+  border-radius: 5px;
+  border-width: 1px;
+  float: left;
+  margin-bottom: 5px;
+  margin-top: 5px;
+  margin-right: 5px;
+  padding: 10px;
+  text-align: left;
+  background-color: #ccccff;
+  animation-name: anim-hover-color;
+  animation-duration: .5s;
+  border-style: solid;
+  border-color: #cccccc;
+  width: 100px;
+  font-size: 10pt;
+}
+
+
 .topic-tag-selected {
   border-radius: 5px;
   border-width: 1px;
@@ -97,7 +127,9 @@ margin: 40px 80px;
   margin-right: 5px;
   padding: 10px;
   text-align: left;
-  background-color: green;
+  background-color: #bbbbbb;
+  animation-name: anim-select-color;
+  animation-duration: .5s;
   border-style: solid;
   border-color: #cccccc;
   width: 100px;

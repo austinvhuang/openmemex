@@ -131,7 +131,7 @@ cacheEntries = do
       (filt links) -- for testing
   let cacheEntries = crawlerOutput2cache $ zip3 (filt linkEntries) (filt links) (filt pages)
   writeCache cacheEntries
-  pPrint pages
+  -- pPrint pages
 
 screenshotEntries :: Bool -> Timeout -> IO ()
 screenshotEntries deltaOnly timeout = do

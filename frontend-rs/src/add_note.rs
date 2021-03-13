@@ -1,13 +1,12 @@
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use wasm_bindgen::prelude::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{
     format::{Json, Nothing},
     prelude::*,
     utils::*,
 };
-use serde::{Deserialize, Serialize};
-use serde_json::json;
-use wasm_bindgen::prelude::*;
-
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct NoteResponse {
@@ -16,7 +15,6 @@ pub struct NoteResponse {
 
 #[derive(Debug)]
 pub enum AddNoteMsg {
-
     NoteEdit(String),
     NoteKeyDown(KeyboardEvent),
     SubmitNote,
@@ -30,15 +28,15 @@ pub enum AddNoteMsg {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Payload {
-    #[serde(rename(serialize = "pnContent", deserialize="pnContent"))]
+    #[serde(rename(serialize = "pnContent", deserialize = "pnContent"))]
     note_content: String,
-    #[serde(rename(serialize = "pnTags", deserialize="pnTags"))]
+    #[serde(rename(serialize = "pnTags", deserialize = "pnTags"))]
     tags: Vec<String>,
 }
 
 pub struct AddNote {
     content: String, // holds text in the note input
-    tag: String, // holds text in the tag input
+    tag: String,     // holds text in the tag input
     tags: Vec<String>,
     link: ComponentLink<Self>,
     submit_task: Option<FetchTask>,
@@ -140,7 +138,6 @@ impl Component for AddNote {
                 log::info!("tag list: {:?}", self.tags);
                 true
             }
-
         }
     }
 
@@ -156,10 +153,10 @@ impl Component for AddNote {
                 <p/>
 
                 <textarea rows="8" class="note-input"  placeholder="Enter to submit" id="noteContent"
-                    value = { &self.content } 
+                    value = { &self.content }
                     oninput={ self.link.callback(move |e: InputData| AddNoteMsg::NoteEdit(e.value)) }
-                    onkeydown={ self.link.batch_callback(move 
-                        |e: KeyboardEvent| 
+                    onkeydown={ self.link.batch_callback(move
+                        |e: KeyboardEvent|
                             if e.key() == "Enter" {
                                 vec![AddNoteMsg::NoteKeyDown(e)]
                             } else {

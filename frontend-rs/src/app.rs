@@ -8,7 +8,7 @@ use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{
     format::{Json, Nothing},
     prelude::*,
-    utils::host
+    utils::host,
 };
 
 use yew_router::prelude::*;
@@ -33,7 +33,7 @@ pub enum AppMsg {
     ReceiveEntries(Result<Vec<Cache>, anyhow::Error>),
     ReceiveTags(Result<Vec<String>, anyhow::Error>),
     KeyDown,
-    TagClick(String),
+    TagClick(Option<String>),
     SortByDate,
     SortByUrl,
 }
@@ -47,7 +47,7 @@ impl App {
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbarNav">
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
-                        <span class="icon-bar"></span> 
+                        <span class="icon-bar"></span>
                     </button>
                 </div>
                 */
@@ -58,10 +58,13 @@ impl App {
                             <Link route=AppRoute::Gallery><div class="nav-link">{ "Gallery" }</div></Link>
                         </li>
                         <li class="nav-item" accesskey="a">
-                            <Link route=AppRoute::AddNote><div class="nav-link">{ "Add Note" }</div></Link>
+                            <Link route=AppRoute::AddNote><div class="nav-link">{ "Create" }</div></Link>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">{ "Detail" }</a>
+                            <a class="nav-link" href="#">{ "Detail (TODO)" }</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">{ "Queue (TODO)" }</a>
                         </li>
                         /*
                         <li class="nav-item">
@@ -172,12 +175,19 @@ impl Component for App {
                 log::info!("keydown event");
                 false
             }
-            AppMsg::TagClick(tag_name) => {
+            AppMsg::TagClick(tag) => {
                 log::info!("tag click event");
-                log::info!("{:?}", tag_name);
-                let query = format!("http://{}/all/cache?sort=time&tag={}", server, tag_name);
+                log::info!("{:?}", tag);
+                let query = match tag {
+                    Some(tag_name) => {
+                        format!("http://{}/all/cache?sort=time&tag={}", server, tag_name)
+                    }
+                    None => {
+                        format!("http://{}/all/cache?sort=time", server)
+                    }
+                };
                 log::info!("Query is: {:?}", &query);
-                self.query = query; // TODO - make queryparams compose
+                self.query = query.clone(); // TODO - make queryparams compose
                 self.link.send_message(AppMsg::GetEntries);
                 false
             }
@@ -204,14 +214,16 @@ impl Component for App {
         let gallery = html! {
             <div>
                 <div>
-                    <input type="text" class="search-input" placeholder="Search" accesskey="/" />
+                    <input type="text" class="search-input" placeholder="TODO DPR Search" accesskey="/" />
                 </div>
+                <center>
                 <div class="btn-group">
                     <button class="sort-button" onclick=self.link.callback(|m| { AppMsg::SortByDate
                         })>{"Sort by Date"}</button>
                     <button class="sort-button" onclick=self.link.callback(|m| { AppMsg::SortByUrl
                         })>{"Sort by Url"}</button>
                 </div>
+                </center>
                 <p/>
                 <div class="twocol">
                     <Cards entries=self.entries.clone()/>
