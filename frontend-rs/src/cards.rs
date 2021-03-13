@@ -23,6 +23,7 @@ pub struct Props {
 
 impl Cards {
     fn view_card(&self, parsed: &Result<Url, url::ParseError>, thumbnail_file: &String, item: &Cache) -> Html {
+        let img_style = "height: 200px; overflow: hidden; -webkit-filter: grayscale(90%); filter: grayscale(90%);";
         html! {
             <div class="card shadow p-3 mb-5 bg-body rounded" onmouseover=self.link.callback(|m| { CardsMsg::CardMouseOver(m) })>
                     { item.date.clone() }
@@ -30,7 +31,7 @@ impl Cards {
                 <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
                 // <img src=thumbnail_file width="100%" style="height: 100px; overflow: hidden;"/>
                 <center>
-                    <img src=thumbnail_file style="height: 200px; overflow: hidden;"/>
+                    <img src=thumbnail_file style=img_style class="shadow-sm bg-white rounded"/>
                 </center>
                 </a>
                 {
@@ -39,9 +40,23 @@ impl Cards {
                         Err(error) => { "" }
                     }
                 }
+
+                {
+                    match item.url.as_ref() {
+                        Some(url) => html! {
+                            <a href={ url.to_string() }> { item.content.clone().unwrap_or("".to_owned()) } </a>
+                        },
+                        None => html! {
+                            { item.content.clone().unwrap_or("".to_owned()) }
+                        }
+                    }
+                }
+
+                /*
                 <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
                     { item.content.clone().unwrap_or("".to_owned()) }
                 </a>
+                */
             </div>
         }
     }
@@ -66,29 +81,7 @@ impl Cards {
                                 },
                                 Nothing => "".to_string()
                             };
-                            self.view_card(&parsed, &thumbnail_file, &item);
-
-                            html! {
-                                <div class="card shadow p-3 mb-5 bg-body rounded" onmouseover=self.link.callback(|m| { CardsMsg::CardMouseOver(m) })>
-                                        { item.date.clone() }
-                                    <hr/>
-                                    <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
-                                    // <img src=thumbnail_file width="100%" style="height: 100px; overflow: hidden;"/>
-                                    <center>
-                                        <img src=thumbnail_file style="height: 200px; overflow: hidden;"/>
-                                    </center>
-                                    </a>
-                                    {
-                                        match &parsed {
-                                            Ok(x) => { x.host_str().unwrap() }
-                                            Err(error) => { "" }
-                                        }
-                                    }
-                                    <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
-                                        { item.content.clone().unwrap_or("".to_owned()) }
-                                    </a>
-                                </div>
-                            }
+                            self.view_card(&parsed, &thumbnail_file, &item)
                         })
                     }
                 }
