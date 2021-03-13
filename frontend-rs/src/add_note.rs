@@ -145,14 +145,14 @@ impl Component for AddNote {
         html! {
             <div>
 
-                <input type="text" class="tag-input" placeholder="tag" id="tagInput"
+                <input type="text" class="tag-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="tag" id="tagInput"
                     value = { &self.tag }
                     oninput = { self.link.callback(move |e: InputData| AddNoteMsg::TagEdit(e.value)) }
                     onkeydown= { self.link.callback(move |e: KeyboardEvent| AddNoteMsg::TagKeyDown(e)) }
                 />
                 <p/>
 
-                <textarea rows="8" class="note-input"  placeholder="Enter to submit" id="noteContent"
+                <textarea rows="8" class="note-input shadow-sm p-3 mb-5 bg-white rounded"  placeholder="note" id="noteContent"
                     value = { &self.content }
                     oninput={ self.link.callback(move |e: InputData| AddNoteMsg::NoteEdit(e.value)) }
                     onkeydown={ self.link.batch_callback(move

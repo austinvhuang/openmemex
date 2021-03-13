@@ -6,6 +6,7 @@ mod api;
 mod app;
 mod app_router;
 mod cards;
+mod detail;
 mod tags;
 
 use wasm_bindgen::prelude::*;

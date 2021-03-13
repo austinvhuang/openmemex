@@ -58,6 +58,9 @@ margin: 40px 80px;
 
 .sort-button {
   width: 300px;
+  margin-top: 10px;
+  margin-left: 15px;
+  margin-right: 15px;
   float: center;
   background-color:white;
   font-size: 16pt;

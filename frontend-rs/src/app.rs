@@ -2,6 +2,7 @@ use crate::add_note::*;
 use crate::api::*;
 use crate::app_router::*;
 use crate::cards::*;
+use crate::detail::*;
 use crate::tags::*;
 use std::collections::HashSet;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
@@ -60,8 +61,8 @@ impl App {
                         <li class="nav-item" accesskey="a">
                             <Link route=AppRoute::AddNote><div class="nav-link">{ "Create" }</div></Link>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">{ "Detail (TODO)" }</a>
+                        <li class="nav-item" accesskey="d">
+                            <Link route=AppRoute::Detail><div class="nav-link">{ "Detail" }</div></Link>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">{ "Queue (TODO)" }</a>
@@ -127,7 +128,7 @@ impl Component for App {
                 self.cache_task = Some(task);
                 // define request
                 log::info!("submitting tag request");
-                let request = Request::get(format!("http://{}/all/tags", server))
+                let request = Request::get(format!("http://{}/all/tags?min=5", server))
                     .body(Nothing)
                     .expect("Could not build request.");
                 // define callback
@@ -214,14 +215,14 @@ impl Component for App {
         let gallery = html! {
             <div>
                 <div>
-                    <input type="text" class="search-input" placeholder="TODO DPR Search" accesskey="/" />
+                    <input type="text" class="search-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="TODO DPR Search" accesskey="/" />
                 </div>
                 <center>
                 <div class="btn-group">
-                    <button class="sort-button" onclick=self.link.callback(|m| { AppMsg::SortByDate
-                        })>{"Sort by Date"}</button>
-                    <button class="sort-button" onclick=self.link.callback(|m| { AppMsg::SortByUrl
-                        })>{"Sort by Url"}</button>
+                    <button class="sort-button shadow-sm p-3 mb-5 bg-white rounded" onclick=self.link.callback(|m| { AppMsg::SortByDate
+                        })> {"▼ Date"}</button>
+                    <button class="sort-button shadow-sm p-3 mb-5 bg-white rounded" onclick=self.link.callback(|m| { AppMsg::SortByUrl
+                        })>{"▼ Url"}</button>
                 </div>
                 </center>
                 <p/>
@@ -235,6 +236,7 @@ impl Component for App {
         let render = Router::render(move |switch: AppRoute| match switch {
             AppRoute::Gallery => gallery.clone(),
             AppRoute::AddNote => html! { <AddNote/> },
+            AppRoute::Detail => html! { <Detail/> },
         });
 
         html! {

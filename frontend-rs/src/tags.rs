@@ -22,7 +22,8 @@ pub struct Props {
     pub tag_click_callback: Callback<Option<String>>,
 }
 
-impl Tags {}
+impl Tags {
+}
 
 impl Component for Tags {
     type Message = TagsMsg;
@@ -89,27 +90,17 @@ impl Component for Tags {
                     <div>
                         { for exist_tags.iter().map((move |item: &String| {
                             let hs = self.selected.clone().unwrap_or(HashSet::new());
+                            let mut style = "topic-tag";
+                            if (hovered.eq(item)) {
+                                style = "topic-tag-hover";
+                            }
                             if hs.contains(item) {
-                                log::info!("{:?}", item);
-                                 html! {
-                                    <div class="topic-tag-selected" onclick=callback(item.clone()).clone()>
-                                    { item.clone() }
-                                    </div>
-                                }
-                            } else {
-                                if (hovered.eq(item)) {
-                                 html! {
-                                    <div class="topic-tag-hover" onclick=callback(item.clone()).clone() onmouseover=hover_callback(item.clone()).clone()>
-                                        { item.clone() }
-                                    </div>
-                                    }
-                                } else {
-                                 html! {
-                                    <div class="topic-tag" onclick=callback(item.clone()).clone() onmouseover=hover_callback(item.clone()).clone()>
-                                        { item.clone() }
-                                    </div>
-                                    }
-                                }
+                                style = "topic-tag-selected";
+                            } 
+                            html! {
+                                <div class= { style } onclick=callback(item.clone()).clone() onmouseover=hover_callback(item.clone()).clone()>
+                                { item.clone() }
+                                </div>
                             }
                          }).clone() )
                         }

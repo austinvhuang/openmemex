@@ -17,7 +17,8 @@ impl Component for Detail {
     type Properties = ();
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
-
+        Self {
+        }
     }
 
     fn change(&mut self, _props: Self::Properties) -> bool {
@@ -25,7 +26,7 @@ impl Component for Detail {
     }
 
     fn update(&mut self, msg: Self::Message) -> bool {
-
+        false
     }
 
     fn view(&self) -> Html {
@@ -35,3 +36,4 @@ impl Component for Detail {
         }
 
     }
+}

@@ -179,11 +179,13 @@ queryRange startYear startMonth startDay endYear endMonth endDay = do
 
 -- | Returns a unique list of all tags
 -- See https://stackoverflow.com/questions/32098328/no-instance-for-database-sqlite-simple-fromfield-fromfield-char
-allTags :: IO [String]
-allTags = do
+allTags :: Maybe Int -> IO [String]
+allTags minCount = do
   hPutStrLn stderr "allTags"
   conn <- open dbFile
-  let queryString = Query $ pack "SELECT distinct tag from tags order by tag"
+  let queryString = case minCount of 
+                      Nothing -> Query $ pack "SELECT distinct tag from tags order by tag"
+                      (Just minCount) -> Query $ pack $ "SELECT tag FROM tags GROUP BY tag HAVING count(*) > " ++ show minCount ++ " ORDER BY tag" -- TODO - don't use show
   r <- query_ conn queryString :: IO [[String]]
   close conn
   pure $ concat r

@@ -55,7 +55,7 @@ type RangeAPI =
     :> Capture "day" Int
     :> Get '[JSON] [Entry]
 
-type AllTagsAPI = "all" :> "tags" :> Get '[JSON] [String]
+type AllTagsAPI = "all" :> "tags" :> QueryParam "min" Int :> Get '[JSON] [String]
 
 type AllEntriesAPI = "all" :> "entries" :> Get '[JSON] [Entry]
 
@@ -117,8 +117,8 @@ queryDateH y m d = liftIO $ queryDate y m d :: Handler [Entry]
 queryRangeH :: Int -> Int -> Int -> Int -> Int -> Int -> Handler [Entry]
 queryRangeH y1 m1 d1 y2 m2 d2 = (liftIO $ queryRange y1 m1 d1 y2 m2 d2) :: Handler [Entry]
 
-allTagsH :: Handler [String]
-allTagsH = liftIO allTags
+allTagsH :: Maybe Int -> Handler [String]
+allTagsH minCount = liftIO $ allTags minCount
 
 allEntriesH :: Handler [Entry]
 allEntriesH = liftIO allEntries
