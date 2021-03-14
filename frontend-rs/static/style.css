@@ -102,7 +102,6 @@ margin: 40px 80px;
 .topic-tags {
 }
 
-
 .topic-tag {
   border-radius: 5px;
   border-width: 1px;
@@ -129,6 +128,11 @@ margin: 40px 80px;
   to {background-color: #bbbbbb;}
 }
 
+@keyframes anim-deselect-color {
+  from {background-color: #bbbbbb;}
+  to {background-color: #ffffff;}
+}
+
 .topic-tag-hover {
   border-radius: 5px;
   border-width: 1px;
@@ -147,7 +151,6 @@ margin: 40px 80px;
   /* font-size: 10pt; */
 }
 
-
 .topic-tag-selected {
   border-radius: 5px;
   border-width: 1px;
@@ -159,6 +162,24 @@ margin: 40px 80px;
   text-align: left;
   background-color: #bbbbbb;
   animation-name: anim-select-color;
+  animation-duration: .5s;
+  border-style: solid;
+  border-color: #cccccc;
+  width: 140px;
+  /* font-size: 10pt; */
+}
+
+.topic-tag-deselect {
+  border-radius: 5px;
+  border-width: 1px;
+  float: left;
+  margin-bottom: 5px;
+  margin-top: 5px;
+  margin-right: 5px;
+  padding: 10px;
+  text-align: left;
+  background-color: #ffffff;
+  animation-name: anim-deselect-color;
   animation-duration: .5s;
   border-style: solid;
   border-color: #cccccc;
