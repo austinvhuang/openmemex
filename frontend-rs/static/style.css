@@ -18,8 +18,26 @@ margin: 40px 80px;
 }
 
 .search-input {
-  width: 100%;
+  width: 60%;
   font-size: 24pt;
+}
+
+
+.sort-button {
+  width: 15%;
+  /*
+  margin-top: 0px;
+  margin-left: 15px;
+  */
+  margin-right: 15px;
+  float: center;
+  background-color:white;
+  font-size: 24pt;
+  border-color: #cccccc;
+  /*
+  border-radius: 5px;
+  border-width: 1px;
+  */
 }
 
 .note-input {
@@ -44,29 +62,43 @@ margin: 40px 80px;
   text-align: left;
 }
 
+@keyframes anim-card-img {
+  from {
+    -webkit-filter: grayscale(90%);
+    filter: grayscale(90%);
+  }
+  to {
+    -webkit-filter: grayscale(10%);
+    filter: grayscale(10%);
+  }
+}
+
+.card-img-background {
+  -webkit-filter: grayscale(90%);
+  filter: grayscale(90%);
+}
+
+.card-img-background {
+  -webkit-filter: grayscale(90%);
+  filter: grayscale(90%);
+}
+
+.card-img-foreground {
+  -webkit-filter: grayscale(10%);
+  filter: grayscale(10%);
+  animation-name: anim-card-img;
+  animation-duration: 0.5s;
+}
+
 .cards {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
   grid-column-gap: 4px;
-  animation: fade 2s linear;
 }
 
 .card-image {
   position: relative;
   bottom: 0;
-}
-
-.sort-button {
-  width: 300px;
-  margin-top: 0px;
-  margin-left: 15px;
-  margin-right: 15px;
-  float: center;
-  background-color:white;
-  font-size: 24pt;
-  border-color: #cccccc;
-  border-radius: 5px;
-  border-width: 1px;
 }
 
 .main-top {

@@ -43,6 +43,7 @@ impl App {
     fn view_navbar(&self) -> Html {
         html! {
             <nav class="navbar navbar-expand-lg navbar-light bg-light">
+
                 /*
                 <div class="navbar-header">
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbarNav">
@@ -52,6 +53,7 @@ impl App {
                     </button>
                 </div>
                 */
+
                 <a class="navbar-brand" href="#"> { "note2self" } </a>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
@@ -63,6 +65,9 @@ impl App {
                         </li>
                         <li class="nav-item" accesskey="d">
                             <Link route=AppRoute::Detail><div class="nav-link">{ "Detail" }</div></Link>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">{ "Latent Space (TODO)" }</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">{ "Queue (TODO)" }</a>
@@ -212,19 +217,17 @@ impl Component for App {
         let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
         let callback = self.link.callback(move |tag| AppMsg::TagClick(tag));
 
+        let button_class = "sort-button shadow-sm p-3 mb-5 bg-white rounded";
+
         let gallery = html! {
             <div>
                 <div>
-                    <input type="text" class="search-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="TODO DPR Search" accesskey="/" />
-                </div>
-                <center>
-                <div class="btn-group">
-                    <button class="sort-button shadow-sm p-3 mb-5 bg-white rounded" onclick=self.link.callback(|m| { AppMsg::SortByDate
+                    <button class=button_class onclick=self.link.callback(|m| { AppMsg::SortByDate
                         })> {"▼ Date"}</button>
-                    <button class="sort-button shadow-sm p-3 mb-5 bg-white rounded" onclick=self.link.callback(|m| { AppMsg::SortByUrl
+                    <button class=button_class onclick=self.link.callback(|m| { AppMsg::SortByUrl
                         })>{"▼ Url"}</button>
+                    <input type="text" class="search-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="Search" accesskey="/" />
                 </div>
-                </center>
                 <p/>
                 <div class="twocol">
                     <Cards entries=self.entries.clone()/>
@@ -236,7 +239,7 @@ impl Component for App {
         let render = Router::render(move |switch: AppRoute| match switch {
             AppRoute::Gallery => gallery.clone(),
             AppRoute::AddNote => html! { <AddNote/> },
-            AppRoute::Detail => html! { <Detail/> },
+            AppRoute::Detail => html! { <Detail entry=None/> }, // TODO - fix entry hack
         });
 
         html! {

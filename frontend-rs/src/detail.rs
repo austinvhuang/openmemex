@@ -1,23 +1,37 @@
+use crate::api::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{
     format::{Json, Nothing},
     prelude::*,
     utils::*,
 };
+use yew::Properties;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use wasm_bindgen::prelude::*;
 
-pub struct Detail {
+pub enum DetailMsg {
 
 }
 
-impl Component for Detail {
-    type Message = ();
-    type Properties = ();
+pub struct Detail {
+    pub link: ComponentLink<Self>,
+    pub entry: Option<Entry>,
+}
 
-    fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
+#[derive(Properties, Clone)]
+pub struct Props {
+    pub entry: Option<Entry>,
+}
+
+impl Component for Detail {
+    type Message = DetailMsg;
+    type Properties = Props;
+
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
+            link: link,
+            entry: props.entry,
         }
     }
 
@@ -32,6 +46,9 @@ impl Component for Detail {
     fn view(&self) -> Html {
         html! {
             <div>
+                <h1>
+                { "Detail" }
+                </h1>
             </div>
         }
 

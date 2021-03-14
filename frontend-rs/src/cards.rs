@@ -4,7 +4,7 @@ use yew::prelude::*;
 
 #[derive(Debug)]
 pub enum CardsMsg {
-    CardMouseOver(MouseEvent),
+    CardMouseOver(MouseEvent, i32),
     CardClick(MouseEvent, i32),
 }
 
@@ -23,15 +23,46 @@ pub struct Props {
 
 impl Cards {
     fn view_card(&self, parsed: &Result<Url, url::ParseError>, thumbnail_file: &String, item: &Cache) -> Html {
-        let img_style = "height: 200px; overflow: hidden; -webkit-filter: grayscale(90%); filter: grayscale(90%);";
+
+        //let img_style = "height: 200px; overflow: hidden;";
+        let img_style = "width: 80%;";
+            
+        /*
+        let img_style = if item.entry_id != self.entry_id_mouseover.unwrap_or(-1) {
+            // log::info!("no match entry id {:?} vs {:?}", item.entry_id, self.entry_id_mouseover.unwrap_or(-1));
+            "height: 200px; overflow: hidden; -webkit-filter: grayscale(90%); filter: grayscale(90%);"
+        } else {
+            "height: 200px; overflow: hidden;"
+        };
+        */
+
+        let img_class = if item.entry_id != self.entry_id_mouseover.unwrap_or(-1) {
+            "card-img-background shadow-sm bg-white rounded"
+        } else {
+            "card-img-foreground shadow-sm bg-white rounded"
+        };
+
+        let div_class = if item.entry_id != self.entry_id_click.unwrap_or(-1) {
+            "card shadow p-3 mb-5 bg-body rounded"
+        } else {
+            "card shadow-none p-3 mb-5 bg-light rounded"
+        };
+
+        let callback_mouseover = |entry_id| { 
+            self.link.callback(move |m| { CardsMsg::CardMouseOver(m, entry_id) }) 
+        };
+
+        let callback_click = |entry_id| { 
+            self.link.callback(move |m| { CardsMsg::CardClick(m, entry_id) }) 
+        };
         html! {
-            <div class="card shadow p-3 mb-5 bg-body rounded" onmouseover=self.link.callback(|m| { CardsMsg::CardMouseOver(m) })>
+            <div class={ div_class } onmouseover=callback_mouseover(item.entry_id) onclick = callback_click(item.entry_id)>
                     { item.date.clone() }
                 <hr/>
                 <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
                 // <img src=thumbnail_file width="100%" style="height: 100px; overflow: hidden;"/>
                 <center>
-                    <img src=thumbnail_file style=img_style class="shadow-sm bg-white rounded"/>
+                    <img src=thumbnail_file style=img_style class=img_class/>
                 </center>
                 </a>
                 {
@@ -116,14 +147,20 @@ impl Component for Cards {
         use CardsMsg::*;
         log::info!("update");
         match msg {
-            CardMouseOver(_m) => {
+            CardMouseOver(_m, entry_id) => {
                 log::info!("card mouseover event");
-                false
+                self.entry_id_mouseover = Some(entry_id);
+                true
             }
             CardClick(_m, entry_id) => {
                 // TODO
                 log::info!("clicked {:?}", entry_id);
-                false
+                if self.entry_id_click.unwrap_or(-1) != entry_id {
+                    self.entry_id_click = Some(entry_id);
+                } else {
+                    self.entry_id_click = None;
+                }
+                true
             }
         }
     }
