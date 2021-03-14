@@ -26,6 +26,9 @@ import Servant
 import System.IO (hPutStrLn, stderr)
 import Text.Printf (printf)
 
+import Models
+import Torch
+
 -- API Types
 
 data PostNote = PostNote
@@ -35,7 +38,6 @@ data PostNote = PostNote
   deriving (Show, Generic)
 
 instance ToJSON PostNote
-
 instance FromJSON PostNote
 
 type RootAPI = Get '[JSON] [String]
@@ -71,8 +73,10 @@ type AllAPI = AllTagsAPI :<|> AllEntriesAPI :<|> AllCacheAPI
 
 type LinkEntryTagsAPI = "link" :> "entry" :> "tags" :> QueryParams "filter" String :> Get '[JSON] [EntryTag]
 
+type HelloTorchAPI = "test" :> "torch" :> Capture "value" Float :> Get '[JSON] [TestTorch]
+
 type CombinedAPI =
-  RootAPI :<|> DateAPI :<|> RangeAPI :<|> AllTagsAPI :<|> AllEntriesAPI :<|> AllCacheAPI :<|> ContentAPI :<|> SubmitAPI :<|> FrontendAPI :<|> LinkEntryTagsAPI
+  RootAPI :<|> DateAPI :<|> RangeAPI :<|> AllTagsAPI :<|> AllEntriesAPI :<|> AllCacheAPI :<|> ContentAPI :<|> SubmitAPI :<|> FrontendAPI :<|> LinkEntryTagsAPI :<|> HelloTorchAPI
 
 combinedApi :: Proxy CombinedAPI
 combinedApi = Proxy
@@ -89,6 +93,7 @@ server =
     :<|> postNoteH
     :<|> frontendH
     :<|> linkEntryTagsH
+    :<|> helloTorchH
 
 instance FromHttpApiData SortBy where
   parseUrlPiece value = case value of

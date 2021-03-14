@@ -27,12 +27,13 @@ executable n2s
 executable server
   hs-source-dirs:      server, shared
   main-is:             Main.hs
-  other-modules:       DB, OCR
+  other-modules:       DB, OCR, Models
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , directory
                      , filepath
+                     , hasktorch
                      , servant-server
                      , sqlite-simple
                      , servant-swagger
