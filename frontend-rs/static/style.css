@@ -64,30 +64,25 @@ margin: 40px 80px;
 
 @keyframes anim-card-img {
   from {
-    -webkit-filter: grayscale(90%);
-    filter: grayscale(90%);
+    -webkit-filter: grayscale(95%);
+    filter: grayscale(95%);
   }
   to {
-    -webkit-filter: grayscale(10%);
-    filter: grayscale(10%);
+    -webkit-filter: grayscale(5%);
+    filter: grayscale(5%);
   }
 }
 
 .card-img-background {
-  -webkit-filter: grayscale(90%);
-  filter: grayscale(90%);
-}
-
-.card-img-background {
-  -webkit-filter: grayscale(90%);
-  filter: grayscale(90%);
+  -webkit-filter: grayscale(95%);
+  filter: grayscale(95%);
 }
 
 .card-img-foreground {
-  -webkit-filter: grayscale(10%);
-  filter: grayscale(10%);
+  -webkit-filter: grayscale(5%);
+  filter: grayscale(5%);
   animation-name: anim-card-img;
-  animation-duration: 0.5s;
+  animation-duration: 0.75s;
 }
 
 .cards {

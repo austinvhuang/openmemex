@@ -1,6 +1,7 @@
 use crate::api::*;
 use url::*;
 use yew::prelude::*;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub enum CardsMsg {
@@ -21,20 +22,24 @@ pub struct Props {
     pub entries: Option<Vec<Cache>>,
 }
 
+fn host_simplify(url: &str) -> String {
+    // TODO - don't hard code this
+    match url {
+        "export.arxiv.org" => "Arxiv".to_string(),
+        "www.arxiv.org" => "Arxiv".to_string(),
+        "www.github.com" => "Github".to_string(),
+        "medium.com" => "Medium".to_string(),
+        "www.reddit.com" => "Reddit".to_string(),
+        "twitter.com" => "Twitter".to_string(),
+        "www.youtube.com" => "YouTube".to_string(),
+        _ => url.to_string()
+    }
+}
+
 impl Cards {
     fn view_card(&self, parsed: &Result<Url, url::ParseError>, thumbnail_file: &String, item: &Cache) -> Html {
 
-        //let img_style = "height: 200px; overflow: hidden;";
-        let img_style = "width: 80%;";
-            
-        /*
-        let img_style = if item.entry_id != self.entry_id_mouseover.unwrap_or(-1) {
-            // log::info!("no match entry id {:?} vs {:?}", item.entry_id, self.entry_id_mouseover.unwrap_or(-1));
-            "height: 200px; overflow: hidden; -webkit-filter: grayscale(90%); filter: grayscale(90%);"
-        } else {
-            "height: 200px; overflow: hidden;"
-        };
-        */
+        let img_style = "width: 70%;";
 
         let img_class = if item.entry_id != self.entry_id_mouseover.unwrap_or(-1) {
             "card-img-background shadow-sm bg-white rounded"
@@ -59,18 +64,18 @@ impl Cards {
             <div class={ div_class } onmouseover=callback_mouseover(item.entry_id) onclick = callback_click(item.entry_id)>
                     { item.date.clone() }
                 <hr/>
-                <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
                 // <img src=thumbnail_file width="100%" style="height: 100px; overflow: hidden;"/>
                 <center>
                     <img src=thumbnail_file style=img_style class=img_class/>
                 </center>
-                </a>
+                <center>
                 {
                     match &parsed {
-                        Ok(x) => { x.host_str().unwrap() }
-                        Err(error) => { "" }
+                        Ok(x) => { host_simplify(x.host_str().unwrap()) }
+                        Err(error) => { "".to_string() }
                     }
                 }
+                </center>
 
                 {
                     match item.url.as_ref() {
@@ -148,7 +153,6 @@ impl Component for Cards {
         log::info!("update");
         match msg {
             CardMouseOver(_m, entry_id) => {
-                log::info!("card mouseover event");
                 self.entry_id_mouseover = Some(entry_id);
                 true
             }
