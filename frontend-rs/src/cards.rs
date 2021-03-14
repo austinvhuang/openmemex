@@ -48,7 +48,11 @@ impl Cards {
         };
 
         let div_class = if item.entry_id != self.entry_id_click.unwrap_or(-1) {
-            "card shadow p-3 mb-5 bg-body rounded"
+            if item.entry_id != self.entry_id_mouseover.unwrap_or(-1) {
+                "card shadow p-3 mb-5 bg-body rounded"
+            } else {
+                "card shadow-lg p-3 mb-5 bg-white rounded"
+            }
         } else {
             "card shadow-none p-3 mb-5 bg-light rounded"
         };
@@ -62,7 +66,7 @@ impl Cards {
         };
         html! {
             <div class={ div_class } onmouseover=callback_mouseover(item.entry_id) onclick = callback_click(item.entry_id)>
-                    { item.date.clone() }
+                <center> { &item.date } </center>
                 <hr/>
                 // <img src=thumbnail_file width="100%" style="height: 100px; overflow: hidden;"/>
                 <center>

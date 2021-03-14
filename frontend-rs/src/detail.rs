@@ -6,8 +6,6 @@ use yew::{
     utils::*,
 };
 use yew::Properties;
-use serde::{Deserialize, Serialize};
-use serde_json::json;
 use wasm_bindgen::prelude::*;
 
 pub enum DetailMsg {
@@ -47,7 +45,8 @@ impl Component for Detail {
         html! {
             <div>
                 <h1>
-                { "Detail" }
+                { "Detail - Hello" }
+                    <embed src="http://www.google.com" style="width:500px; height: 300px;"/>
                 </h1>
             </div>
         }

@@ -230,7 +230,7 @@ impl Component for App {
                 </div>
                 <p/>
                 <div class="twocol">
-                    <Cards entries=self.entries.clone()/>
+                    <Cards entries=&self.entries />
                     <Tags tags=exist_tags tag_click_callback=callback/>
                 </div>
             </div>

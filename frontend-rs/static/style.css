@@ -51,8 +51,10 @@ margin: 40px 80px;
 }
 
 .card {
-  box-shadow 0px 5px 10px 0px rgba(0, 0, 0, 0.2);
-  border-radius: 5px;
+  /* box-shadow 0px 5px 10px 0px rgba(0, 0, 0, 0.2); */
+  /* border-radius: 5px; */
+  border: none;
+  border-radius: 0px;
   float: left;
   margin-bottom: 0px;
   margin-top: 0px;
