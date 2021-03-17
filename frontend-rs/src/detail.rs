@@ -14,12 +14,16 @@ pub enum DetailMsg {
 
 pub struct Detail {
     pub link: ComponentLink<Self>,
-    pub entry: Option<Entry>,
+    pub entry: Option<Cache>,
 }
 
 #[derive(Properties, Clone)]
 pub struct Props {
-    pub entry: Option<Entry>,
+    pub entry: Option<Cache>,
+}
+
+fn iframeify_url(url: String) -> String {
+    unimplemented!()
 }
 
 impl Component for Detail {
@@ -33,8 +37,9 @@ impl Component for Detail {
         }
     }
 
-    fn change(&mut self, _props: Self::Properties) -> bool {
-        false
+    fn change(&mut self, props: Self::Properties) -> bool {
+        self.entry = props.entry;
+        true
     }
 
     fn update(&mut self, msg: Self::Message) -> bool {
@@ -44,10 +49,17 @@ impl Component for Detail {
     fn view(&self) -> Html {
         html! {
             <div>
-                <h1>
-                { "Detail - Hello" }
-                    <embed src="http://www.google.com" style="width:500px; height: 300px;"/>
-                </h1>
+                <div class="twocol">
+                    <div>
+                        <iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                        src="https://www.youtube.com/embed/ZOabsYbmBRM" style="width:100%; height: 25vh;"/>
+                    </div>
+                    <div>
+                    <input type="checkbox" id="finished" name="finished" value="finished"/>
+                    <textarea rows="24" class="detail-input shadow-sm p-3 mb-5 bg-white rounded" 
+                    placeholder="notes"/>
+                    </div>
+                </div>
             </div>
         }
 

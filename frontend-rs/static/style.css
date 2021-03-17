@@ -45,9 +45,28 @@ margin: 40px 80px;
   font-size: 24pt;
 }
 
+.detail-input {
+  width: 100%;
+  font-size: 12pt;
+  border-color: #cccccc
+}
+
 .tag-input {
   width: 100%;
   font-size: 24pt;
+}
+
+.card-outline {
+  /* box-shadow 0px 5px 10px 0px rgba(0, 0, 0, 0.2); */
+  border-color: black;
+  border-radius: 5px;
+  float: left;
+  margin-bottom: 0px;
+  margin-top: 0px;
+  margin-left: 10px;
+  margin-right: 10px;
+  padding: 10px;
+  text-align: left;
 }
 
 .card {
@@ -192,6 +211,13 @@ margin: 40px 80px;
 .twocol {
   display: grid;
   grid-template-columns: 3fr 1fr;
+  grid-column-gap: 4px;
+}
+
+
+.twocol-detail {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
   grid-column-gap: 4px;
 }
 

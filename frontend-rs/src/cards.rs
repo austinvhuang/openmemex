@@ -6,7 +6,7 @@ use std::collections::HashMap;
 #[derive(Debug)]
 pub enum CardsMsg {
     CardMouseOver(MouseEvent, i32),
-    CardClick(MouseEvent, i32),
+    CardClick(MouseEvent, i32, Cache),
 }
 
 #[derive(Debug)]
@@ -40,6 +40,7 @@ impl Cards {
     fn view_card(&self, parsed: &Result<Url, url::ParseError>, thumbnail_file: &String, item: &Cache) -> Html {
 
         let img_style = "width: 70%;";
+        let item_clone = item.clone();
 
         let img_class = if item.entry_id != self.entry_id_mouseover.unwrap_or(-1) {
             "card-img-background shadow-sm bg-white rounded"
@@ -62,7 +63,7 @@ impl Cards {
         };
 
         let callback_click = |entry_id| { 
-            self.link.callback(move |m| { CardsMsg::CardClick(m, entry_id) }) 
+            self.link.callback(move |m| { CardsMsg::CardClick(m, entry_id, item_clone.clone()) }) 
         };
         html! {
             <div class={ div_class } onmouseover=callback_mouseover(item.entry_id) onclick = callback_click(item.entry_id)>
@@ -160,7 +161,7 @@ impl Component for Cards {
                 self.entry_id_mouseover = Some(entry_id);
                 true
             }
-            CardClick(_m, entry_id) => {
+            CardClick(_m, entry_id, item) => {
                 // TODO
                 log::info!("clicked {:?}", entry_id);
                 if self.entry_id_click.unwrap_or(-1) != entry_id {

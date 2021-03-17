@@ -16,17 +16,7 @@
 
         <link rel="stylesheet" href="style.css">
 
-        <script src="glider/glider.js"></script>
-        <link rel="stylesheet" href="glider/glider.css">
         <script type="module">
-
-            window.addEventListener('load', function(){
-              new Glider(document.querySelector('.glider'), {
-                'setting-name': 'setting-value'
-              })
-            })
-
-
             import init from "./wasm.js"
             init()
         </script>
