@@ -15,11 +15,13 @@ pub struct Cards {
     pub entries: Option<Vec<Cache>>,
     pub entry_id_mouseover: Option<i32>,
     pub entry_id_click: Option<i32>,
+    pub card_click_callback: Callback<Option<Cache>>,
 }
 
 #[derive(Clone, Properties)]
 pub struct Props {
     pub entries: Option<Vec<Cache>>,
+    pub card_click_callback: Callback<Option<Cache>>,
 }
 
 fn host_simplify(url: &str) -> String {
@@ -145,11 +147,14 @@ impl Component for Cards {
             entries: props.entries,
             entry_id_mouseover: None,
             entry_id_click: None,
+            card_click_callback: props.card_click_callback,
         }
     }
 
     fn change(&mut self, props: Self::Properties) -> bool {
         self.entries = props.entries;
+        self.card_click_callback = props.card_click_callback;
+
         true
     }
 

@@ -47,12 +47,19 @@ impl Component for Detail {
     }
 
     fn view(&self) -> Html {
+        let default = String::from("https://unsplash.it/1920/1080?random");
+        log::info!("Screen {:?}", &self.entry);
+        let src = match &self.entry {
+            Some(entry) => entry.url.as_ref().unwrap_or(&default),
+            None => &default,
+        };
+        log::info!("Screen {:?}", src);
         html! {
             <div>
                 <div class="twocol">
                     <div>
                         <iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                        src="https://www.youtube.com/embed/ZOabsYbmBRM" style="width:100%; height: 25vh;"/>
+                        src=src style="width:100%; height: 25vh;"/>
                     </div>
                     <div>
                     <input type="checkbox" id="finished" name="finished" value="finished"/>

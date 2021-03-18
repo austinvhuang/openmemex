@@ -21,6 +21,7 @@ pub struct App {
     cache_task: Option<FetchTask>,
     tag_task: Option<FetchTask>,
     entries: Option<Vec<Cache>>,
+    selected_entry: Option<Cache>,
     tags: Option<Vec<String>>,
     selected_tags: HashSet<String>,
     link: ComponentLink<Self>,
@@ -34,6 +35,7 @@ pub enum AppMsg {
     ReceiveEntries(Result<Vec<Cache>, anyhow::Error>),
     ReceiveTags(Result<Vec<String>, anyhow::Error>),
     KeyDown,
+    CardClick(Option<Cache>),
     TagClick(Option<String>),
     SortByDate,
     SortByUrl,
@@ -100,6 +102,7 @@ impl Component for App {
             tag_task: None,
             entries: None,
             tags: None,
+            selected_entry: None,
             selected_tags: HashSet::new(),
             link,
             error: None,
@@ -181,6 +184,11 @@ impl Component for App {
                 log::info!("keydown event");
                 false
             }
+            AppMsg::CardClick(entry) => {
+                self.selected_entry = entry;
+                log::info!("selected entry is {:?}", self.selected_entry);
+                true
+            }
             AppMsg::TagClick(tag) => {
                 log::info!("tag click event");
                 log::info!("{:?}", tag);
@@ -215,7 +223,8 @@ impl Component for App {
     fn view(&self) -> Html {
         let empty_vec = &[].to_vec();
         let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
-        let callback = self.link.callback(move |tag| AppMsg::TagClick(tag));
+        let card_callback = self.link.callback(move |tag| AppMsg::CardClick(tag));
+        let tag_callback = self.link.callback(move |tag| AppMsg::TagClick(tag));
 
         let button_class = "sort-button shadow-sm p-3 mb-5 bg-white rounded";
 
@@ -230,16 +239,19 @@ impl Component for App {
                 </div>
                 <p/>
                 <div class="twocol">
-                    <Cards entries=&self.entries />
-                    <Tags tags=exist_tags tag_click_callback=callback/>
+                    <Cards entries=&self.entries card_click_callback=card_callback/>
+                    <Tags tags=exist_tags tag_click_callback=tag_callback/>
                 </div>
             </div>
         };
 
+
+        let entry = self.selected_entry.clone();
+
         let render = Router::render(move |switch: AppRoute| match switch {
             AppRoute::Gallery => gallery.clone(),
             AppRoute::AddNote => html! { <AddNote/> },
-            AppRoute::Detail => html! { <Detail entry=None/> }, // TODO - fix entry hack
+            AppRoute::Detail => html! { <Detail entry=&entry /> }, // TODO - fix entry hack
         });
 
         html! {
