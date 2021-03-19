@@ -248,10 +248,15 @@ impl Component for App {
 
         let entry = self.selected_entry.clone();
 
+
+            log::info!("switch with entry as {:?}", &entry);
         let render = Router::render(move |switch: AppRoute| match switch {
             AppRoute::Gallery => gallery.clone(),
             AppRoute::AddNote => html! { <AddNote/> },
-            AppRoute::Detail => html! { <Detail entry=&entry /> }, // TODO - fix entry hack
+            AppRoute::Detail => {
+                log::info!("switch to detail with entry as {:?}", &entry);
+                html! { <Detail entry=&entry /> } // TODO - fix entry hack
+            },
         });
 
         html! {

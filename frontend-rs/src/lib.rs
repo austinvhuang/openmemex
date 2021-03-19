@@ -7,6 +7,7 @@ mod app;
 mod app_router;
 mod cards;
 mod detail;
+mod external;
 mod tags;
 
 use wasm_bindgen::prelude::*;

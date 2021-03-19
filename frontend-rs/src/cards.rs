@@ -143,7 +143,7 @@ impl Component for Cards {
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         log::info!("Creating cards component");
         Self {
-            link,
+            link: link,
             entries: props.entries,
             entry_id_mouseover: None,
             entry_id_click: None,
@@ -168,11 +168,12 @@ impl Component for Cards {
             }
             CardClick(_m, entry_id, item) => {
                 // TODO
-                log::info!("clicked {:?}", entry_id);
                 if self.entry_id_click.unwrap_or(-1) != entry_id {
                     self.entry_id_click = Some(entry_id);
+                    self.card_click_callback.emit(Some(item));
                 } else {
                     self.entry_id_click = None;
+                    self.card_click_callback.emit(None);
                 }
                 true
             }

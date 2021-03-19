@@ -7,6 +7,7 @@ use yew::{
 };
 use yew::Properties;
 use wasm_bindgen::prelude::*;
+use crate::external::*;
 
 pub enum DetailMsg {
 
@@ -38,12 +39,20 @@ impl Component for Detail {
     }
 
     fn change(&mut self, props: Self::Properties) -> bool {
+        log::info!("updated entry to {:?}", props.entry);
         self.entry = props.entry;
         true
     }
 
     fn update(&mut self, msg: Self::Message) -> bool {
         false
+    }
+
+    
+    fn rendered(&mut self, first_render: bool) {
+        log::info!("calling init_ace");
+        init_ace();
+        log::info!("called init_ace");
     }
 
     fn view(&self) -> Html {
@@ -56,15 +65,25 @@ impl Component for Detail {
         log::info!("Screen {:?}", src);
         html! {
             <div>
-                <div class="twocol">
-                    <div>
-                        <iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                        src=src style="width:100%; height: 25vh;"/>
+                <div class="twocol-equal">
+                    <div class="container shadow p-3 mb-5 bg-body rounded">
+                        <iframe class="responsive-iframe shadow p-3 mb-5 bg-body rounded" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                        src=src style="width:100%; height:90vh;"/>
                     </div>
-                    <div>
-                    <input type="checkbox" id="finished" name="finished" value="finished"/>
-                    <textarea rows="24" class="detail-input shadow-sm p-3 mb-5 bg-white rounded" 
-                    placeholder="notes"/>
+                    <div style="height:80vh" class="shadow p-3 mb-5 bg-body rounded">
+                        /*
+                        <textarea rows="24" class="detail-input shadow-sm p-3 mb-5 bg-white rounded" 
+                        placeholder="notes" style="width:100%;" />
+                        */
+                        <div id="editor" style="height:90%;">
+                            {"# Notes"}
+                        </div>
+                        <div class="item">
+                            // <input type="checkbox" id="finished" name="finished" style="width=20px; height:10%;"/>
+                            <input type="checkbox" id="finished" name="finished"/>
+                            <label style="height:10%;">{"Completed"}</label>
+                        </div>
+
                     </div>
                 </div>
             </div>

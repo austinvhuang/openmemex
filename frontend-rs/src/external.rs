@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use web_sys::console;
+use yew::web_sys::console;
 
 /*
 #[wasm_bindgen]
@@ -8,3 +8,8 @@ extern "C" {
     fn uuidv4() -> JsValue;
 }
 */
+
+#[wasm_bindgen]
+pub extern "C" {
+    pub fn init_ace() -> JsValue;
+}
