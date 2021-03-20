@@ -14,17 +14,30 @@ pub struct Props {
 }
 
 fn grid() -> Html {
-    // TODO - make this work
-    /*
-    (0..1000).step_by(50).into_iter().map(move |x| {
-        (0..1000).step_by(50).into_iter().map(move |y| {
-            html!{
-                <circle id="orange-circle" r="5" cx={x} cy={y} fill="orange" />
+    let mut counter = 0;
+    (0..1000).step_by(20).map(move |x| {
+        (0..1000).step_by(20).map(move |y| {
+            let id = format!("circle-{:?}", counter);
+            counter = counter + 1;
+            html! {
+                <circle id={id} r="5" cx={x} cy={y} fill="orange" />
+
+                /*
+                <animate 
+                href="#orange-circle"
+                attributeName="cx"
+                from="50"
+                to="450" 
+                dur="5s"
+                begin="click"
+                repeatCount="2"
+                fill="freeze" 
+                id="circ-anim" />
+                */
+
             }
-        })
-    })
-    */
-    html! { <circle id="orange-circle" r="5" cx="5" cy="5" fill="orange" />}
+        }).collect::<Html>()
+    }).collect::<Html>()
 }
 
 impl Component for Space {
@@ -48,6 +61,7 @@ impl Component for Space {
     fn view(&self) -> Html {
         html! {
             <div>
+
             <svg height="1000" width="1000">
             {
                 grid()

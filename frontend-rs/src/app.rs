@@ -76,11 +76,6 @@ impl App {
                         <li class="nav-item" accesskey="q">
                             <Link route=AppRoute::Queue><div class="nav-link">{ "Queue" }</div></Link>
                         </li>
-                        /*
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" accesskey="q">{ "Queue" }</a>
-                        </li>
-                        */
                     </ul>
                 </div>
             </nav>
