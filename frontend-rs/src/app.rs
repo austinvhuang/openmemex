@@ -3,6 +3,8 @@ use crate::api::*;
 use crate::app_router::*;
 use crate::cards::*;
 use crate::detail::*;
+use crate::queue::*;
+use crate::space::*;
 use crate::tags::*;
 use std::collections::HashSet;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
@@ -68,11 +70,11 @@ impl App {
                         <li class="nav-item" accesskey="d">
                             <Link route=AppRoute::Detail><div class="nav-link">{ "Detail" }</div></Link>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">{ "Latent Space (TODO)" }</a>
+                        <li class="nav-item" accesskey="s">
+                            <Link route=AppRoute::Space><div class="nav-link">{ "Space" }</div></Link>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">{ "Queue (TODO)" }</a>
+                        <li class="nav-item" accesskey="q">
+                            <Link route=AppRoute::Queue><div class="nav-link">{ "Queue" }</div></Link>
                         </li>
                         /*
                         <li class="nav-item">
@@ -253,10 +255,10 @@ impl Component for App {
         let render = Router::render(move |switch: AppRoute| match switch {
             AppRoute::Gallery => gallery.clone(),
             AppRoute::AddNote => html! { <AddNote/> },
-            AppRoute::Detail => {
-                log::info!("switch to detail with entry as {:?}", &entry);
-                html! { <Detail entry=&entry /> } // TODO - fix entry hack
-            },
+            AppRoute::Detail => html! { <Detail entry=&entry /> }, 
+            AppRoute::Space =>  html! { <Space /> },
+            AppRoute::Queue => html! { <Space /> },
+            
         });
 
         html! {

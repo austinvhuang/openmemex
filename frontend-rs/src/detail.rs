@@ -70,7 +70,7 @@ impl Component for Detail {
                         <iframe class="responsive-iframe shadow p-3 mb-5 bg-body rounded" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
                         src=src style="width:100%; height:90vh;"/>
                     </div>
-                    <div style="height:80vh" class="shadow p-3 mb-5 bg-body rounded">
+                    <div style="height:85vh" class="shadow p-3 mb-5 bg-body rounded">
                         /*
                         <textarea rows="24" class="detail-input shadow-sm p-3 mb-5 bg-white rounded" 
                         placeholder="notes" style="width:100%;" />
@@ -79,7 +79,6 @@ impl Component for Detail {
                             {"# Notes"}
                         </div>
                         <div class="item">
-                            // <input type="checkbox" id="finished" name="finished" style="width=20px; height:10%;"/>
                             <input type="checkbox" id="finished" name="finished"/>
                             <label style="height:10%;">{"Completed"}</label>
                         </div>

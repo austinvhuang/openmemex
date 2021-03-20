@@ -12,6 +12,10 @@ pub enum AppRoute {
     AddNote,
     #[to = "/frontend/detail"]
     Detail,
+    #[to = "/frontend/space"]
+    Space,
+    #[to = "/frontend/queue"]
+    Queue,
     #[to = "/frontend/index.html"]
     Gallery,
 }

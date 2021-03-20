@@ -19,7 +19,7 @@ margin: 40px 80px;
 
 .search-input {
   width: 60%;
-  font-size: 24pt;
+  font-size: 20pt;
 }
 
 
@@ -32,7 +32,7 @@ margin: 40px 80px;
   margin-right: 15px;
   float: center;
   background-color:white;
-  font-size: 24pt;
+  font-size: 20pt;
   border-color: #cccccc;
   /*
   border-radius: 5px;
@@ -42,7 +42,7 @@ margin: 40px 80px;
 
 .note-input {
   width: 100%;
-  font-size: 24pt;
+  font-size: 20pt;
 }
 
 .detail-input {
@@ -53,7 +53,7 @@ margin: 40px 80px;
 
 .tag-input {
   width: 100%;
-  font-size: 24pt;
+  font-size: 20pt;
 }
 
 .card-outline {
@@ -229,7 +229,7 @@ margin: 40px 80px;
 
 .picker {
   width=100%;
-  font-size= 24pt;
+  font-size= 20pt;
 }
 
 .btn-group button {
@@ -245,7 +245,7 @@ margin: 40px 80px;
   position: relative;
   overflow: hidden;
   width: 100%;
-  height: 80vh;
+  height: 85vh;
   padding-top: 56.25%; /* 16:9 Aspect Ratio (divide 9 by 16 = 0.5625) */
 }
 
