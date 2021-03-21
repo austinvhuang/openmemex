@@ -9,7 +9,6 @@
 
 module DB where
 
-import GHC.Int (Int64)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (ToJSON)
 import Data.List (intercalate)
@@ -18,6 +17,7 @@ import Data.Text (Text, pack, unpack)
 import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
 import Database.SQLite.Simple
 import GHC.Generics (Generic)
+import GHC.Int (Int64)
 import OCR
 import System.Directory (copyFile)
 import System.IO (hPutStrLn, stderr)
@@ -48,8 +48,7 @@ instance ToJSON Entry
 -- Used for DB writes, note entryID is inferred by the database
 -- so isn't part of the ADT
 data WriteEntry = WriteEntry
-  { 
-    weDate :: String,
+  { weDate :: String,
     weTime :: String,
     weContent :: String
   }
@@ -183,9 +182,9 @@ allTags :: Maybe Int -> IO [String]
 allTags minCount = do
   hPutStrLn stderr "allTags"
   conn <- open dbFile
-  let queryString = case minCount of 
-                      Nothing -> Query $ pack "SELECT distinct tag from tags order by tag"
-                      (Just minCount) -> Query $ pack $ "SELECT tag FROM tags GROUP BY tag HAVING count(*) > " ++ show minCount ++ " ORDER BY tag" -- TODO - don't use show
+  let queryString = case minCount of
+        Nothing -> Query $ pack "SELECT distinct tag from tags order by tag"
+        (Just minCount) -> Query $ pack $ "SELECT tag FROM tags GROUP BY tag HAVING count(*) > " ++ show minCount ++ " ORDER BY tag" -- TODO - don't use show
   r <- query_ conn queryString :: IO [[String]]
   close conn
   pure $ concat r
@@ -199,25 +198,29 @@ allEntries = do
 
 -- Tiny String Builder
 
-newtype SqlCol = SqlCol { sqlColname :: String }
-newtype SqlCond = SqlCond { sqlCond :: String }
-newtype SqlFrom = SqlFrom { sqlFromTable :: String } -- TODO: expand this representation
+newtype SqlCol = SqlCol {sqlColname :: String}
+
+newtype SqlCond = SqlCond {sqlCond :: String}
+
+newtype SqlFrom = SqlFrom {sqlFromTable :: String} -- TODO: expand this representation
+
 data SqlOrder = SqlAscending SqlCol | SqlDescending SqlCol | SqlDirFunction String
 
-data SqlQuery = SqlQuery {
-  sqlSelect :: [SqlCol],
-  sqlFrom :: SqlFrom,
-  sqlWhere :: [SqlCond],
-  sqlOrder :: Maybe SqlOrder
-}
-
+data SqlQuery = SqlQuery
+  { sqlSelect :: [SqlCol],
+    sqlFrom :: SqlFrom,
+    sqlWhere :: [SqlCond],
+    sqlOrder :: Maybe SqlOrder
+  }
 
 sql2string :: SqlQuery -> String
-sql2string SqlQuery{..} =
-  "SELECT" 
-    ++ (intercalate "," (sqlColname <$>  sqlSelect)) 
-    ++ (sqlFromTable sqlFrom) ++ " " 
-    ++ whereClause ++ " " 
+sql2string SqlQuery {..} =
+  "SELECT"
+    ++ (intercalate "," (sqlColname <$> sqlSelect))
+    ++ (sqlFromTable sqlFrom)
+    ++ " "
+    ++ whereClause
+    ++ " "
     ++ orderClause
   where
     whereClause = case sqlWhere of
@@ -234,13 +237,13 @@ allCache :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> IO [CacheVie
 allCache sortby sortdir filterTags limit = do
   conn <- open dbFile
   let limitStr = case limit of
-                    Nothing -> ""
-                    Just n -> "LIMIT " ++ show n
+        Nothing -> ""
+        Just n -> "LIMIT " ++ show n
   let query = case filterTags of
-        [] -> "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from cache " 
+        [] -> "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from cache "
         lst ->
           let tagList = "('" ++ (intercalate "','" $ unpack <$> lst) ++ "')"
-           in "SELECT cache.entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from tags LEFT JOIN cache ON cache.entry_id=tags.entry_id where tag in " ++ tagList ++ " " 
+           in "SELECT cache.entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from tags LEFT JOIN cache ON cache.entry_id=tags.entry_id where tag in " ++ tagList ++ " "
   -- let query = "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file from cache "
   r <- case (sortby, sortdir) of
     (Just SortUrl, Just SortRev) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url DESC " ++ limitStr)
@@ -463,5 +466,5 @@ addTag entryID tag = do
 wipeTesting :: IO ()
 wipeTesting = do
   putStrLn "removing entries and tags where tags==\"testing\""
-  bracketExecute "delete from entries where entries.entry_id in (select tags.entry_id from tags where tag==\"testing\")";
-  bracketExecute "delete from tags where tag==\"testing\"";
+  bracketExecute "delete from entries where entries.entry_id in (select tags.entry_id from tags where tag==\"testing\")"
+  bracketExecute "delete from tags where tag==\"testing\""

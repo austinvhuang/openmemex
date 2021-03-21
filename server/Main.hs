@@ -13,6 +13,7 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.Int (Int64)
 import Data.Text (Text, pack, unpack)
 import GHC.Generics (Generic)
+import Models
 import Network.Wai.Handler.Warp
   ( defaultSettings,
     runSettings,
@@ -25,8 +26,6 @@ import Network.Wai.Middleware.Cors (simpleCors)
 import Servant
 import System.IO (hPutStrLn, stderr)
 import Text.Printf (printf)
-
-import Models
 import Torch
 
 -- API Types
@@ -38,6 +37,7 @@ data PostNote = PostNote
   deriving (Show, Generic)
 
 instance ToJSON PostNote
+
 instance FromJSON PostNote
 
 type RootAPI = Get '[JSON] [String]
@@ -61,14 +61,14 @@ type AllTagsAPI = "all" :> "tags" :> QueryParam "min" Int :> Get '[JSON] [String
 
 type AllEntriesAPI = "all" :> "entries" :> Get '[JSON] [Entry]
 
-type AllCacheAPI = 
-  "all" 
-  :> "cache" 
-  :> QueryParam "sort" SortBy 
-  :> QueryParam "sortdir" SortDir 
-  :> QueryParams "tag" Text 
-  :> QueryParam "limit" Int 
-  :> Get '[JSON] [CacheView]
+type AllCacheAPI =
+  "all"
+    :> "cache"
+    :> QueryParam "sort" SortBy
+    :> QueryParam "sortdir" SortDir
+    :> QueryParams "tag" Text
+    :> QueryParam "limit" Int
+    :> Get '[JSON] [CacheView]
 
 type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [CacheView]
 
@@ -78,26 +78,31 @@ type FrontendAPI = "frontend" :> Raw
 
 type AllAPI = AllTagsAPI :<|> AllEntriesAPI :<|> AllCacheAPI
 
-type LinkEntryTagsAPI = "link" :> "entry" :> "tags" :> QueryParams "filter" String :> Get '[JSON] [EntryTag]
+type LinkEntryTagsAPI =
+  "link"
+    :> "entry"
+    :> "tags"
+    :> QueryParams "filter" String
+    :> Get '[JSON] [EntryTag]
 
-type HelloTorchAPI = 
-  "test" 
-  :> "torch" 
-  :> Capture "value" Float 
-  :> Get '[JSON] [TestTorch]
+type HelloTorchAPI =
+  "test"
+    :> "torch"
+    :> Capture "value" Float
+    :> Get '[JSON] [TestTorch]
 
 type CombinedAPI =
-  RootAPI 
-  :<|> DateAPI 
-  :<|> RangeAPI 
-  :<|> AllTagsAPI 
-  :<|> AllEntriesAPI 
-  :<|> AllCacheAPI 
-  :<|> ContentAPI 
-  :<|> SubmitAPI 
-  :<|> FrontendAPI 
-  :<|> LinkEntryTagsAPI 
-  :<|> HelloTorchAPI
+  RootAPI
+    :<|> DateAPI
+    :<|> RangeAPI
+    :<|> AllTagsAPI
+    :<|> AllEntriesAPI
+    :<|> AllCacheAPI
+    :<|> ContentAPI
+    :<|> SubmitAPI
+    :<|> FrontendAPI
+    :<|> LinkEntryTagsAPI
+    :<|> HelloTorchAPI
 
 combinedApi :: Proxy CombinedAPI
 combinedApi = Proxy
@@ -154,6 +159,7 @@ allCacheH sortby sortdir filterTags limit = liftIO (allCache sortby sortdir filt
 
 -- frontendH = serveDirectoryFileServer "./frontend-rs/static/."
 frontendH = serveDirectoryWebApp "./frontend-rs/static/"
+-- what's the difference here?
 
 queryContentH q = liftIO $ queryContent q :: Handler [CacheView]
 

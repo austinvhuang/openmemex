@@ -2,7 +2,7 @@ use yew::Properties;
 use yew::prelude::*;
 
 pub enum SpaceMsg {
-
+    PointHover(MouseEvent, String)
 }
 
 pub struct Space {
@@ -13,7 +13,7 @@ pub struct Space {
 pub struct Props {
 }
 
-fn grid() -> Html {
+fn grid()-> Html {
     (0..1000).step_by(20).map(move |x| {
         (0..1000).step_by(20).map(move |y| {
             let suffix = format!("{:?}_{:?}", x, y);
@@ -29,6 +29,8 @@ fn grid() -> Html {
                 <title> {"test point"} </title>
                 </circle>
 
+                <text x={x} y={y} class="small">{"Hello"}</text>
+
                 <animate 
                 href={id_pound.clone()}
                 attributeName="cx"
@@ -36,7 +38,7 @@ fn grid() -> Html {
                 to={x}
                 values={ format!("{:?}; {:?}; {:?}", x, x_max, x) }
                 keyTimes="0; 0.5; 1"
-                dur="12s"
+                dur="2s"
                 begin="0s"
                 repeatCount="indefinite"
                 id={x_id_anim} />
@@ -48,7 +50,7 @@ fn grid() -> Html {
                 to={y}
                 values={ format!("{:?}; {:?}; {:?}", y, y_max, y) }
                 keyTimes="0; 0.5; 1"
-                dur="12s"
+                dur="2s"
                 begin="0s"
                 repeatCount="indefinite"
                 id={y_id_anim} />
@@ -80,21 +82,6 @@ impl Component for Space {
     fn view(&self) -> Html {
         html! {
             <div>
-            /*
-            <svg height="500" width="500">
-            <circle id="foo" r="5", cx="5" cy="5" fill="red"/>
-            <animate
-                href="#foo"
-                attributeName="cx"
-                from="5"
-                to="5"
-                values="5;50;5"
-                keyTimes="0; 0.5; 1"
-                dur="2s"
-                begin="0s"
-                repeatCount="indefinite"/>
-            </svg>
-            */
 
             <svg height="1000" width="1000">
             {
