@@ -14,27 +14,46 @@ pub struct Props {
 }
 
 fn grid() -> Html {
-    let mut counter = 0;
     (0..1000).step_by(20).map(move |x| {
         (0..1000).step_by(20).map(move |y| {
-            let id = format!("circle-{:?}", counter);
-            counter = counter + 1;
+            let suffix = format!("{:?}_{:?}", x, y);
+            let id = format!("circle-{:?}", suffix);
+            let id_pound = format!("#circle-{:?}", suffix);
+            let x_id_anim= format!("x-circle-anim-{:?}", suffix);
+            let y_id_anim= format!("y-circle-anim-{:?}", suffix);
+            let x_max = x + 50;
+            let y_max = y + 50;
             html! {
-                <circle id={id} r="5" cx={x} cy={y} fill="orange" />
+                <>
+                <circle id={id.clone()} r="5" cx={x} cy={y} fill="orange"  opacity="0.3">
+                <title> {"test point"} </title>
+                </circle>
 
-                /*
                 <animate 
-                href="#orange-circle"
+                href={id_pound.clone()}
                 attributeName="cx"
-                from="50"
-                to="450" 
-                dur="5s"
-                begin="click"
-                repeatCount="2"
-                fill="freeze" 
-                id="circ-anim" />
-                */
+                from={x}
+                to={x}
+                values={ format!("{:?}; {:?}; {:?}", x, x_max, x) }
+                keyTimes="0; 0.5; 1"
+                dur="12s"
+                begin="0s"
+                repeatCount="indefinite"
+                id={x_id_anim} />
 
+                <animate 
+                href={id_pound.clone()}
+                attributeName="cy"
+                from={y}
+                to={y}
+                values={ format!("{:?}; {:?}; {:?}", y, y_max, y) }
+                keyTimes="0; 0.5; 1"
+                dur="12s"
+                begin="0s"
+                repeatCount="indefinite"
+                id={y_id_anim} />
+
+                </>
             }
         }).collect::<Html>()
     }).collect::<Html>()
@@ -61,6 +80,21 @@ impl Component for Space {
     fn view(&self) -> Html {
         html! {
             <div>
+            /*
+            <svg height="500" width="500">
+            <circle id="foo" r="5", cx="5" cy="5" fill="red"/>
+            <animate
+                href="#foo"
+                attributeName="cx"
+                from="5"
+                to="5"
+                values="5;50;5"
+                keyTimes="0; 0.5; 1"
+                dur="2s"
+                begin="0s"
+                repeatCount="indefinite"/>
+            </svg>
+            */
 
             <svg height="1000" width="1000">
             {

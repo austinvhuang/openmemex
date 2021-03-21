@@ -61,7 +61,14 @@ type AllTagsAPI = "all" :> "tags" :> QueryParam "min" Int :> Get '[JSON] [String
 
 type AllEntriesAPI = "all" :> "entries" :> Get '[JSON] [Entry]
 
-type AllCacheAPI = "all" :> "cache" :> QueryParam "sort" SortBy :> QueryParam "sortdir" SortDir :> QueryParams "tag" Text :> Get '[JSON] [CacheView]
+type AllCacheAPI = 
+  "all" 
+  :> "cache" 
+  :> QueryParam "sort" SortBy 
+  :> QueryParam "sortdir" SortDir 
+  :> QueryParams "tag" Text 
+  :> QueryParam "limit" Int 
+  :> Get '[JSON] [CacheView]
 
 type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [CacheView]
 
@@ -73,10 +80,24 @@ type AllAPI = AllTagsAPI :<|> AllEntriesAPI :<|> AllCacheAPI
 
 type LinkEntryTagsAPI = "link" :> "entry" :> "tags" :> QueryParams "filter" String :> Get '[JSON] [EntryTag]
 
-type HelloTorchAPI = "test" :> "torch" :> Capture "value" Float :> Get '[JSON] [TestTorch]
+type HelloTorchAPI = 
+  "test" 
+  :> "torch" 
+  :> Capture "value" Float 
+  :> Get '[JSON] [TestTorch]
 
 type CombinedAPI =
-  RootAPI :<|> DateAPI :<|> RangeAPI :<|> AllTagsAPI :<|> AllEntriesAPI :<|> AllCacheAPI :<|> ContentAPI :<|> SubmitAPI :<|> FrontendAPI :<|> LinkEntryTagsAPI :<|> HelloTorchAPI
+  RootAPI 
+  :<|> DateAPI 
+  :<|> RangeAPI 
+  :<|> AllTagsAPI 
+  :<|> AllEntriesAPI 
+  :<|> AllCacheAPI 
+  :<|> ContentAPI 
+  :<|> SubmitAPI 
+  :<|> FrontendAPI 
+  :<|> LinkEntryTagsAPI 
+  :<|> HelloTorchAPI
 
 combinedApi :: Proxy CombinedAPI
 combinedApi = Proxy
@@ -128,8 +149,8 @@ allTagsH minCount = liftIO $ allTags minCount
 allEntriesH :: Handler [Entry]
 allEntriesH = liftIO allEntries
 
-allCacheH :: Maybe SortBy -> Maybe SortDir -> [Text] -> Handler [CacheView]
-allCacheH sortby sortdir filterTags = liftIO (allCache sortby sortdir filterTags)
+allCacheH :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> Handler [CacheView]
+allCacheH sortby sortdir filterTags limit = liftIO (allCache sortby sortdir filterTags limit)
 
 -- frontendH = serveDirectoryFileServer "./frontend-rs/static/."
 frontendH = serveDirectoryWebApp "./frontend-rs/static/"

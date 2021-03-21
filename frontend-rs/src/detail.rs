@@ -71,18 +71,16 @@ impl Component for Detail {
                         src=src style="width:100%; height:90vh;"/>
                     </div>
                     <div style="height:85vh" class="shadow p-3 mb-5 bg-body rounded">
-                        /*
-                        <textarea rows="24" class="detail-input shadow-sm p-3 mb-5 bg-white rounded" 
-                        placeholder="notes" style="width:100%;" />
-                        */
                         <div id="editor" style="height:90%;">
                             {"# Notes"}
                         </div>
-                        <div class="item">
-                            <input type="checkbox" id="finished" name="finished"/>
-                            <label style="height:10%;">{"Completed"}</label>
-                        </div>
-
+                        <p/>
+                        <center>
+                            <div class="item">
+                                <input type="checkbox" id="finished" name="finished"/>
+                                <label style="height:10%; margin-left: 10px">{" Completed"}</label>
+                            </div>
+                        </center>
                     </div>
                 </div>
             </div>

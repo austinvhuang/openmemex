@@ -28,6 +28,7 @@ pub struct App {
     selected_tags: HashSet<String>,
     link: ComponentLink<Self>,
     error: Option<String>,
+    default_query: String,
     query: String,
 }
 
@@ -94,6 +95,7 @@ impl Component for App {
         cb.emit("".to_string()); // TODO - what's the right way to handle a message without parameters
         log::info!("sent message");
         // let kb_cb = link.callback(Msg::KeyDown);
+        let default_query = format!("http://{}/all/cache?limit=100", server).to_string();
         Self {
             cache_task: None,
             tag_task: None,
@@ -103,7 +105,8 @@ impl Component for App {
             selected_tags: HashSet::new(),
             link,
             error: None,
-            query: format!("http://{}/all/cache", server).to_string(),
+            default_query: default_query.clone(),
+            query: default_query.clone(),
         }
     }
 
@@ -117,7 +120,7 @@ impl Component for App {
         match msg {
             AppMsg::GetEntries => {
                 // define request
-                log::info!("submitting cache request");
+                log::info!("submitting cache request: {:?}", self.query);
                 let request = Request::get(&self.query)
                     .body(Nothing)
                     .expect("Could not build request.");
@@ -151,7 +154,6 @@ impl Component for App {
             AppMsg::ReceiveEntries(response) => {
                 match response {
                     Ok(result) => {
-                        // log::info!("Update: {:#?}", result);
                         self.entries = Some(result);
                     }
                     Err(error) => {
@@ -194,7 +196,7 @@ impl Component for App {
                         format!("http://{}/all/cache?sort=time&tag={}", server, tag_name)
                     }
                     None => {
-                        format!("http://{}/all/cache?sort=time", server)
+                        format!("http://{}/all/cache?sort=time?limit=50", server)
                     }
                 };
                 log::info!("Query is: {:?}", &query);

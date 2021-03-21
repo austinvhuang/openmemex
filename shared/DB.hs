@@ -230,20 +230,23 @@ sql2string SqlQuery{..} =
 
 -- handlers
 
-allCache :: Maybe SortBy -> Maybe SortDir -> [Text] -> IO [CacheView]
-allCache sortby sortdir filterTags = do
+allCache :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> IO [CacheView]
+allCache sortby sortdir filterTags limit = do
   conn <- open dbFile
+  let limitStr = case limit of
+                    Nothing -> ""
+                    Just n -> "LIMIT " ++ show n
   let query = case filterTags of
-        [] -> "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from cache "
+        [] -> "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from cache " 
         lst ->
           let tagList = "('" ++ (intercalate "','" $ unpack <$> lst) ++ "')"
-           in "SELECT cache.entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from tags LEFT JOIN cache ON cache.entry_id=tags.entry_id where tag in " ++ tagList ++ " "
+           in "SELECT cache.entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from tags LEFT JOIN cache ON cache.entry_id=tags.entry_id where tag in " ++ tagList ++ " " 
   -- let query = "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file from cache "
   r <- case (sortby, sortdir) of
-    (Just SortUrl, Just SortRev) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url DESC")
-    (Just SortUrl, _) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url")
-    (Just SortTime, Just SortFwd) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\"))")
-    (_, _) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC")
+    (Just SortUrl, Just SortRev) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url DESC " ++ limitStr)
+    (Just SortUrl, _) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url " ++ limitStr)
+    (Just SortTime, Just SortFwd) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) " ++ limitStr)
+    (_, _) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC " ++ limitStr)
   close conn
   pure r
 
