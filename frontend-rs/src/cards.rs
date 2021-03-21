@@ -1,7 +1,7 @@
 use crate::api::*;
+use std::collections::HashMap;
 use url::*;
 use yew::prelude::*;
-use std::collections::HashMap;
 
 #[derive(Debug)]
 pub enum CardsMsg {
@@ -34,13 +34,17 @@ fn host_simplify(url: &str) -> String {
         "www.reddit.com" => "Reddit".to_string(),
         "twitter.com" => "Twitter".to_string(),
         "www.youtube.com" => "YouTube".to_string(),
-        _ => url.to_string()
+        _ => url.to_string(),
     }
 }
 
 impl Cards {
-    fn view_card(&self, parsed: &Result<Url, url::ParseError>, thumbnail_file: &String, item: &Cache) -> Html {
-
+    fn view_card(
+        &self,
+        parsed: &Result<Url, url::ParseError>,
+        thumbnail_file: &String,
+        item: &Cache,
+    ) -> Html {
         let img_style = "width: 70%;";
         let item_clone = item.clone();
 
@@ -60,12 +64,14 @@ impl Cards {
             "card shadow-none p-3 mb-5 bg-light rounded"
         };
 
-        let callback_mouseover = |entry_id| { 
-            self.link.callback(move |m| { CardsMsg::CardMouseOver(m, entry_id) }) 
+        let callback_mouseover = |entry_id| {
+            self.link
+                .callback(move |m| CardsMsg::CardMouseOver(m, entry_id))
         };
 
-        let callback_click = |entry_id| { 
-            self.link.callback(move |m| { CardsMsg::CardClick(m, entry_id, item_clone.clone()) }) 
+        let callback_click = |entry_id| {
+            self.link
+                .callback(move |m| CardsMsg::CardClick(m, entry_id, item_clone.clone()))
         };
         html! {
             <div class={ div_class } onmouseover=callback_mouseover(item.entry_id) onclick = callback_click(item.entry_id)>

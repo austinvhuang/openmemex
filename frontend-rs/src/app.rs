@@ -195,9 +195,7 @@ impl Component for App {
                     Some(tag_name) => {
                         format!("http://{}/all/cache?sort=time&tag={}", server, tag_name)
                     }
-                    None => {
-                        format!("http://{}/all/cache?sort=time?limit=50", server)
-                    }
+                    None => format!("http://{}/all/cache?sort=time?limit=50", server),
                 };
                 log::info!("Query is: {:?}", &query);
                 self.query = query.clone(); // TODO - make queryparams compose
@@ -244,18 +242,15 @@ impl Component for App {
             </div>
         };
 
-
         let entry = self.selected_entry.clone();
 
-
-            log::info!("switch with entry as {:?}", &entry);
+        log::info!("switch with entry as {:?}", &entry);
         let render = Router::render(move |switch: AppRoute| match switch {
             AppRoute::Gallery => gallery.clone(),
             AppRoute::AddNote => html! { <AddNote/> },
-            AppRoute::Detail => html! { <Detail entry=&entry /> }, 
-            AppRoute::Space =>  html! { <Space /> },
+            AppRoute::Detail => html! { <Detail entry=&entry /> },
+            AppRoute::Space => html! { <Space /> },
             AppRoute::Queue => html! { <Space /> },
-            
         });
 
         html! {

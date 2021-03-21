@@ -10,10 +10,10 @@ extern "C" {
 */
 
 #[wasm_bindgen]
-pub extern "C" {
+extern "C" {
     #[wasm_bindgen]
     pub fn init_ace() -> JsValue;
 
     #[wasm_bindgen]
-    pub fn ace_add_callback(editor: JsValue, callback: JsValue) -> JsValue; 
+    pub fn ace_add_callback(editor: JsValue, callback: JsValue) -> JsValue;
 }

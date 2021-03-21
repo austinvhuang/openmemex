@@ -22,8 +22,7 @@ pub struct Props {
     pub tag_click_callback: Callback<Option<String>>,
 }
 
-impl Tags {
-}
+impl Tags {}
 
 impl Component for Tags {
     type Message = TagsMsg;
@@ -96,7 +95,7 @@ impl Component for Tags {
                             }
                             if hs.contains(item) {
                                 style = "topic-tag-selected";
-                            } 
+                            }
                             html! {
                                 <div class= { style } onclick=callback(item.clone()).clone() onmouseover=hover_callback(item.clone()).clone()>
                                 { item.clone() }

@@ -8,8 +8,8 @@ mod app_router;
 mod cards;
 mod detail;
 mod external;
-mod space;
 mod queue;
+mod space;
 mod tags;
 
 use wasm_bindgen::prelude::*;

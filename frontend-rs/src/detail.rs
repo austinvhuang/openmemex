@@ -1,17 +1,15 @@
 use crate::api::*;
+use crate::external::*;
+use wasm_bindgen::prelude::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
+use yew::Properties;
 use yew::{
     format::{Json, Nothing},
     prelude::*,
     utils::*,
 };
-use yew::Properties;
-use wasm_bindgen::prelude::*;
-use crate::external::*;
 
-pub enum DetailMsg {
-
-}
+pub enum DetailMsg {}
 
 pub struct Detail {
     pub link: ComponentLink<Self>,
@@ -48,7 +46,6 @@ impl Component for Detail {
         false
     }
 
-    
     fn rendered(&mut self, first_render: bool) {
         log::info!("calling init_ace");
         init_ace();
@@ -85,6 +82,5 @@ impl Component for Detail {
                 </div>
             </div>
         }
-
     }
 }
