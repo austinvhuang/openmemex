@@ -198,30 +198,41 @@ allEntries = do
 
 -- Tiny String Builder
 
-newtype SqlCol = SqlCol {sqlColname :: String}
+newtype SqlCol = SqlCol {sqlCol :: String} deriving Show
 
-newtype SqlCond = SqlCond {sqlCond :: String}
+newtype SqlCond = SqlCond {sqlCond :: String} deriving Show
 
-newtype SqlFrom = SqlFrom {sqlFromTable :: String} -- TODO: expand this representation
+newtype SqlFrom = SqlFrom {sqlFromTable :: String} deriving Show -- TODO: expand this representation
 
-data SqlOrder = SqlAscending SqlCol | SqlDescending SqlCol | SqlDirFunction String
+data SqlOrder = SqlAscending SqlCol | SqlDescending SqlCol | SqlDirFunction String deriving Show
 
 data SqlQuery = SqlQuery
   { sqlSelect :: [SqlCol],
     sqlFrom :: SqlFrom,
     sqlWhere :: [SqlCond],
-    sqlOrder :: Maybe SqlOrder
-  }
+    sqlOrder :: Maybe SqlOrder,
+    sqlLimit :: Maybe Int
+  } deriving (Show)
+
+defaultQuery = SqlQuery {
+  sqlSelect = [],
+  sqlFrom = SqlFrom "",
+  sqlWhere = [],
+  sqlOrder = Nothing,
+  sqlLimit = Nothing
+}
 
 sql2string :: SqlQuery -> String
 sql2string SqlQuery {..} =
   "SELECT"
-    ++ (intercalate "," (sqlColname <$> sqlSelect))
+    ++ (intercalate "," (sqlCol <$> sqlSelect))
     ++ (sqlFromTable sqlFrom)
     ++ " "
     ++ whereClause
     ++ " "
     ++ orderClause
+    ++ " "
+    ++ limitClause
   where
     whereClause = case sqlWhere of
       [] -> ""
@@ -230,12 +241,22 @@ sql2string SqlQuery {..} =
       Nothing -> ""
       Just (SqlAscending (SqlCol colName)) -> "ORDER BY " ++ colName
       Just (SqlDescending (SqlCol colName)) -> "ORDER BY " ++ colName ++ "DESC"
+    limitClause = case sqlLimit of
+      Nothing -> ""
+      Just n -> "LIMIT " ++ show n
 
 -- handlers
 
 allCache :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> IO [CacheView]
 allCache sortby sortdir filterTags limit = do
   conn <- open dbFile
+  let query = defaultQuery {
+    sqlSelect = SqlCol <$> ["entry_id", "cache_url", "cache_content_type", "cache_title", "date", "time", "cache_screenshot_file", "cache_thumbnail_file"],
+    sqlFrom = SqlFrom "cache",
+    sqlLimit = limit
+  }
+  let queryString = sql2string query
+    -- TODO finish this builder, use querystring instead of hard coding
   let limitStr = case limit of
         Nothing -> ""
         Just n -> "LIMIT " ++ show n

@@ -44,7 +44,11 @@ initDB = do
   execute_ conn "CREATE INDEX idx_entries_date on entries(date);"
   execute_ conn "CREATE INDEX idx_tags_tag ON tags(tag);"
   execute_ conn "CREATE UNIQUE INDEX idx_entries_entry_id ON entries(entry_id);"
-  close conn
+
+  execute_ conn "CREATE TABLE annotations(annotation_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, annotation_date TEXT, annotation_time TEXT, annotation_content TEXT);"
+  execute_ conn "CREATE INDEX idx_annotations_date on annotations(annotation_date);"
+  execute_ conn "CREATE INDEX idx_annotations_time on annotations(annotation_time);"
+  execute_ conn "CREATE INDEX idx_annotations_entry_id on annotations(entry_id);"
 
 addEntry :: Entry -> IO Int64
 addEntry Entry {..} = do
