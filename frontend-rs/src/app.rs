@@ -231,7 +231,7 @@ impl Component for App {
                 false
             }
             AppMsg::SearchSubmit => {
-                self.query = format!("http://{}/search/{:?}", server, self.search_query).to_string();
+                self.query = format!("http://{}/search/{}", server, self.search_query.trim()).to_string();
                 self.link.send_message(AppMsg::GetEntries);
                 false
             }
@@ -253,9 +253,9 @@ impl Component for App {
                         })> {"▼ Date"}</button>
                     <button class=button_class onclick=self.link.callback(|m| { AppMsg::SortByUrl
                         })>{"▼ Url"}</button>
-                    <input type="text" class="search-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="Search" accesskey="/" 
+                    <input type="text" class="search-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="Search 2" accesskey="/" 
                     oninput = { self.link.callback(move |e: InputData| AppMsg::SearchEdit(e.value)) }
-                    onkeydown= { self.link.callback(move |e: KeyboardEvent| AppMsg::SearchKeyDown(e)) }
+                    onkeydown = { self.link.callback(move |e: KeyboardEvent| AppMsg::SearchKeyDown(e)) }
                     />
                 </div>
                 <p/>
