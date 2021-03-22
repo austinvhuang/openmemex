@@ -30,6 +30,7 @@ pub struct App {
     error: Option<String>,
     default_query: String,
     query: String,
+    search_query: String,
 }
 
 #[derive(Debug)]
@@ -42,6 +43,9 @@ pub enum AppMsg {
     TagClick(Option<String>),
     SortByDate,
     SortByUrl,
+    SearchEdit(String),
+    SearchKeyDown(KeyboardEvent),
+    SearchSubmit,
 }
 
 impl App {
@@ -107,6 +111,7 @@ impl Component for App {
             error: None,
             default_query: default_query.clone(),
             query: default_query.clone(),
+            search_query: String::from(""),
         }
     }
 
@@ -214,6 +219,22 @@ impl Component for App {
                 self.link.send_message(AppMsg::GetEntries);
                 false
             }
+            AppMsg::SearchKeyDown(keypress) => {
+                log::info!("search keydown {:?}", keypress.key());
+                if keypress.key() == "Enter" {
+                    self.link.send_message(AppMsg::SearchSubmit);
+                }
+                false
+            }
+            AppMsg::SearchEdit(query) => {
+                self.search_query = query;
+                false
+            }
+            AppMsg::SearchSubmit => {
+                self.query = format!("http://{}/search/{:?}", server, self.search_query).to_string();
+                self.link.send_message(AppMsg::GetEntries);
+                false
+            }
         }
     }
 
@@ -232,7 +253,10 @@ impl Component for App {
                         })> {"▼ Date"}</button>
                     <button class=button_class onclick=self.link.callback(|m| { AppMsg::SortByUrl
                         })>{"▼ Url"}</button>
-                    <input type="text" class="search-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="Search" accesskey="/" />
+                    <input type="text" class="search-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="Search" accesskey="/" 
+                    oninput = { self.link.callback(move |e: InputData| AppMsg::SearchEdit(e.value)) }
+                    onkeydown= { self.link.callback(move |e: KeyboardEvent| AppMsg::SearchKeyDown(e)) }
+                    />
                 </div>
                 <p/>
                 <div class="twocol">
