@@ -453,11 +453,15 @@ replaceTag fromTag toTag = do
   -- TODO - fill-in
   pure ()
 
-addEntryInferDate :: String -> [String] -> IO Int64
-addEntryInferDate entry tags = do
+getDateTime = do
   now <- getZonedTime
   let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
   let tm = formatTime defaultTimeLocale "%H:%M:%S" now
+  pure (dt, tm)
+
+addEntryInferDate :: String -> [String] -> IO Int64
+addEntryInferDate entry tags = do
+  (dt, tm) <- getDateTime
   entryID <- addEntry $ WriteEntry dt tm entry
   mapM_ (addTag entryID) tags
   pure entryID
@@ -483,6 +487,31 @@ addTag entryID tag = do
   r <- lastInsertRowId conn
   close conn
   pure r
+
+addCompleted :: Int -> IO Int64
+addCompleted entryID = do
+  (dt, tm) <- getDateTime
+  conn <- open dbFile
+  executeNamed
+    conn
+    "INSERT INTO completed (entry_id, date, time) VALUES (:entryID, :date, :time)"
+    [":entryID" := entryID, ":date" := dt, ":time" := tm]
+  r <- lastInsertRowId conn
+  close conn
+  pure r
+
+removeCompleted :: Int -> IO Int64
+removeCompleted entryID = do
+  conn <- open dbFile
+  executeNamed
+    conn
+    "DELETE FROM completed WHERE entry_id = :entryID"
+    [":entryID" := entryID]
+  close conn
+  pure 0
+
+search :: String -> IO [CacheView]
+search = undefined -- TODO
 
 wipeTesting :: IO ()
 wipeTesting = do

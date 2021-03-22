@@ -35,10 +35,19 @@ data PostNote = PostNote
     pnTags :: [String]
   }
   deriving (Show, Generic)
-
 instance ToJSON PostNote
-
 instance FromJSON PostNote
+
+data PostCompleted = 
+  PostCompleted { pcEntryID :: Int } 
+  | UndoCompleted { pcEntryID :: Int } deriving (Show, Generic)
+instance ToJSON PostCompleted
+instance FromJSON PostCompleted
+
+data PostSearch =
+  PostSearch { psQuery :: String } deriving (Show, Generic)
+instance ToJSON PostSearch
+instance FromJSON PostSearch
 
 type RootAPI = Get '[JSON] [String]
 
@@ -72,11 +81,12 @@ type AllCacheAPI =
 
 type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [CacheView]
 
-type SubmitAPI = "submit" :> "note" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
+type EntryAPI = "submit" :> "note" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
+type CompletedAPI = "submit" :> "completed" :> ReqBody '[JSON] PostCompleted :> Post '[JSON] Int64
+
+type SearchAPI = "submit" :> "search" :> ReqBody '[JSON] PostSearch :> Post '[JSON] Int64
 
 type FrontendAPI = "frontend" :> Raw
-
-type AllAPI = AllTagsAPI :<|> AllEntriesAPI :<|> AllCacheAPI
 
 type LinkEntryTagsAPI =
   "link"
@@ -99,7 +109,9 @@ type CombinedAPI =
     :<|> AllEntriesAPI
     :<|> AllCacheAPI
     :<|> ContentAPI
-    :<|> SubmitAPI
+    :<|> EntryAPI 
+    :<|> CompletedAPI 
+    :<|> SearchAPI
     :<|> FrontendAPI
     :<|> LinkEntryTagsAPI
     :<|> HelloTorchAPI
@@ -117,6 +129,8 @@ server =
     :<|> allCacheH
     :<|> queryContentH
     :<|> postNoteH
+    :<|> postCompletedH
+    :<|> postSearchH
     :<|> frontendH
     :<|> linkEntryTagsH
     :<|> helloTorchH
@@ -172,6 +186,29 @@ postNote note = do
   addEntryInferDate (pnContent note) (pnTags note)
 
 postNoteH note = liftIO $ postNote note
+
+postCompleted :: PostCompleted -> IO Int64
+postCompleted (PostCompleted entryID) = do
+  putStrLn "Marking as complete"
+  print entryID
+  addCompleted entryID
+  pure 0
+
+postCompleted (UndoCompleted entryID) = do
+  putStrLn "Removing complete"
+  print entryID
+  removeCompleted entryID
+  pure 0
+
+postCompletedH entryID = liftIO $ postCompleted entryID
+
+postSearch :: PostSearch -> IO Int64
+postSearch (PostSearch query) = do
+  putStrLn $ "Searching for " ++ query
+  undefined
+  pure 0
+
+postSearchH query = liftIO $ postSearch query
 
 mkApp :: IO Application
 mkApp = pure $ serve combinedApi server
