@@ -2,6 +2,10 @@ use crate::api::*;
 use std::collections::HashMap;
 use url::*;
 use yew::prelude::*;
+use crate::app_router::*;
+use yew_router::prelude::*;
+
+pub type Link = RouterAnchor<AppRoute>;
 
 #[derive(Debug)]
 pub enum CardsMsg {
@@ -79,7 +83,10 @@ impl Cards {
                 <hr/>
                 // <img src=thumbnail_file width="100%" style="height: 100px; overflow: hidden;"/>
                 <center>
+
+                    <Link route=AppRoute::Detail>
                     <img src=thumbnail_file style=img_style class=img_class/>
+                    </Link>
                 </center>
                 <center>
                 {
