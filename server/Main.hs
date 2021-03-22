@@ -83,8 +83,7 @@ type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [CacheView]
 
 type EntryAPI = "submit" :> "note" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
 type CompletedAPI = "submit" :> "completed" :> ReqBody '[JSON] PostCompleted :> Post '[JSON] Int64
-
-type SearchAPI = "submit" :> "search" :> ReqBody '[JSON] PostSearch :> Post '[JSON] Int64
+type SearchAPI = "search" :> Capture "query" String :> Get '[JSON] [CacheView]
 
 type FrontendAPI = "frontend" :> Raw
 
@@ -130,7 +129,7 @@ server =
     :<|> queryContentH
     :<|> postNoteH
     :<|> postCompletedH
-    :<|> postSearchH
+    :<|> searchH
     :<|> frontendH
     :<|> linkEntryTagsH
     :<|> helloTorchH
@@ -202,13 +201,7 @@ postCompleted (UndoCompleted entryID) = do
 
 postCompletedH entryID = liftIO $ postCompleted entryID
 
-postSearch :: PostSearch -> IO Int64
-postSearch (PostSearch query) = do
-  putStrLn $ "Searching for " ++ query
-  undefined
-  pure 0
-
-postSearchH query = liftIO $ postSearch query
+searchH query = liftIO $ search query
 
 mkApp :: IO Application
 mkApp = pure $ serve combinedApi server

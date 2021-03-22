@@ -250,7 +250,7 @@ impl Component for App {
             AppRoute::AddNote => html! { <AddNote/> },
             AppRoute::Detail => html! { <Detail entry=&entry /> },
             AppRoute::Space => html! { <Space /> },
-            AppRoute::Queue => html! { <Space /> },
+            AppRoute::Queue => html! { <Queue /> },
         });
 
         html! {
