@@ -1,15 +1,17 @@
 use crate::api::*;
-use crate::external::*;
-use wasm_bindgen::prelude::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
-use yew::Properties;
 use yew::{
     format::{Json, Nothing},
     prelude::*,
     utils::*,
 };
+use yew::Properties;
+use wasm_bindgen::prelude::*;
+use crate::external::*;
 
-pub enum DetailMsg {}
+pub enum DetailMsg {
+
+}
 
 pub struct Detail {
     pub link: ComponentLink<Self>,
@@ -21,8 +23,22 @@ pub struct Props {
     pub entry: Option<Cache>,
 }
 
-fn iframeify_url(url: String) -> String {
-    unimplemented!()
+fn iframeify_url(url: String) -> (String, String) {
+    let mut new_url = url.clone();
+    let mut iframe_style = String::from("width:100%; height:90vh;");
+    log::info!("checking url {:?}", new_url);
+    if (url.contains("www.youtube.com") && url.contains("watch?v=")) {
+        log::info!("remapping url {:?}", new_url);
+        let tokens:Vec<&str> = url.split("watch?v=").collect();
+        // let video_id = tokens[1].to_owned().slice(0..11).to_string()
+        let video_id = tokens[1].to_owned()[0..11].to_string(); // todo - 0..11 only works for ascii byte sized chars- make this more general
+        log::info!("{:?}", video_id);
+        new_url = format!("http://www.youtube.com/embed/{}", video_id);
+        iframe_style = String::from("width:100%; height:25vh;");
+    }
+    log::info!("new url is {:?}", new_url);
+    log::info!("style is {:?}", iframe_style);
+    (new_url, iframe_style)
 }
 
 impl Component for Detail {
@@ -46,6 +62,7 @@ impl Component for Detail {
         false
     }
 
+    
     fn rendered(&mut self, first_render: bool) {
         log::info!("calling init_ace");
         init_ace();
@@ -59,13 +76,14 @@ impl Component for Detail {
             Some(entry) => entry.url.as_ref().unwrap_or(&default),
             None => &default,
         };
+        let (src_mapped, iframe_style) = iframeify_url(src.to_string());
         log::info!("Screen {:?}", src);
         html! {
             <div>
                 <div class="twocol-equal">
                     <div class="container shadow p-3 mb-5 bg-body rounded">
                         <iframe class="responsive-iframe shadow p-3 mb-5 bg-body rounded" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                        src=src style="width:100%; height:90vh;"/>
+                        src=src_mapped style=iframe_style/>
                     </div>
                     <div style="height:85vh" class="shadow p-3 mb-5 bg-body rounded">
                         <div id="editor" style="height:90%;">
@@ -82,5 +100,6 @@ impl Component for Detail {
                 </div>
             </div>
         }
+
     }
 }
