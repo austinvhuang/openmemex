@@ -34,7 +34,7 @@ fn iframeify_url(url: String) -> (String, String) {
         let video_id = tokens[1].to_owned()[0..11].to_string(); // todo - 0..11 only works for ascii byte sized chars- make this more general
         log::info!("{:?}", video_id);
         new_url = format!("http://www.youtube.com/embed/{}", video_id);
-        iframe_style = String::from("width:100%; height:25vh;");
+        iframe_style = String::from("width:100%; height:50vh;");
     }
     log::info!("new url is {:?}", new_url);
     log::info!("style is {:?}", iframe_style);
