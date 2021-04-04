@@ -47,7 +47,7 @@ executable server
 executable crawler
   hs-source-dirs:      crawler, shared
   main-is:             Main.hs
-  other-modules:       DB, OCR
+  other-modules:       DB, OCR, CrawlTools
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , aeson

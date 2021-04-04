@@ -1,4 +1,4 @@
-# note2self
+# memex.ai (working name, formerly note2self)
 
 General concept:
 

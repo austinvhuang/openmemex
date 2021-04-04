@@ -18,120 +18,12 @@ import Text.Pretty.Simple (pPrint)
 import Text.Printf
 import Text.Read (readMaybe)
 
--- TODO - user arxiv API
-arxivTransform :: String -> String
-arxivTransform url = unpack . replace "arxiv.org" "export.arxiv.org" $ pack url
+import CrawlTools
 
--- TODO - add other transformations
-urlTransformations :: String -> String
-urlTransformations = arxivTransform
-
-newtype Timeout = Timeout Int
-
-data Config = Config {
-  windowSize :: (Int, Int),
-  timeBudget :: Int,
-  dirScreenshots :: String,
-  dirThumbnails :: String,
-  dirOCR :: String
-} deriving Show
-
-configDefault = Config {
-  windowSize = (600, 800),
-  timeBudget = 30000,
-  dirScreenshots = "screenshots",
-  dirThumbnails = "thumbnails",
-  dirOCR = "ocr"
-  }
-
-configBig = Config {
-  windowSize = (1024, 2048),
-  timeBudget = 30000,
-  dirScreenshots = "screenshots_lrg",
-  dirThumbnails = "thumbnails_lrg",
-  dirOCR = "ocr_lrg"
-  }
-
--- TODO - use a configuration
-
-idURL :: String -> URLType
-idURL url
-  -- order of pdf should come before arxivurl to take precedence
-  | "pdf" `isInfixOf` pack url = PdfURL
-  | "arxiv.org" `isInfixOf` pack url = ArxivURL
-  | "twitter.com" `isInfixOf` pack url = TwitterURL
-  | otherwise = GenericURL
-
-parsePage :: String -> IO (Maybe WebPage)
-parsePage url = fmap (\x -> if not (null x) then head x else WebPage "" "") <$> scrapeURL url title
-  where
-    title :: Scraper String [WebPage]
-    title = do
-      chroots "html" $ do
-        title <- text "title"
-        body <- text "body"
-        return $ WebPage title body
-
-catchAny :: IO a -> (SomeException -> IO a) -> IO a
-catchAny = catch -- specialize types
-
-scrapePage :: String -> IO (Maybe WebPage)
-scrapePage url = do
-  let urlType = idURL url
-  case urlType of
-    ArxivURL -> pure $ Just (WebPage url "")
-    TwitterURL -> pure $ Just (WebPage url "")
-    PdfURL -> pure $ Just (WebPage url "")
-    _ -> do
-      result <- parsePage url
-      if result == Just (WebPage "" "") then pure Nothing else pure result
-
-screenshot :: Timeout -> String -> Int -> IO ()
-screenshot (Timeout timeout) url fileID = do
-  createDirectoryIfMissing True "screenshots"
-  fp <- findExecutable "chromium"
-  let result = case fp of
-        Just _ -> undefined
-        Nothing -> error ""
-  let outFile = mkScreenshotFilename fileID
-  let args =
-        [ printf "%ds" timeout,
-          "chromium",
-          "--headless",
-          "--incognito",
-          "--run-all-compositor-stages-before-draw",
-          "--virtual-time-budget=30000",
-          "--disable-gpu",
-          "--window-size=600,800",
-          "--hide-scrollbars",
-          printf "--screenshot=%s" outFile,
-          url
-        ]
-  (code, stdout, stderr) <- readProcessWithExitCode "timeout" args ""
-  print code
-  print $ "Writing to: " ++ outFile
-
--- filt = take 5 -- debugging
-filt = id
-
-cacheEntries :: IO ()
-cacheEntries = do
-  entries <- allEntries
-  let linkEntries = filter (isURI . content) entries
-      links = urlTransformations . content <$> linkEntries
-  pages <-
-    mapM
-      ( \url -> do
-          putStrLn $ "Caching content at url: " ++ url
-          catchAny (threadDelay 50000 >> scrapePage url) $ \e -> do
-            putStrLn $ "Got an exception: " ++ show e
-            putStrLn "Returning dummy value of Nothing"
-            pure $ Just $ WebPage url ""
-      )
-      (filt links) -- for testing
-  let cacheEntries = crawlerOutput2cache $ zip3 (filt linkEntries) (filt links) (filt pages)
-  writeCache cacheEntries
-  -- pPrint pages
+cacheAllEntries :: IO ()
+cacheAllEntries = do
+  allEntries <- allEntries
+  cacheEntries allEntries
 
 screenshotEntries :: Bool -> Timeout -> IO ()
 screenshotEntries deltaOnly timeout = do
@@ -203,7 +95,9 @@ thumbnails = do
     ) files
 
 main = do
+
   screenshotEntries True (Timeout 30) -- False to reconstruct screenshots directory
   thumbnails
   ocrShots
-  cacheEntries
+  -- crawl pages
+  cacheAllEntries

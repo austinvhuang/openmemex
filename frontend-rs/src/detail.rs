@@ -8,6 +8,7 @@ use yew::{
 use yew::Properties;
 use wasm_bindgen::prelude::*;
 use crate::external::*;
+use wasm_bindgen::JsCast;
 
 pub enum DetailMsg {
 
@@ -16,6 +17,9 @@ pub enum DetailMsg {
 pub struct Detail {
     pub link: ComponentLink<Self>,
     pub entry: Option<Cache>,
+    pub ace_editor: Option<JsValue>,
+    // pub ace_callback: dyn Fn(JsValue) -> (),
+    pub ace_callback: JsValue,
 }
 
 #[derive(Properties, Clone)]
@@ -49,6 +53,8 @@ impl Component for Detail {
         Self {
             link: link,
             entry: props.entry,
+            ace_editor: None,
+            ace_callback: unimplemented!(), // |buffer: JsValue| log::info!("ace callback") ,
         }
     }
 
@@ -65,6 +71,7 @@ impl Component for Detail {
     
     fn rendered(&mut self, first_render: bool) {
         log::info!("calling init_ace");
+        // self.ace_editor = Some(init_ace());
         init_ace();
         log::info!("called init_ace");
     }
