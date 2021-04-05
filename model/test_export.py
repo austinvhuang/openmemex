@@ -1,4 +1,5 @@
 import torch
+from transformers import RobertaTokenizer, RobertaConfig, RobertaModel
 
 class Model(torch.nn.Module):
     def __init__(self):
@@ -11,6 +12,18 @@ class Model(torch.nn.Module):
         return self.fc1(x)
 
 if __name__ == "__main__":
-    test = Model()
-    traced = torch.jit.trace(test, torch.ones([1, 2]))
-    traced.save('traced.zip')
+    # test = Model()
+    # traced = torch.jit.trace(test, torch.ones([1, 2]))
+    # traced.save('traced.zip')
+
+    tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
+    configuration = RobertaConfig()
+    model = RobertaModel(configuration)
+    tokenizer("Hello world")['input_ids']
+    tokens = tokenizer("Hello world. This is a test sentence")
+    tokens = tokenizer(["Hello world. This is a test sentence", "and this is another sentence", "hi i am here"])
+    ids = torch.tensor(tokens['input_ids'][0]).reshape(1, 10)
+
+    None
+
+
