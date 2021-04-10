@@ -27,11 +27,11 @@ if __name__ == "__main__":
     configuration = RobertaConfig()
     roberta = RobertaModel(configuration)
     roberta.eval()
-    tokens = tokenizer("hi how are you doing. this is a test.")
-    ids = torch.tensor(tokens['input_ids']).reshape(1, len(tokens['input_ids']))
     (last_hidden_state, pooler_output) = roberta (ids)
     traced = torch.jit.trace(roberta , ids)
     traced.save('roberta_traced.zip')
+    tokens = tokenizer("hi how are you doing. this is a test.")
+    ids = torch.tensor(tokens['input_ids']).reshape(1, len(tokens['input_ids']))
     print(roberta(ids)[0][0][0][0:10])
 
     # sanity check
