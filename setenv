@@ -8,11 +8,11 @@ HASKTORCH_LIB_PATH="$(pwd)/libtorch/lib/"
 function add_vendor_lib_path {
     case "$(uname)" in
       "Darwin")
-        DYLD_LIBRARY_PATH=$HASKTORCH_LIB_PATH:$DYLD_LIBRARY_PATH
+        DYLD_LIBRARY_PATH=$HASKTORCH_LIB_PATH:$(pwd)/deps/tokenizers:$DYLD_LIBRARY_PATH
         export DYLD_LIBRARY_PATH
         ;;
       "Linux"|"FreeBSD")
-        LD_LIBRARY_PATH=$HASKTORCH_LIB_PATH:$LD_LIBRARY_PATH
+        LD_LIBRARY_PATH=$HASKTORCH_LIB_PATH:$(pwd)/deps/tokenizers:$LD_LIBRARY_PATH
         export LD_LIBRARY_PATH
         ;;
       *)

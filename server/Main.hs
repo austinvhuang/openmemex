@@ -27,6 +27,7 @@ import Servant
 import System.IO (hPutStrLn, stderr)
 import Text.Printf (printf)
 import Torch
+import Tokenizers
 
 -- API Types
 
@@ -100,6 +101,12 @@ type HelloTorchAPI =
     :> Capture "value" Float
     :> Get '[JSON] [TestTorch]
 
+type HelloHuggingfaceAPI =
+  "test"
+    :> "huggingface"
+    :> Capture "value" String
+    :> Get '[JSON] [TestHuggingface]
+
 type CombinedAPI =
   RootAPI
     :<|> DateAPI
@@ -114,6 +121,7 @@ type CombinedAPI =
     :<|> FrontendAPI
     :<|> LinkEntryTagsAPI
     :<|> HelloTorchAPI
+    :<|> HelloHuggingfaceAPI
 
 combinedApi :: Proxy CombinedAPI
 combinedApi = Proxy
@@ -133,6 +141,7 @@ server =
     :<|> frontendH
     :<|> linkEntryTagsH
     :<|> helloTorchH
+    :<|> helloHuggingfaceH
 
 instance FromHttpApiData SortBy where
   parseUrlPiece value = case value of

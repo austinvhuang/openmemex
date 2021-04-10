@@ -20,7 +20,7 @@ extra-deps:
       - libtorch-ffi
       - libtorch-ffi-helper
   - git: https://github.com/hasktorch/tokenizers
-    commit: f661557768202e44c0f32a4212cc277aeae7a0fd
+    commit: 9ffac70dcf291406bc4d25fac00395e7926fd4ba
     subdirs:
       - bindings/haskell/tokenizers-haskell  
 # servant swagger ui
@@ -34,7 +34,8 @@ extra-include-dirs:
 # according to stack docs absolute paths are required but it seems to work on mac with relative paths
 # see https://docs.haskellstack.org/en/v1.3.2/yaml_configuration/#extra-include-dirsextra-lib-dirs
 extra-lib-dirs:
-  - libtorch/lib
+  - ./libtorch/lib
+  - ./deps/tokenizers
 
 packages:
   - .

@@ -40,9 +40,11 @@ executable server
                      , swagger2
                      , text
                      , time
+                     , tokenizers
                      , wai-cors
                      , wai-logger
                      , warp
+  extra-lib-dirs:     ./deps/tokenizers
 
 executable crawler
   hs-source-dirs:      crawler, shared
