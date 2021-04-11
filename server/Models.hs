@@ -39,4 +39,4 @@ helloHuggingface :: String -> IO [TestHuggingface]
 helloHuggingface value = do
   tokenizer <- mkRobertaTokenizer "roberta-base-vocab.json" "roberta-base-merges.txt"
   result <- hface value tokenizer
-  pure [TestHuggingface value [result !! 0]]
+  pure [TestHuggingface value result]
