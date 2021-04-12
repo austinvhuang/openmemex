@@ -21,7 +21,7 @@ if __name__ == "__main__":
     (last_hidden_state, pooler_output) = model(tokenized.input_ids, tokenized.attention_mask)
 
     print("Dimensionality Reduction")
-    vis = umap.UMAP(output_metric='gaussian_energy',
+    vis = umap.UMAP(output_metric='euclidean',
                             n_components=2,
                             random_state=42).fit_transform(pooler_output.detach().numpy())
 
@@ -42,5 +42,6 @@ if __name__ == "__main__":
     height=400
     ).interactive(bind_x = False)
     chart.save('frontend-rs/static/contentspace.html')
+    chart.show()
 
 

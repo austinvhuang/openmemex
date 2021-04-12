@@ -6,3 +6,5 @@
 000*.png
 000*.txt
 *.lock
+
+out/

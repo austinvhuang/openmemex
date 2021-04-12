@@ -85,6 +85,11 @@ impl Component for Space {
     fn view(&self) -> Html {
         html! {
             <div>
+                <div class="container shadow p-3 mb-5 bg-body rounded">
+                    <iframe class="responsive-iframe shadow p-3 mb-5 bg-body rounded" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                    src="contentspace.html" />
+                </div>
+
 
             <svg height="1000" width="1000">
             {
