@@ -34,6 +34,10 @@ executable server
                      , directory
                      , filepath
                      , hasktorch
+                     , network-uri
+                     , pretty-simple
+                     , process >= 1.6.9.0
+                     , scalpel
                      , servant-server
                      , sqlite-simple
                      , servant-swagger

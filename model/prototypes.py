@@ -40,7 +40,8 @@ if __name__ == "__main__":
     ).properties(
     width=800,
     height=400
-    ).interactive(bind_x = False)
+    ).interactive()
+    # ).interactive(bind_x = False)
     chart.save('frontend-rs/static/contentspace.html')
     chart.show()
 

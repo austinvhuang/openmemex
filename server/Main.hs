@@ -28,6 +28,7 @@ import System.IO (hPutStrLn, stderr)
 import Text.Printf (printf)
 import Torch
 import Tokenizers
+import CrawlTools
 
 -- API Types
 
@@ -191,7 +192,11 @@ postNote :: PostNote -> IO Int64
 postNote note = do
   putStrLn "Adding note"
   print note
-  addEntryInferDate (pnContent note) (pnTags note)
+  entryID <- addEntryInferDate (pnContent note) (pnTags note)
+  entry <- getEntry (fromIntegral entryID)
+  print entry
+  crawlData entry
+  pure entryID
 
 postNoteH note = liftIO $ postNote note
 

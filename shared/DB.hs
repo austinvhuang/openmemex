@@ -196,6 +196,25 @@ allEntries = do
   close conn
   pure r
 
+{-
+removeCompleted :: Int -> IO Int64
+removeCompleted entryID = do
+  conn <- open dbFile
+  executeNamed
+    conn
+    "DELETE FROM completed WHERE entry_id = :entryID"
+    [":entryID" := entryID]
+  close conn
+  pure 0
+-}
+
+getEntry :: Int -> IO [Entry]
+getEntry entryID = do
+  conn <- open dbFile
+  r <- queryNamed conn "SELECT * FROM entries WHERE entry_id = :entryID" [":entryID" := entryID] :: IO [Entry]
+  close conn
+  pure r -- list should be of length 1
+
 -- Tiny String Builder
 
 newtype SqlCol = SqlCol {sqlCol :: String} deriving Show
