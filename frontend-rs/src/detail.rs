@@ -77,7 +77,7 @@ impl Component for Detail {
     }
 
     fn view(&self) -> Html {
-        let default = String::from("https://unsplash.it/1920/1080?random");
+        let default = String::from("https://unsplash.it/600/800?random");
         log::info!("Screen {:?}", &self.entry);
         let src = match &self.entry {
             Some(entry) => entry.url.as_ref().unwrap_or(&default),
