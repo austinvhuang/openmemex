@@ -77,6 +77,7 @@ impl Cards {
             self.link
                 .callback(move |m| CardsMsg::CardClick(m, entry_id, item_clone.clone()))
         };
+        log::info!("thumbnail file is {:?}", &thumbnail_file);
         html! {
             <div class={ div_class } onmouseover=callback_mouseover(item.entry_id) onclick = callback_click(item.entry_id)>
                 <center> { &item.date } </center>
@@ -108,11 +109,6 @@ impl Cards {
                     }
                 }
 
-                /*
-                <a href={ item.url.as_ref().unwrap_or(&"".to_owned()).clone() }>
-                    { item.content.clone().unwrap_or("".to_owned()) }
-                </a>
-                */
             </div>
         }
     }

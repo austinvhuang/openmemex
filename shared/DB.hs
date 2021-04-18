@@ -19,6 +19,7 @@ import Database.SQLite.Simple
 import GHC.Generics (Generic)
 import GHC.Int (Int64)
 import OCR
+import SQL
 import System.Directory (copyFile)
 import System.IO (hPutStrLn, stderr)
 import Text.Printf (printf)
@@ -196,18 +197,6 @@ allEntries = do
   close conn
   pure r
 
-{-
-removeCompleted :: Int -> IO Int64
-removeCompleted entryID = do
-  conn <- open dbFile
-  executeNamed
-    conn
-    "DELETE FROM completed WHERE entry_id = :entryID"
-    [":entryID" := entryID]
-  close conn
-  pure 0
--}
-
 getEntry :: Int -> IO [Entry]
 getEntry entryID = do
   conn <- open dbFile
@@ -215,67 +204,19 @@ getEntry entryID = do
   close conn
   pure r -- list should be of length 1
 
--- Tiny String Builder
-
-newtype SqlCol = SqlCol {sqlCol :: String} deriving Show
-
-newtype SqlCond = SqlCond {sqlCond :: String} deriving Show
-
-newtype SqlFrom = SqlFrom {sqlFromTable :: String} deriving Show -- TODO: expand this representation
-
-data SqlOrder = SqlAscending SqlCol | SqlDescending SqlCol | SqlDirFunction String deriving Show
-
-data SqlQuery = SqlQuery
-  { sqlSelect :: [SqlCol],
-    sqlFrom :: SqlFrom,
-    sqlWhere :: [SqlCond],
-    sqlOrder :: Maybe SqlOrder,
-    sqlLimit :: Maybe Int
-  } deriving (Show)
-
-defaultQuery = SqlQuery {
-  sqlSelect = [],
-  sqlFrom = SqlFrom "",
-  sqlWhere = [],
-  sqlOrder = Nothing,
-  sqlLimit = Nothing
-}
-
-sql2string :: SqlQuery -> String
-sql2string SqlQuery {..} =
-  "SELECT"
-    ++ (intercalate "," (sqlCol <$> sqlSelect))
-    ++ (sqlFromTable sqlFrom)
-    ++ " "
-    ++ whereClause
-    ++ " "
-    ++ orderClause
-    ++ " "
-    ++ limitClause
-  where
-    whereClause = case sqlWhere of
-      [] -> ""
-      lst -> " " ++ (intercalate " AND " (sqlCond <$> lst)) ++ " "
-    orderClause = case sqlOrder of
-      Nothing -> ""
-      Just (SqlAscending (SqlCol colName)) -> "ORDER BY " ++ colName
-      Just (SqlDescending (SqlCol colName)) -> "ORDER BY " ++ colName ++ "DESC"
-    limitClause = case sqlLimit of
-      Nothing -> ""
-      Just n -> "LIMIT " ++ show n
-
 -- handlers
 
 allCache :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> IO [CacheView]
 allCache sortby sortdir filterTags limit = do
   conn <- open dbFile
-  let query = defaultQuery {
-    sqlSelect = SqlCol <$> ["entry_id", "cache_url", "cache_content_type", "cache_title", "date", "time", "cache_screenshot_file", "cache_thumbnail_file"],
-    sqlFrom = SqlFrom "cache",
-    sqlLimit = limit
-  }
+  let query =
+        defaultQuery
+          { sqlSelect = SqlCol <$> ["entry_id", "cache_url", "cache_content_type", "cache_title", "date", "time", "cache_screenshot_file", "cache_thumbnail_file"],
+            sqlFrom = SqlFrom "cache",
+            sqlLimit = limit
+          }
   let queryString = sql2string query
-    -- TODO finish this builder, use querystring instead of hard coding
+  -- TODO finish this builder, use querystring instead of hard coding
   let limitStr = case limit of
         Nothing -> ""
         Just n -> "LIMIT " ++ show n
@@ -533,7 +474,9 @@ search :: String -> IO [CacheView]
 search query = do
   putStrLn $ "Searching for " ++ query
   conn <- open dbFile
-  let queryString = Query $ pack ("SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from cache " ++ "WHERE cache_title LIKE '%" ++ query ++ "%'") 
+  let queryString = Query $ pack (
+                    "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from cache " ++ 
+                    "WHERE cache_title LIKE '%" ++ query ++ "%'")
   query_ conn queryString :: IO [CacheView]
 
 wipeTesting :: IO ()

@@ -127,8 +127,9 @@ cacheEntries entries = do
       )
       (filt links) -- for testing
   let cacheEntries = crawlerOutput2cache $ zip3 (filt linkEntries) (filt links) (filt pages)
+  
+  -- TODO - split this out so that individual entries can be cached
   writeCache cacheEntries
-  -- pPrint pages
 
 filt = id
 
@@ -138,13 +139,15 @@ screenshotEntries deltaOnly timeout entries = do
   let links = zip (urlTransformations . content <$> linkEntries) (entryID <$> linkEntries)
   mapM_
     ( \(url, entryid) -> do
-        exists <- doesFileExist (mkScreenshotFilename entryid)
+        let filename = mkScreenshotFilename entryid
+        exists <- doesFileExist filename
         if (not deltaOnly || not exists) && (idURL url /= PdfURL)
           then do
             putStrLn $ "Screenshotting url: " ++ url
             catchAny (threadDelay 50000 >> screenshot timeout url entryid) $ \e -> do
               putStrLn $ "Got an exception: " ++ show e
               putStrLn "Returning dummy value of Nothing"
+            putStrLn $ "Wrote " ++ filename
           else -- pure $ Just $ PageTitle url)
             putStrLn $ "Screenshot already exists or is not possible (eg a pdf) for url: " ++ url
     )
@@ -155,7 +158,7 @@ ocrShots entries = do
   -- make ocr output files from screenshots
   createDirectoryIfMissing True "ocr"
   -- files <- sort <$> listDirectory "screenshots"
-  let files = sort (mkScreenshotFilename <$> entryID <$> entries)
+  let files = sort (takeBaseName <$> mkScreenshotFilename <$> entryID <$> entries)
   mapM_
     ( \file -> do
         exists <- doesFileExist (ss2ocrFilename file)
@@ -188,20 +191,9 @@ ocrShots entries = do
   -- write entries to database
   writeOCR (catMaybes ocrEntries)
 
-thumbnailsAll = do
-  files <- listDirectory "screenshots"
-  mapM_ ( \file -> do
-    let outFile = (takeBaseName file) ++ "_tn.png"
-    createDirectoryIfMissing True "thumbnails"
-    let args = ["-resize", "30%", "-crop", "180x180+0+0", "screenshots/" ++ file, "thumbnails/" ++ outFile]
-    putStrLn file
-    putStrLn outFile
-    (code, stdout, stderr) <- readProcessWithExitCode "convert" args ""
-    pure ()
-    ) files
-
 thumbnails entries = do
-  let files = mkScreenshotFilename <$> entryID <$> entries
+  -- files <- listDirectory "screenshots"
+  let files = takeBaseName <$> mkScreenshotFilename <$> entryID <$> entries
   mapM_ ( \file -> do
     let outFile = (takeBaseName file) ++ "_tn.png"
     createDirectoryIfMissing True "thumbnails"
