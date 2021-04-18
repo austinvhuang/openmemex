@@ -204,8 +204,15 @@ thumbnails entries = do
     pure ()
     ) files
 
-crawlData entries = do
+crawlAll = do
+  entries <- allEntries
   screenshotEntries True (Timeout 30) entries -- False to reconstruct screenshots directory
   thumbnails entries
   ocrShots entries
   cacheEntries entries
+
+crawlData entries = do
+  screenshotEntries True (Timeout 30) entries -- False to reconstruct screenshots directory
+  thumbnails entries
+  ocrShots entries
+  -- cacheEntries entries -- TODO - fix this so that the cache table is updated instead of wiped

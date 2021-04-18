@@ -20,6 +20,4 @@ import Text.Read (readMaybe)
 
 import CrawlTools
 
-main = do
-  entries <- allEntries
-  crawlData entries
+main = crawlAll
