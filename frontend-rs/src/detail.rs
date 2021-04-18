@@ -18,8 +18,8 @@ pub struct Detail {
     pub link: ComponentLink<Self>,
     pub entry: Option<Cache>,
     pub ace_editor: Option<JsValue>,
+    // TODO: get ace callback working
     // pub ace_callback: dyn Fn(JsValue) -> (),
-    pub ace_callback: JsValue,
 }
 
 #[derive(Properties, Clone)]
@@ -48,13 +48,13 @@ fn iframeify_url(url: String) -> (String, String) {
 impl Component for Detail {
     type Message = DetailMsg;
     type Properties = Props;
-
+    // let callback = |buffer: JsValue| log::info!("ace callback");
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
             link: link,
             entry: props.entry,
             ace_editor: None,
-            ace_callback: unimplemented!(), // |buffer: JsValue| log::info!("ace callback") ,
+            // ace_callback: unimplemented!(),
         }
     }
 
@@ -89,8 +89,9 @@ impl Component for Detail {
             <div>
                 <div class="twocol-equal">
                     <div class="container shadow p-3 mb-5 bg-body rounded">
-                        <iframe class="responsive-iframe shadow p-3 mb-5 bg-body rounded" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                        src=src_mapped style=iframe_style/>
+                        <iframe class="responsive-iframe shadow p-3 mb-5 bg-body rounded" 
+                                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                                src=src_mapped style=iframe_style/>
                     </div>
                     <div style="height:85vh" class="shadow p-3 mb-5 bg-body rounded">
                         <div id="editor" style="height:90%;">
@@ -100,7 +101,7 @@ impl Component for Detail {
                         <center>
                             <div class="item">
                                 <input type="checkbox" id="finished" name="finished"/>
-                                <label style="height:10%; margin-left: 10px">{" Completed"}</label>
+                                <label style="height:10%; margin-left: 10px"> {" Completed"} </label>
                             </div>
                         </center>
                     </div>

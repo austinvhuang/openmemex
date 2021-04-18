@@ -34,6 +34,7 @@ fn host_simplify(url: &str) -> String {
         "export.arxiv.org" => "Arxiv".to_string(),
         "www.arxiv.org" => "Arxiv".to_string(),
         "www.github.com" => "Github".to_string(),
+        "github.com" => "Github".to_string(),
         "medium.com" => "Medium".to_string(),
         "www.reddit.com" => "Reddit".to_string(),
         "twitter.com" => "Twitter".to_string(),
@@ -78,6 +79,12 @@ impl Cards {
                 .callback(move |m| CardsMsg::CardClick(m, entry_id, item_clone.clone()))
         };
         log::info!("thumbnail file is {:?}", &thumbnail_file);
+        let mut content = item.content.clone().unwrap_or("".to_owned());
+        let max_length = 70;
+        if (content.len() > max_length) {
+            content.truncate(max_length);
+            content.push_str("...");
+        }
         html! {
             <div class={ div_class } onmouseover=callback_mouseover(item.entry_id) onclick = callback_click(item.entry_id)>
                 <center> { &item.date } </center>
@@ -89,6 +96,18 @@ impl Cards {
                     <img src=thumbnail_file style=img_style class=img_class/>
                     </Link>
                 </center>
+
+                {
+                    match item.url.as_ref() {
+                        Some(url) => html! {
+                            <a href={ url.to_string() }> { content } </a>
+                        },
+                        None => html! {
+                            { item.content.clone().unwrap_or("".to_owned()) }
+                        }
+                    }
+                }
+
                 <center>
                 {
                     match &parsed {
@@ -98,22 +117,12 @@ impl Cards {
                 }
                 </center>
 
-                {
-                    match item.url.as_ref() {
-                        Some(url) => html! {
-                            <a href={ url.to_string() }> { item.content.clone().unwrap_or("".to_owned()) } </a>
-                        },
-                        None => html! {
-                            { item.content.clone().unwrap_or("".to_owned()) }
-                        }
-                    }
-                }
-
             </div>
         }
     }
 
     fn view_entries(&self) -> Html {
+        let blank = String::from("");
         match self.entries {
             Some(ref entries) => {
                 log::info!("{:#?} results fetched.", entries.len());
@@ -123,16 +132,7 @@ impl Cards {
                         for entries.iter().map(|mut item| {
                             // log::info!("{:#?} : item.", item);
                             let parsed = Url::parse(item.url.as_ref().unwrap_or(&"".to_owned()));
-
-                            let mut thumbnail_file = match item.thumbnail_file.clone() {
-                                Some(mut value) => {
-                                    value.truncate(value.len() - 4);
-                                    let suffix: &str = "_tn.png";
-                                    value.push_str(suffix);
-                                    value
-                                },
-                                Nothing => "".to_string()
-                            };
+                            let thumbnail_file = item.thumbnail_file.as_ref().unwrap_or(&blank);
                             self.view_card(&parsed, &thumbnail_file, &item)
                         })
                     }
