@@ -49,6 +49,7 @@ initDB = do
   execute_ conn "CREATE INDEX idx_annotations_date on annotations(annotation_date);"
   execute_ conn "CREATE INDEX idx_annotations_time on annotations(annotation_time);"
   execute_ conn "CREATE INDEX idx_annotations_entry_id on annotations(entry_id);"
+  -- TODO - need to setup a dummy cache table and cache view so web server doesn't crash on initialized db
 
 addEntry :: Entry -> IO Int64
 addEntry Entry {..} = do

@@ -5,6 +5,7 @@ cli-watcher:
 	~/.local/bin/ghcid -c "stack ghci note2self:exe:n2s" -Tmain
 
 server-watcher:
+	cd frontend-rs; make build
 	~/.local/bin/ghcid -c "stack ghci note2self:exe:server" -Tmain
 
 crawler-run:
@@ -22,7 +23,7 @@ clean-backups:
 libtorch-mac:
 	rm -rf ./libtorch
 	rm -f cpu-libtorch-macos-latest.zip
-	wget https://github.com/hasktorch/libtorch-binary-for-ci/releases/download/1.7.0/cpu-libtorch-macos-latest.zip
+	wget https://github.com/hasktorch/libtorch-binary-for-ci/releases/download/1.8.0/cpu-libtorch-macos-latest.zip
 	unzip cpu-libtorch-macos-latest.zip
 	rm -f cpu-libtorch-macos-latest.zip
 
@@ -33,10 +34,14 @@ libtorch-linux:
 	unzip cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
 	rm -f cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
 
-model-linux: libtorch-linux
+# model-linux: libtorch-linux
+model-linux: 
+	./get_roberta.sh
+	python model/test_export.py
 	export LD_LIBRARY_PATH=`pwd`/libtorch/lib; stack run model
 
 model-mac-build: 
+	./get_roberta.sh
 	python model/test_export.py
 	rm -rf ./.stack-work/install
 	stack build model
