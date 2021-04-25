@@ -131,6 +131,23 @@ cacheEntries entries = do
   -- TODO - split this out so that individual entries can be cached
   writeCache cacheEntries
 
+appendEntries :: [Entry] -> IO ()
+appendEntries entries = do
+  let linkEntries = filter (isURI . content) entries
+      links = urlTransformations . content <$> linkEntries
+  pages <-
+    mapM
+      ( \url -> do
+          putStrLn $ "Caching content at url: " ++ url
+          catchAny (threadDelay 50000 >> scrapePage url) $ \e -> do
+            putStrLn $ "Got an exception: " ++ show e
+            putStrLn "Returning dummy value of Nothing"
+            pure $ Just $ WebPage url ""
+      )
+      (filt links) -- for testing
+  let cacheEntries = crawlerOutput2cache $ zip3 (filt linkEntries) (filt links) (filt pages)
+  appendCache cacheEntries
+
 filt = id
 
 screenshotEntries :: Bool -> Timeout -> [Entry] -> IO ()
@@ -158,7 +175,7 @@ ocrShots entries = do
   -- make ocr output files from screenshots
   createDirectoryIfMissing True "ocr"
   -- files <- sort <$> listDirectory "screenshots"
-  let files = sort (takeBaseName <$> mkScreenshotFilename <$> entryID <$> entries)
+  let files = sort ((\x -> x ++ ".png") <$> takeBaseName <$> mkScreenshotFilename <$> entryID <$> entries)
   mapM_
     ( \file -> do
         exists <- doesFileExist (ss2ocrFilename file)
@@ -193,7 +210,7 @@ ocrShots entries = do
 
 thumbnails entries = do
   -- files <- listDirectory "screenshots"
-  let files = takeBaseName <$> mkScreenshotFilename <$> entryID <$> entries
+  let files = (\x -> x ++ ".png") <$> takeBaseName <$> mkScreenshotFilename <$> entryID <$> entries
   mapM_ ( \file -> do
     let outFile = (takeBaseName file) ++ "_tn.png"
     createDirectoryIfMissing True "thumbnails"
@@ -201,9 +218,13 @@ thumbnails entries = do
     putStrLn file
     putStrLn outFile
     (code, stdout, stderr) <- readProcessWithExitCode "convert" args ""
+    putStrLn $ show code
+    putStrLn stdout
+    putStrLn stderr
     pure ()
     ) files
 
+crawlAll :: IO ()
 crawlAll = do
   entries <- allEntries
   screenshotEntries True (Timeout 30) entries -- False to reconstruct screenshots directory
@@ -211,8 +232,9 @@ crawlAll = do
   ocrShots entries
   cacheEntries entries
 
-crawlData entries = do
+crawlEntries :: [Entry] -> IO ()
+crawlEntries entries = do
   screenshotEntries True (Timeout 30) entries -- False to reconstruct screenshots directory
   thumbnails entries
   ocrShots entries
-  -- cacheEntries entries -- TODO - fix this so that the cache table is updated instead of wiped
+  appendEntries entries

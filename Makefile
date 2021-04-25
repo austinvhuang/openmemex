@@ -13,6 +13,11 @@ install-dependencies:
 clean-backups:
 	rm note2self.db.backup.20*.db
 
+clean-cache-files:
+	rm screenshots/*.png
+	rm thumbnails/*.png
+	rm ocr/*.txt
+
 download-libtorch-mac:
 	rm -rf ./libtorch
 	rm -f cpu-libtorch-macos-latest.zip
@@ -34,7 +39,7 @@ download-libtorch-linux: libtorch/lib/libtorch_cpu.so
 cli-watcher:
 	~/.local/bin/ghcid -c "stack ghci note2self:exe:n2s" -Tmain
 
-frontend-rs/static/wasm_bg.wasm:
+frontend-rs/static/wasm_bg.wasm: frontend-rs/src/$(wildcard *.rs)
 	cd frontend-rs; make build
 
 # run `source setenv` before invoking this

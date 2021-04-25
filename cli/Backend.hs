@@ -5,7 +5,7 @@ module Backend where
 
 import Database.SQLite.Simple
 import GHC.Int (Int64)
-import System.Directory (copyFile)
+import System.Directory (copyFile, removeFile)
 
 data Entry = Entry
   { entryID :: Maybe Int, -- only needs a value when reading
@@ -32,20 +32,23 @@ dbFile = "note2self.db"
 
 initDB :: IO ()
 initDB = do
-  -- copyFile dbFile (dbFile ++ ".backup")
+  copyFile dbFile (dbFile ++ ".backup")
+  removeFile dbFile
   conn <- open dbFile
   execute_ conn "DROP TABLE IF EXISTS entries;"
   execute_ conn "DROP TABLE IF EXISTS tags;"
+  execute_ conn "DROP TABLE IF EXISTS cache_meta;"
+  execute_ conn "DROP TABLE IF EXISTS annotations;"
   execute_ conn "CREATE TABLE entries (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT, content TEXT);"
   execute_ conn "CREATE TABLE tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
   execute_ conn "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
+  execute_ conn "CREATE TABLE annotations(annotation_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, annotation_date TEXT, annotation_time TEXT, annotation_content TEXT);"
   execute_ conn "CREATE INDEX idx_tags_entry_id ON tags(entry_id);"
   execute_ conn "CREATE INDEX idx_entries_time on entries(time);"
   execute_ conn "CREATE INDEX idx_entries_date on entries(date);"
   execute_ conn "CREATE INDEX idx_tags_tag ON tags(tag);"
   execute_ conn "CREATE UNIQUE INDEX idx_entries_entry_id ON entries(entry_id);"
 
-  execute_ conn "CREATE TABLE annotations(annotation_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, annotation_date TEXT, annotation_time TEXT, annotation_content TEXT);"
   execute_ conn "CREATE INDEX idx_annotations_date on annotations(annotation_date);"
   execute_ conn "CREATE INDEX idx_annotations_time on annotations(annotation_time);"
   execute_ conn "CREATE INDEX idx_annotations_entry_id on annotations(entry_id);"

@@ -87,7 +87,15 @@ impl Cards {
         }
         html! {
             <div class={ div_class } onmouseover=callback_mouseover(item.entry_id) onclick = callback_click(item.entry_id)>
-                <center> { &item.date } </center>
+                { &item.date }
+                <font color="grey">
+                {
+                    match &parsed {
+                        Ok(x) => { host_simplify(x.host_str().unwrap()) }
+                        Err(error) => { "".to_string() }
+                    }
+                }
+                </font>
                 <hr/>
                 // <img src=thumbnail_file width="100%" style="height: 100px; overflow: hidden;"/>
                 <center>
@@ -96,27 +104,18 @@ impl Cards {
                     <img src=thumbnail_file style=img_style class=img_class/>
                     </Link>
                 </center>
-
-                {
-                    match item.url.as_ref() {
-                        Some(url) => html! {
-                            <a href={ url.to_string() }> { content } </a>
-                        },
-                        None => html! {
-                            { item.content.clone().unwrap_or("".to_owned()) }
+                <center>
+                    {
+                        match item.url.as_ref() {
+                            Some(url) => html! {
+                                <a href={ url.to_string() }> { content } </a>
+                            },
+                            None => html! {
+                                { item.content.clone().unwrap_or("".to_owned()) }
+                            }
                         }
                     }
-                }
-
-                <center>
-                {
-                    match &parsed {
-                        Ok(x) => { host_simplify(x.host_str().unwrap()) }
-                        Err(error) => { "".to_string() }
-                    }
-                }
                 </center>
-
             </div>
         }
     }

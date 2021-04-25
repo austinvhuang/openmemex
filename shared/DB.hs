@@ -308,6 +308,82 @@ writeOCR ocrEntries = do
     ocrEntries
   close conn
 
+
+
+
+data CurrTable = CurrTable
+  { 
+    currTable :: String
+  }
+  deriving (Eq, Show, Generic)
+
+instance FromRow CurrTable where
+  fromRow = CurrTable <$> field
+
+appendCache :: [CacheEntry] -> IO ()
+appendCache cacheEntries = do
+  now <- getZonedTime
+  conn <- open dbFile
+  -- get the most recent cache snapshot
+  r <- query_ conn $ Query "SELECT table_name FROM cache_meta ORDER BY cache_date, cache_time DESC LIMIT 1;"
+  tableName <- if length r == 0 then do
+      putStrLn "creating new cache table"
+      let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
+      let tm = formatTime defaultTimeLocale "%H:%M:%S" now
+      let timeStamp = formatTime defaultTimeLocale "%Y%m%d_%H%M%S" now
+      let tableName = "cache_" ++ timeStamp
+      executeNamed
+        conn
+        ( Query . pack $
+            "CREATE TABLE " ++ tableName -- :cacheTable "
+              ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
+              ++ "cache_url TEXT, "
+              ++ "cache_content_type TEXT, cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT, cache_ocr_file TEXT);"
+        )
+        []
+      bracketExecute "DROP VIEW IF EXISTS cache"
+      bracketExecute $
+        "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "
+          ++ "as select cache_entry_id, "
+          ++ "entries.entry_id as entry_id, cache_url, cache_content_type, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content "
+          ++ "from entries"
+          ++ " left join "
+          ++ tableName
+          ++ " on "
+          ++ tableName
+          ++ ".entry_id=entries.entry_id;"
+      close conn
+      pure tableName
+
+    else do
+      let (CurrTable tableName) = (r !! 0)
+      putStrLn $ "appending to " ++ tableName
+      pure tableName
+
+  -- TODO - fix inserts for fresh DB
+  mapM_
+    ( \CacheEntry {..} ->
+        executeNamed
+          conn
+          ( Query . pack $
+              "INSERT INTO " ++ tableName -- :cacheTable "
+                ++ "       (entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file) "
+                ++ "VALUES (:entryID, :cacheUrl, :cacheContentType, :cacheTitle, :cacheBody, :cacheScreenshotFile, :cacheThumbnailFile, :cacheOCRFile)"
+          )
+          -- [ ":cacheTable" := tableName,
+          [ ":entryID" := cacheForeignID,
+            ":cacheUrl" := cacheUrl,
+            ":cacheContentType" := cacheContentType,
+            ":cacheTitle" := cacheTitle,
+            ":cacheBody" := cacheBody,
+            ":cacheScreenshotFile" := cacheScreenshotFile,
+            ":cacheThumbnailFile" := cacheThumbnailFile,
+            ":cacheOCRFile" := cacheOCRFile
+          ]
+    )
+    cacheEntries
+  close conn
+
 writeCache :: [CacheEntry] -> IO ()
 writeCache cacheEntries = do
   now <- getZonedTime
@@ -317,7 +393,6 @@ writeCache cacheEntries = do
   let tableName = "cache_" ++ timeStamp
   copyFile dbFile (dbFile ++ ".backup." ++ timeStamp ++ ".db")
   conn <- open dbFile
-
   -- insert metadata entry
   executeNamed
     conn
@@ -326,7 +401,6 @@ writeCache cacheEntries = do
           ++ "VALUES (:tableName, :date, :time)"
     )
     [":tableName" := tableName, ":date" := dt, ":time" := tm]
-
   -- create new table
   executeNamed
     conn
@@ -337,8 +411,8 @@ writeCache cacheEntries = do
           ++ "cache_content_type TEXT, cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT, cache_ocr_file TEXT);"
     )
     []
-  --    [":cacheTable" := tableName]
 
+  --    [":cacheTable" := tableName]
   -- insert data into new table
   mapM_
     ( \CacheEntry {..} ->
@@ -363,7 +437,6 @@ writeCache cacheEntries = do
     cacheEntries
   bracketExecute "DROP INDEX IF EXISTS idx_cache_entry_id;"
   bracketExecute $ "CREATE UNIQUE INDEX idx_cache_entry_id ON " ++ tableName ++ "(entry_id);"
-
   bracketExecute "DROP VIEW IF EXISTS cache"
   bracketExecute $
     "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "

@@ -195,7 +195,7 @@ postNote note = do
   entryID <- addEntryInferDate (pnContent note) (pnTags note)
   entry <- getEntry (fromIntegral entryID)
   print entry
-  crawlData entry
+  crawlEntries entry
   pure entryID
 
 postNoteH note = liftIO $ postNote note

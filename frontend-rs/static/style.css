@@ -269,3 +269,9 @@ margin: 40px 80px;
     bottom: 0;
     left: 0;
 }
+
+a {
+  color: #cccccc;
+  /* text-decoration: underline; */
+  text-decoration: none;
+}
