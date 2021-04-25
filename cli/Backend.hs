@@ -32,7 +32,7 @@ dbFile = "note2self.db"
 
 initDB :: IO ()
 initDB = do
-  copyFile dbFile (dbFile ++ ".backup")
+  -- copyFile dbFile (dbFile ++ ".backup")
   conn <- open dbFile
   execute_ conn "DROP TABLE IF EXISTS entries;"
   execute_ conn "DROP TABLE IF EXISTS tags;"

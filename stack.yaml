@@ -14,13 +14,13 @@ extra-deps:
   - webdriver-w3c-0.0.2@sha256:f07934702391238d79a06727a11f5c0518819e69814bc34b3fd4e2d3905ff464,4116
   - script-monad-0.0.3@sha256:ba3bad28d6f6400fe492101300dad63989afc813cc6c8dc23832170275951ef0,2218
   - git: https://github.com/hasktorch/hasktorch.git
-    commit: 63b3df06477ab1fc60030ccbb630330e71fdca74
+    commit: 4e846fdcd89df5c7c6991cb9d6142007a6bb0a58
     subdirs:
       - hasktorch
       - libtorch-ffi
       - libtorch-ffi-helper
   - git: https://github.com/hasktorch/tokenizers
-    commit: 322be73023bb60e8d83946eaf7f36aa218cbe852
+    commit: ee086b60dc894c233666b8f9036f7bc6ba73abe3
     subdirs:
       - bindings/haskell/tokenizers-haskell  
 # servant swagger ui

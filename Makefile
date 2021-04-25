@@ -29,7 +29,7 @@ libtorch-mac:
 libtorch-linux:
 	rm -rf ./libtorch
 	rm -f cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
-	wget https://github.com/hasktorch/libtorch-binary-for-ci/releases/download/1.7.0/cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
+	wget https://github.com/hasktorch/libtorch-binary-for-ci/releases/download/1.8.0/cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
 	unzip cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
 	rm -f cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
 

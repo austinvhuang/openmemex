@@ -49,6 +49,8 @@ executable server
                      , wai-logger
                      , warp
   extra-lib-dirs:     ./deps/tokenizers
+  extra-libraries:
+      tokenizers_haskell
 
 executable crawler
   hs-source-dirs:      crawler, shared
