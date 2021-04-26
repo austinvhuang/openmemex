@@ -61,7 +61,7 @@ impl Cards {
 
         let div_class = if item.entry_id != self.entry_id_click.unwrap_or(-1) {
             if item.entry_id != self.entry_id_mouseover.unwrap_or(-1) {
-                "card shadow p-3 mb-5 bg-body rounded"
+                "card shadow-sm p-3 mb-5 bg-white rounded"
             } else {
                 "card shadow-lg p-3 mb-5 bg-white rounded"
             }

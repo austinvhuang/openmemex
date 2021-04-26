@@ -127,8 +127,6 @@ cacheEntries entries = do
       )
       (filt links) -- for testing
   let cacheEntries = crawlerOutput2cache $ zip3 (filt linkEntries) (filt links) (filt pages)
-  
-  -- TODO - split this out so that individual entries can be cached
   writeCache cacheEntries
 
 appendEntries :: [Entry] -> IO ()
@@ -227,14 +225,14 @@ thumbnails entries = do
 crawlAll :: IO ()
 crawlAll = do
   entries <- allEntries
-  screenshotEntries True (Timeout 30) entries -- False to reconstruct screenshots directory
+  screenshotEntries False (Timeout 30) entries -- False to reconstruct screenshots directory
   thumbnails entries
   ocrShots entries
   cacheEntries entries
 
 crawlEntries :: [Entry] -> IO ()
 crawlEntries entries = do
-  screenshotEntries True (Timeout 30) entries -- False to reconstruct screenshots directory
+  screenshotEntries False (Timeout 30) entries -- False to reconstruct screenshots directory
   thumbnails entries
   ocrShots entries
   appendEntries entries

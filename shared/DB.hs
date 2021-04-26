@@ -185,7 +185,7 @@ allTags minCount = do
   conn <- open dbFile
   let queryString = case minCount of
         Nothing -> Query $ pack "SELECT distinct tag from tags order by tag"
-        (Just minCount) -> Query $ pack $ "SELECT tag FROM tags GROUP BY tag HAVING count(*) > " ++ show minCount ++ " ORDER BY tag" -- TODO - don't use show
+        (Just minCount) -> Query $ pack $ "SELECT tag FROM tags GROUP BY tag HAVING count(*) > " ++ show minCount ++ " ORDER BY tag"
   r <- query_ conn queryString :: IO [[String]]
   close conn
   pure $ concat r
@@ -341,9 +341,17 @@ appendCache cacheEntries = do
               ++ "cache_content_type TEXT, cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT, cache_ocr_file TEXT);"
         )
         []
+
+      executeNamed
+        conn
+        ( Query . pack $
+            "INSERT INTO cache_meta (table_name, cache_date, cache_time) "
+              ++ "VALUES (:tableName, :date, :time)"
+        )
+        [":tableName" := tableName, ":date" := dt, ":time" := tm]
       bracketExecute "DROP VIEW IF EXISTS cache"
       bracketExecute $
-        "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "
+        "CREATE VIEW IF NOT EXISTS cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "
           ++ "as select cache_entry_id, "
           ++ "entries.entry_id as entry_id, cache_url, cache_content_type, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content "
           ++ "from entries"
@@ -352,15 +360,13 @@ appendCache cacheEntries = do
           ++ " on "
           ++ tableName
           ++ ".entry_id=entries.entry_id;"
-      close conn
       pure tableName
 
     else do
       let (CurrTable tableName) = (r !! 0)
-      putStrLn $ "appending to " ++ tableName
       pure tableName
 
-  -- TODO - fix inserts for fresh DB
+  putStrLn $ "appending to " ++ tableName
   mapM_
     ( \CacheEntry {..} ->
         executeNamed
