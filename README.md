@@ -4,13 +4,13 @@ WARNING - not recommended for use other than development.
 
 # Project Organization
 
-There are currently 2 main components.
+There are currently 3 main components.
 
 - `frontend-rs/` - this is the frontend user interface implementation, uses rust + yew compiles to wasm.
 - `server/` - this is the backend server, interacts with the database and in the future runs various automation tasks and (in the future) models.
-- `shared/` - shared backend operations - more or less reused models between `server` and the two supporting command line tools below (`cli/` and `crawler/`)
+- `shared/` - shared backend operations - more or less reused modules between `server` and the two supporting command line tools below (`cli/` and `crawler/`)
 
-There's additionally two supporting command line tools which are mostly deprecated, except that the CLI is still needed on a first use to initialize the database table schemas.
+Additionally, there's two supporting command line tools (`n2s` command line interface under `cli/` and `crawler` command line tool) which are mostly deprecated, except that the CLI is still needed on a first use to initialize the database table schemas.
 
 - `cli/` - [[mostly deprecated except for initialization]] the command line tool. this is mostly no longer needed except to initialize the table schemas of the database (`n2s --reset --note ""`), but can also be used to test adding notes at the command line eg `n2s --note "blah blah" --tag "atag" --tag "anothertag`)
 - `crawler/` - [[mostly deprecated]] for all notes consisting of urls, this crawls them, pulls html content into the database, but also takes screenshots, thumbnails, and runs ocr for a text representation of screenshots. This tool is also mostly deprecated in favor of running these operations synchronously upon adding a note instead of requiring users to run this process in batch on-demand (which leaves part of the database un-crawled).

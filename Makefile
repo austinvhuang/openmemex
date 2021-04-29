@@ -1,6 +1,6 @@
 # Dependencies ##################################################
 
-install-tools:
+install-haskell-tools:
 	stack install ormolu ghcid
 
 install-dependencies:
@@ -59,6 +59,9 @@ roberta_traced.zip:
 	./get_roberta.sh
 	python model/test_export.py
 
+electron:
+	cd electron; yarn start
+
 # Tests ##################################################
 
 # model-test-linux: libtorch-linux
@@ -90,3 +93,5 @@ test-screenshot:
 
 test-post-note:
 	curl -g --header "Content-Type: application/json" --request POST --data '{"pnContent":"https://monoskop.org/images/5/51/Wiener_Norbert_The_Human_Use_of_Human_Beings.pdf", "pnTags":["book"]}' --request POST http://localhost:3000/submit/note
+
+

@@ -50,7 +50,7 @@ impl Cards {
         thumbnail_file: &String,
         item: &Cache,
     ) -> Html {
-        let img_style = "width: 70%;";
+        let img_style = "width: 60%;";
         let item_clone = item.clone();
 
         let img_class = if item.entry_id != self.entry_id_mouseover.unwrap_or(-1) {
@@ -101,7 +101,7 @@ impl Cards {
                 <center>
 
                     <Link route=AppRoute::Detail>
-                    <img src=thumbnail_file style=img_style class=img_class/>
+                    <img  src=thumbnail_file style=img_style class=img_class/>
                     </Link>
                 </center>
                 <center>
