@@ -39,8 +39,8 @@ download-libtorch-linux: libtorch/lib/libtorch_cpu.so
 cli-watcher:
 	~/.local/bin/ghcid -c "stack ghci note2self:exe:n2s" -Tmain
 
-frontend-rs/static/wasm_bg.wasm: frontend-rs/src/$(wildcard *.rs)
-	cd frontend-rs; make build
+frontend-rs/static/wasm_bg.wasm: $(wildcard frontend-rs/src/*.rs)
+	cd frontend-rs; $(MAKE) build
 
 # run `source setenv` before invoking this
 watch-server: frontend-rs/static/wasm_bg.wasm libtorch/lib/libtorch_cpu.so
