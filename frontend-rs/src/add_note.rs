@@ -7,6 +7,7 @@ use yew::{
     prelude::*,
     utils::*,
 };
+use crate::api::*;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct NoteResponse {

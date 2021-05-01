@@ -35,9 +35,9 @@ pub struct Tag {
 // add_note
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct Payload {
+pub struct Payload {
     #[serde(rename(serialize = "pnContent", deserialize = "pnContent"))]
-    note_content: String,
+    pub note_content: String,
     #[serde(rename(serialize = "pnTags", deserialize = "pnTags"))]
-    tags: Vec<String>,
+    pub tags: Vec<String>,
 }
