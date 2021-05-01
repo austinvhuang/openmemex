@@ -40,7 +40,7 @@ data PostNote = PostNote
 instance ToJSON PostNote
 instance FromJSON PostNote
 
-data PostCompleted = PostCompleted { pcEntryID :: Int, state :: Bool} deriving Generic
+data PostCompleted = PostCompleted { pcEntryID :: Int, pcState :: Bool} deriving Generic
 instance ToJSON PostCompleted
 instance FromJSON PostCompleted
 
@@ -83,6 +83,10 @@ type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [CacheView]
 
 type EntryAPI = "submit" :> "note" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
 type CompletedAPI = "submit" :> "completed" :> ReqBody '[JSON] PostCompleted :> Post '[JSON] Int64
+  
+
+type GetCompletedAPI = "get" :> "completed" :> Capture "entry_id" Int :> Get '[JSON] [Bool]
+  
 type SearchAPI = "search" :> Capture "query" String :> Get '[JSON] [CacheView]
 
 type FrontendAPI = "frontend" :> Raw
@@ -116,6 +120,7 @@ type CombinedAPI =
     :<|> ContentAPI
     :<|> EntryAPI 
     :<|> CompletedAPI 
+    :<|> GetCompletedAPI 
     :<|> SearchAPI
     :<|> FrontendAPI
     :<|> LinkEntryTagsAPI
@@ -136,6 +141,7 @@ server =
     :<|> queryContentH
     :<|> postNoteH
     :<|> postCompletedH
+    :<|> getCompletedH
     :<|> searchH
     :<|> frontendH
     :<|> linkEntryTagsH
@@ -209,6 +215,16 @@ postCompleted (PostCompleted entryID state) = do
   pure 0
 
 postCompletedH entryID = liftIO $ postCompleted entryID
+
+-- TODO - test that this works correctly
+getCompleted :: Int -> IO [Bool]
+getCompleted entryID = do
+  print entryID
+  result <- checkCompleted entryID
+  print result
+  pure [result]
+
+getCompletedH entryID = liftIO $ getCompleted entryID
 
 searchH query = liftIO $ search query
 

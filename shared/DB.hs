@@ -533,7 +533,7 @@ addCompleted entryID = do
   conn <- open dbFile
   executeNamed
     conn
-    "INSERT INTO completed (entry_id, date, time) VALUES (:entryID, :date, :time)"
+    "INSERT INTO completed (entry_id, completed_date, completed_time) VALUES (:entryID, :date, :time)"
     [":entryID" := entryID, ":date" := dt, ":time" := tm]
   r <- lastInsertRowId conn
   close conn
@@ -548,6 +548,13 @@ removeCompleted entryID = do
     [":entryID" := entryID]
   close conn
   pure 0
+
+checkCompleted :: Int -> IO Bool
+checkCompleted entryID = do
+  conn <- open dbFile
+  r <- query_ conn "SELECT completed_date FROM completed"  :: IO [[String]]
+  close conn
+  pure (length (r !! 0) > 0)
 
 search :: String -> IO [CacheView]
 search query = do

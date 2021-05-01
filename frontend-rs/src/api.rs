@@ -35,9 +35,23 @@ pub struct Tag {
 // add_note
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Payload {
+pub struct AddNotePayload {
     #[serde(rename(serialize = "pnContent", deserialize = "pnContent"))]
     pub note_content: String,
     #[serde(rename(serialize = "pnTags", deserialize = "pnTags"))]
     pub tags: Vec<String>,
+}
+
+// detail
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CompletedPayload {
+    #[serde(rename(serialize = "pcEntryID", deserialize = "pcEntryID"))]
+    pub entry_id: i32,
+    #[serde(rename(serialize = "pcState", deserialize = "pcState"))]
+    pub state: bool,
+}
+
+pub struct CompletedResponse {
+    pub code: i64,
 }

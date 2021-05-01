@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use crate::api::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{
@@ -18,7 +19,7 @@ pub struct CompletedResponse {
 
 pub enum DetailMsg {
     CompletedChange(ChangeData),
-    SubmitResponse(Result<Vec<CompletedResponse>, anyhow::Error>),
+    CompletedResponse(Result<Vec<CompletedResponse>, anyhow::Error>),
 }
 
 pub struct Detail {
@@ -26,6 +27,7 @@ pub struct Detail {
     pub entry: Option<Cache>,
     pub ace_editor: Option<JsValue>,
     pub completed: bool,
+    submit_task: Option<FetchTask>,
     // TODO: get ace callback working
     // pub ace_callback: dyn Fn(JsValue) -> (),
 }
@@ -67,6 +69,7 @@ impl Component for Detail {
             entry: props.entry,
             ace_editor: None,
             completed: false,
+            submit_task: None
             // ace_callback: unimplemented!(),
         }
     }
@@ -86,17 +89,49 @@ impl Component for Detail {
                         self.completed = !self.completed;
                         log::info!("completed checbox : change value: {:?}", s);
                         log::info!("completed checbox : state: {:?}", self.completed);
-                        log::info!("completed checbox : entry_id: {:?}", 
-                            match &self.entry { None => -1, Some(e) => e.entry_id });
-                        let server = host();
+                            
+                            match &self.entry { 
+                                None => {
+                                    log::info!("completed checbox : entry_id: None");
+                                    -1
+                                }
+                                Some(e) => {
+                                    log::info!("completed checbox : entry_id: {:?}", e.entry_id);
+                                    let server = host().unwrap();
+                                    let query = format!("http://{}/submit/completed", server);
+                                    let payload = CompletedPayload {
+                                        entry_id: e.entry_id,
+                                        state: self.completed,
+                                    };
+                                    // TODO can we use payload to deserialize here instead?
+                                    // currently payload value isn't used
+                                    let body = json!({"pcEntryID": payload.entry_id,
+                                                      "pcState": payload.state});
+                                    let request = Request::post(query)
+                                        .header("Content-Type", "application/json")
+                                        .body(Json(&body))
+                                        .expect("Could not build request.");
+                                    let callback = self.link.callback_once(
+                                        |response: Response<Json<Result<Vec<CompletedResponse>, anyhow::Error>>>| {
+                                            let Json(data) = response.into_body();
+                                            DetailMsg::CompletedResponse(data)
+                                        },
+                                    );
+                                    let task = FetchService::fetch(request, callback).expect("failed to start request");
+                                    self.submit_task = Some(task);
+                                    e.entry_id 
+                                }
+                            }
                     }
                     _ =>{
                         log::info!("completed checkbox : not a value: {:?}", v);
+                        -1
                     }
                 }
             }
-            DetailMsg::SubmitResponse(d) => {
-                log::info!("submit response");
+            DetailMsg::CompletedResponse(d) => {
+                log::info!("completed response {:?}", d);
+                -1
             }
         };
         false

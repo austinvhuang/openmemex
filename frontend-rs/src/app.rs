@@ -262,9 +262,9 @@ impl Component for App {
                 <div class="twocol">
                     <Cards entries=&self.entries card_click_callback=card_callback/>
                     <div>
-                    <Tags tags=exist_tags tag_click_callback=tag_callback/>
-                    <input type="checkbox" id="hidecompleted" name="hidecompleted"/>
-                    <label style="height:10%; margin-left: 10px"> {"Hide Completed"} </label>
+                        <Tags tags=exist_tags tag_click_callback=tag_callback/>
+                        <input type="checkbox" id="hidecompleted" name="hidecompleted"/>
+                        <label style="height:10%; margin-left: 10px"> {"Hide Completed"} </label>
                     </div>
                 </div>
             </div>

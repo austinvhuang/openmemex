@@ -95,7 +95,7 @@ impl Component for AddNote {
                 log::info!("self.content.clone() {:?}", self.content.clone());
                 log::info!("submit note: {:?}", self.content);
                 let query = format!("http://{}/submit/note", server);
-                let payload = Payload {
+                let payload = AddNotePayload {
                     note_content: self.content.clone(),
                     tags: self.tags.clone(),
                 };
