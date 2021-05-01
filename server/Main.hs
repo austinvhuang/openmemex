@@ -40,9 +40,7 @@ data PostNote = PostNote
 instance ToJSON PostNote
 instance FromJSON PostNote
 
-data PostCompleted = 
-  PostCompleted { pcEntryID :: Int } 
-  | UndoCompleted { pcEntryID :: Int } deriving (Show, Generic)
+data PostCompleted = PostCompleted { pcEntryID :: Int, state :: Bool} deriving Generic
 instance ToJSON PostCompleted
 instance FromJSON PostCompleted
 
@@ -201,16 +199,13 @@ postNote note = do
 postNoteH note = liftIO $ postNote note
 
 postCompleted :: PostCompleted -> IO Int64
-postCompleted (PostCompleted entryID) = do
-  putStrLn "Marking as complete"
+postCompleted (PostCompleted entryID state) = do
+  putStrLn $ "Marking complete as " ++ show state
   print entryID
-  addCompleted entryID
-  pure 0
-
-postCompleted (UndoCompleted entryID) = do
-  putStrLn "Removing complete"
-  print entryID
-  removeCompleted entryID
+  case state of
+    True -> addCompleted entryID
+    False -> removeCompleted entryID
+  
   pure 0
 
 postCompletedH entryID = liftIO $ postCompleted entryID

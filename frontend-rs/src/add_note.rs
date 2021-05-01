@@ -26,14 +26,6 @@ pub enum AddNoteMsg {
     SubmitResponse(Result<Vec<NoteResponse>, anyhow::Error>),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct Payload {
-    #[serde(rename(serialize = "pnContent", deserialize = "pnContent"))]
-    note_content: String,
-    #[serde(rename(serialize = "pnTags", deserialize = "pnTags"))]
-    tags: Vec<String>,
-}
-
 pub struct AddNote {
     content: String, // holds text in the note input
     tag: String,     // holds text in the tag input

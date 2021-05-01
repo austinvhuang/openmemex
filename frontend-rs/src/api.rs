@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Entry {
@@ -8,6 +8,8 @@ pub struct Entry {
     content: String,
     pub date: String,
 }
+
+// gallery view
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Cache {
@@ -28,4 +30,14 @@ pub struct Cache {
 #[derive(Deserialize, Debug, Clone)]
 pub struct Tag {
     pub tag_name: String,
+}
+
+// add_note
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct Payload {
+    #[serde(rename(serialize = "pnContent", deserialize = "pnContent"))]
+    note_content: String,
+    #[serde(rename(serialize = "pnTags", deserialize = "pnTags"))]
+    tags: Vec<String>,
 }

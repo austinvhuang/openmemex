@@ -63,7 +63,7 @@ impl App {
                 </div>
                 */
 
-                <a class="navbar-brand" href="#"> { "note2self" } </a>
+                <a class="navbar-brand" href="#"> { "OpenMemex" } </a>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
                         <li class="nav-item active">
@@ -261,7 +261,11 @@ impl Component for App {
                 <p/>
                 <div class="twocol">
                     <Cards entries=&self.entries card_click_callback=card_callback/>
+                    <div>
                     <Tags tags=exist_tags tag_click_callback=tag_callback/>
+                    <input type="checkbox" id="hidecompleted" name="hidecompleted"/>
+                    <label style="height:10%; margin-left: 10px"> {"Hide Completed"} </label>
+                    </div>
                 </div>
             </div>
         };
@@ -283,7 +287,7 @@ impl Component for App {
                 { self.view_navbar() }
                 <div class="main-inner">
                     <div class="main-top">
-                        <h1 class="big-title"> { "note2self" } </h1>
+                        <h1 class="big-title"> { "OpenMemex" } </h1>
                         <hr/>
                         <Router<AppRoute, ()> render=render/>
                     </div>
