@@ -20,6 +20,8 @@ pub struct CompletedResponse {
 pub enum DetailMsg {
     CompletedChange(ChangeData),
     CompletedResponse(Result<Vec<CompletedResponse>, anyhow::Error>),
+    GetCompleted,
+    ReceiveCompleted(Result<Vec<bool>, anyhow::Error>),
 }
 
 pub struct Detail {
@@ -131,6 +133,40 @@ impl Component for Detail {
             }
             DetailMsg::CompletedResponse(d) => {
                 log::info!("completed response {:?}", d);
+                -1
+            }
+            DetailMsg::GetCompleted => {
+                match &self.entry { 
+                    None => { unimplemented!() }
+                    Some(e) => {
+                        let server = host().unwrap();
+                        let query = format!("http://{}/get/completed/{:?}", server,e.entry_id).to_string();
+                        log::info!("submitting get completed : {:?}", query);
+                        let request = Request::get(&query)
+                            .body(Nothing)
+                            .expect("Could not build request.");
+                        let callback = self.link.callback_once(
+                            |response: Response<Json<Result<Vec<bool>, anyhow::Error>>>| {
+                                let Json(data) = response.into_body();
+                                DetailMsg::ReceiveCompleted(data)
+                            },
+                        );
+                    }
+                }
+                -1
+            }
+            DetailMsg::ReceiveCompleted(completed) => {
+                log::info!("received : {:?}", completed);
+                match completed {
+                    Ok(result) => { 
+                        self.completed = result[0]; // TODO clean this up to be safe
+                    }
+                    Err(error) => {
+                        log::info!("receive error, error is:");
+                        log::info!("{}", &error.to_string());
+                        // Some(error.to_string());
+                    }
+                }
                 -1
             }
         };

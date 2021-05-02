@@ -99,7 +99,7 @@ impl Component for App {
         cb.emit("".to_string()); // TODO - what's the right way to handle a message without parameters
         log::info!("sent message");
         // let kb_cb = link.callback(Msg::KeyDown);
-        let default_query = format!("http://{}/all/cache?limit=100", server).to_string();
+        let default_query = format!("http://{}/all/cache?limit=50", server).to_string();
         Self {
             cache_task: None,
             tag_task: None,
