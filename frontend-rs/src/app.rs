@@ -198,9 +198,9 @@ impl Component for App {
                 log::info!("{:?}", tag);
                 let query = match tag {
                     Some(tag_name) => {
-                        format!("http://{}/all/cache?sort=time&tag={}", server, tag_name)
+                        format!("http://{}/all/cache?sort=time&tag={}&limit=50", server, tag_name)
                     }
-                    None => format!("http://{}/all/cache?sort=time?limit=50", server),
+                    None => format!("http://{}/all/cache?sort=time&limit=50", server),
                 };
                 log::info!("Query is: {:?}", &query);
                 self.query = query.clone(); // TODO - make queryparams compose
@@ -209,15 +209,15 @@ impl Component for App {
             }
             AppMsg::SortByDate => {
                 log::info!("sort date");
-                self.query = format!("http://{}/all/cache?sort=time", server).to_string();
+                self.query = format!("http://{}/all/cache?sort=time&limit=50", server).to_string();
                 self.link.send_message(AppMsg::GetEntries);
-                false
+                true
             }
             AppMsg::SortByUrl => {
                 log::info!("sort url");
-                self.query = format!("http://{}/all/cache?sort=url", server).to_string();
+                self.query = format!("http://{}/all/cache?sort=url&limit=50", server).to_string();
                 self.link.send_message(AppMsg::GetEntries);
-                false
+                true
             }
             AppMsg::SearchKeyDown(keypress) => {
                 log::info!("search keydown {:?}", keypress.key());
@@ -249,7 +249,8 @@ impl Component for App {
         let gallery = html! {
             <div>
                 <div>
-                    <button class=button_class onclick=self.link.callback(|m| { AppMsg::SortByDate
+                    <button class=button_class onclick=self.link.callback(|m| { 
+                        AppMsg::SortByDate
                         })> {"▼ Date"}</button>
                     <button class=button_class onclick=self.link.callback(|m| { AppMsg::SortByUrl
                         })>{"▼ Url"}</button>
