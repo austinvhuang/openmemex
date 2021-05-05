@@ -66,6 +66,9 @@ impl Component for Detail {
     type Properties = Props;
     // let callback = |buffer: JsValue| log::info!("ace callback");
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let cb = link.callback_once(|_: String| DetailMsg::GetCompleted);
+        cb.emit("".to_string()); // TODO - what's the right way to handle a message without parameters
+        log::info!("sent GetCompleted message");
         Self {
             link: link,
             entry: props.entry,
@@ -95,7 +98,7 @@ impl Component for Detail {
                             match &self.entry { 
                                 None => {
                                     log::info!("completed checbox : entry_id: None");
-                                    -1
+                                    false
                                 }
                                 Some(e) => {
                                     log::info!("completed checbox : entry_id: {:?}", e.entry_id);
@@ -121,19 +124,20 @@ impl Component for Detail {
                                     );
                                     let task = FetchService::fetch(request, callback).expect("failed to start request");
                                     self.submit_task = Some(task);
-                                    e.entry_id 
+                                    // e.entry_id ;
+                                    false
                                 }
                             }
                     }
                     _ =>{
                         log::info!("completed checkbox : not a value: {:?}", v);
-                        -1
+                        false
                     }
                 }
             }
             DetailMsg::CompletedResponse(d) => {
                 log::info!("completed response {:?}", d);
-                -1
+                false
             }
             DetailMsg::GetCompleted => {
                 match &self.entry { 
@@ -151,15 +155,18 @@ impl Component for Detail {
                                 DetailMsg::ReceiveCompleted(data)
                             },
                         );
+                        let task = FetchService::fetch(request, callback).expect("failed to start request");
+                        self.submit_task = Some(task);
                     }
                 }
-                -1
+                false
             }
             DetailMsg::ReceiveCompleted(completed) => {
                 log::info!("received : {:?}", completed);
                 match completed {
                     Ok(result) => { 
                         self.completed = result[0]; // TODO clean this up to be safe
+                        log::info!("completed is now: {:?}", self.completed);
                     }
                     Err(error) => {
                         log::info!("receive error, error is:");
@@ -167,10 +174,9 @@ impl Component for Detail {
                         // Some(error.to_string());
                     }
                 }
-                -1
+                true
             }
-        };
-        false
+        }
     }
 
     
@@ -204,14 +210,31 @@ impl Component for Detail {
                         </div>
                         <p/>
                         <center>
-                            <div class="item">
-                                <input type="checkbox" id="finished" name="finished" 
-                                 onchange = {
-                                     self.link.callback(move |e: ChangeData| DetailMsg::CompletedChange(e))
-                                     }
-                                />
+                            {
+                                if self.completed {
+                                    html! {
+                                        <div class="item">
+                                            <input type="checkbox" id="finished" name="finished" 
+                                             onchange = {
+                                                 self.link.callback(move |e: ChangeData| DetailMsg::CompletedChange(e))
+                                                 }
+                                             checked = self.completed
+                                            />
+                                        </div>
+                                    }
+                                } else {
+                                    html! {
+                                        <div class="item">
+                                            <input type="checkbox" id="finished" name="finished" 
+                                             onchange = {
+                                                 self.link.callback(move |e: ChangeData| DetailMsg::CompletedChange(e))
+                                                 }
+                                            />
+                                        </div>
+                                    }
+                                }
+                            }
                                 <label style="height:10%; margin-left: 10px"> {" Completed"} </label>
-                            </div>
                         </center>
                     </div>
                 </div>

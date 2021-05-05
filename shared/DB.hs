@@ -562,7 +562,7 @@ search query = do
   conn <- open dbFile
   let queryString = Query $ pack (
                     "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from cache " ++ 
-                    "WHERE cache_title LIKE '%" ++ query ++ "%'")
+                    "WHERE cache_url LIKE '%" ++ query ++ "%' OR cache_title LIKE '%" ++ query ++ "%' ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC")
   query_ conn queryString :: IO [CacheView]
 
 wipeTesting :: IO ()
