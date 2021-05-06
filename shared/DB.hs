@@ -552,9 +552,9 @@ removeCompleted entryID = do
 checkCompleted :: Int -> IO Bool
 checkCompleted entryID = do
   conn <- open dbFile
-  r <- query_ conn "SELECT completed_date FROM completed"  :: IO [[String]]
+  r <- query_ conn (Query . pack $ "SELECT completed_date FROM completed WHERE entry_id == " ++ show entryID) :: IO [[String]]
   close conn
-  pure (length (r !! 0) > 0)
+  pure $ if null r then False else (not $ null (r !! 0))
 
 search :: String -> IO [CacheView]
 search query = do

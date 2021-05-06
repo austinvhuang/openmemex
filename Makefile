@@ -52,6 +52,11 @@ watch-crawler:
 watch-crawler-build:
 	~/.local/bin/ghcid -c "stack ghci note2self:exe:crawler"
 
+server-release:
+	stack clean
+	stack build note2self:server --ghc-options="-O2"
+	stack run server
+
 thumbnails:
 	crawler/Thumbnails.hs
 
