@@ -173,9 +173,8 @@ allEntriesH = liftIO allEntries
 allCacheH :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> Maybe Bool -> Handler [CacheView]
 allCacheH sortby sortdir filterTags limit hideCompleted = liftIO (allCache sortby sortdir filterTags limit hideCompleted)
 
--- frontendH = serveDirectoryFileServer "./frontend-rs/static/."
-frontendH = serveDirectoryWebApp "./frontend-rs/static/"
--- what's the difference between FileServer and WebApp?
+frontendH = serveDirectoryFileServer "./frontend-rs/static/."
+-- frontendH = serveDirectoryWebApp "./frontend-rs/static/"
 
 queryContentH q = liftIO $ queryContent q :: Handler [CacheView]
 
