@@ -10,7 +10,7 @@
 module DB where
 
 import Control.Monad.IO.Class (liftIO)
-import Data.Aeson (ToJSON)
+import Data.Aeson (FromJSON, ToJSON)
 import Data.List (intercalate)
 import Data.Maybe (catMaybes)
 import Data.Text (Text, pack, unpack)
@@ -144,6 +144,18 @@ data OCREntry = OCREntry
 instance FromRow OCREntry where
   fromRow = OCREntry <$> field <*> field <*> field
 
+data PostNote = PostNote
+  { pnContent :: String,
+    pnTags :: [String]
+  }
+  deriving (Show, Generic)
+instance ToJSON PostNote
+instance FromJSON PostNote
+
+data PostCompleted = PostCompleted { pcEntryID :: Int, pcState :: Bool} deriving Generic
+instance ToJSON PostCompleted
+instance FromJSON PostCompleted
+
 dbFile = "note2self.db"
 
 -- Helper functions
@@ -153,6 +165,23 @@ date2string :: Int -> Int -> Int -> String
 date2string = printf "%.4d-%.2d-%.2d"
 
 -- Handlers
+
+getCompleted :: Int -> IO [Bool]
+getCompleted entryID = do
+  print entryID
+  result <- checkCompleted entryID
+  print result
+  pure [result]
+
+postCompleted :: PostCompleted -> IO Int64
+postCompleted (PostCompleted entryID state) = do
+  putStrLn $ "Marking complete as " ++ show state
+  print entryID
+  case state of
+    True -> addCompleted entryID
+    False -> removeCompleted entryID
+  
+  pure 0
 
 queryDate :: Int -> Int -> Int -> IO [Entry]
 queryDate year month day = do
@@ -206,8 +235,9 @@ getEntry entryID = do
 
 -- handlers
 
-allCache :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> IO [CacheView]
-allCache sortby sortdir filterTags limit = do
+allCache :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> Maybe Bool -> IO [CacheView]
+allCache sortby sortdir filterTags limit hideCompleted = do
+  -- TODO: support hideCompleted
   conn <- open dbFile
   let query =
         defaultQuery

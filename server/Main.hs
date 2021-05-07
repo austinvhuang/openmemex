@@ -32,18 +32,6 @@ import CrawlTools
 
 -- API Types
 
-data PostNote = PostNote
-  { pnContent :: String,
-    pnTags :: [String]
-  }
-  deriving (Show, Generic)
-instance ToJSON PostNote
-instance FromJSON PostNote
-
-data PostCompleted = PostCompleted { pcEntryID :: Int, pcState :: Bool} deriving Generic
-instance ToJSON PostCompleted
-instance FromJSON PostCompleted
-
 data PostSearch =
   PostSearch { psQuery :: String } deriving (Show, Generic)
 instance ToJSON PostSearch
@@ -77,6 +65,7 @@ type AllCacheAPI =
     :> QueryParam "sortdir" SortDir
     :> QueryParams "tag" Text
     :> QueryParam "limit" Int
+    :> QueryParam "hidecompleted" Bool
     :> Get '[JSON] [CacheView]
 
 type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [CacheView]
@@ -181,12 +170,12 @@ allTagsH minCount = liftIO $ allTags minCount
 allEntriesH :: Handler [Entry]
 allEntriesH = liftIO allEntries
 
-allCacheH :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> Handler [CacheView]
-allCacheH sortby sortdir filterTags limit = liftIO (allCache sortby sortdir filterTags limit)
+allCacheH :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> Maybe Bool -> Handler [CacheView]
+allCacheH sortby sortdir filterTags limit hideCompleted = liftIO (allCache sortby sortdir filterTags limit hideCompleted)
 
 -- frontendH = serveDirectoryFileServer "./frontend-rs/static/."
 frontendH = serveDirectoryWebApp "./frontend-rs/static/"
--- what's the difference here?
+-- what's the difference between FileServer and WebApp?
 
 queryContentH q = liftIO $ queryContent q :: Handler [CacheView]
 
@@ -204,25 +193,7 @@ postNote note = do
 
 postNoteH note = liftIO $ postNote note
 
-postCompleted :: PostCompleted -> IO Int64
-postCompleted (PostCompleted entryID state) = do
-  putStrLn $ "Marking complete as " ++ show state
-  print entryID
-  case state of
-    True -> addCompleted entryID
-    False -> removeCompleted entryID
-  
-  pure 0
-
 postCompletedH entryID = liftIO $ postCompleted entryID
-
--- TODO - test that this works correctly
-getCompleted :: Int -> IO [Bool]
-getCompleted entryID = do
-  print entryID
-  result <- checkCompleted entryID
-  print result
-  pure [result]
 
 getCompletedH entryID = liftIO $ getCompleted entryID
 
