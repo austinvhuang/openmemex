@@ -260,7 +260,8 @@ allCache sortby sortdir filterTags limit hideCompleted = do
     (Just SortUrl, Just SortRev) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url DESC " ++ limitStr)
     (Just SortUrl, _) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url " ++ limitStr)
     (Just SortTime, Just SortFwd) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) " ++ limitStr)
-    (_, _) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC " ++ limitStr)
+    -- (_, _) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC " ++ limitStr)
+    (_, _) -> query_ conn (Query . pack $ query ++ "ORDER BY date DESC, time DESC " ++ limitStr)
   close conn
   pure r
 
