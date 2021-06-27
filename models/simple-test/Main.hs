@@ -4,9 +4,9 @@ import Torch
 import Torch.Script 
 
 mlpTest = do
-  model <- load WithoutRequiredGrad "traced.zip"
+  model <- loadScript WithoutRequiredGrad "traced.zip"
   let x               = asTensor ([[1.0, 2.0]] :: [[Float]])
-      IVTensor result = Torch.Script.forward model [IVTensor x]
+      IVTensor result = forward model [IVTensor x]
       expected        = Torch.matmul (asTensor ([[2.0, 3.0]] :: [[Float]])) (transpose2D x)
   putStrLn $ "\nInput\n" ++ show x
   putStrLn $ "\nTorscript Inference\n" ++ show result
@@ -14,8 +14,8 @@ mlpTest = do
 
 robertaTest :: Tensor -> IO (Tensor, Tensor)
 robertaTest ids = do
-  model <- load WithoutRequiredGrad "roberta_traced.zip"
-  let IVTuple [IVTensor lastHiddenState, IVTensor poolerOutput] = Torch.Script.forward model [IVTensor ids]
+  model <- loadScript WithoutRequiredGrad "roberta_traced.zip"
+  let IVTuple [IVTensor lastHiddenState, IVTensor poolerOutput] = forward model [IVTensor ids]
   putStrLn $ "\nInput\n" ++ show ids
   let values = asValue $ lastHiddenState ! (0 :: Int) ! (0 :: Int) :: [Float]
   putStrLn $ "\nFirst 10 values\n" ++ show ids

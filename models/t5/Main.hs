@@ -14,7 +14,7 @@ main = do
   
   -- perform inference computation
   let IVTuple [IVTensor r0, IVTuple r1, IVTensor r2] =
-        Torch.forward tsModule [inputIDs, inputsMask, decoderIDs, decoderMask] 
+        forward tsModule [inputIDs, inputsMask, decoderIDs, decoderMask] 
     
   print $ r0
 
