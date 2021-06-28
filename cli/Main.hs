@@ -10,7 +10,7 @@ main = do
   options <- execParser optionsParser
   print (options :: CommandLine)
   if resetDB options
-    then putStrLn "Resetting DB" >> initDB >> putStrLn "Previous DB saved as note2self.db.backup"
+    then putStrLn "Resetting DB" >> initDB' >> putStrLn "Previous DB saved as note2self.db.backup"
     else pure ()
 
   now <- getZonedTime

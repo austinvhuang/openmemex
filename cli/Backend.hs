@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Backend where
+module Backend (module Backend, module DB ) where
 
 import Database.SQLite.Simple
 import GHC.Int (Int64)
 import System.Directory (copyFile, removeFile)
 import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
-import DB hiding (Entry)
+import DB hiding (Entry(..), addEntry, addTag)
 
 data Entry = Entry
   { entryID :: Maybe Int, -- only needs a value when reading
