@@ -9,6 +9,7 @@
 
 module DB where
 
+import Control.Monad.Reader
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.List (intercalate)
@@ -313,7 +314,7 @@ backupDB = do
 writeOCR :: [OCREntry] -> IO ()
 writeOCR ocrEntries = do
   conn <- open dbFile
-  bracketExecute "DROP TABLE IF EXISTS ocr"
+  bracketExecute' "DROP TABLE IF EXISTS ocr"
   executeNamed
     conn
     ( Query . pack $
@@ -377,8 +378,8 @@ appendCache cacheEntries = do
               ++ "VALUES (:tableName, :date, :time)"
         )
         [":tableName" := tableName, ":date" := dt, ":time" := tm]
-      bracketExecute "DROP VIEW IF EXISTS cache"
-      bracketExecute $
+      bracketExecute' "DROP VIEW IF EXISTS cache"
+      bracketExecute' $
         "CREATE VIEW IF NOT EXISTS cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "
           ++ "as select cache_entry_id, "
           ++ "entries.entry_id as entry_id, cache_url, cache_content_type, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content "
@@ -469,10 +470,10 @@ writeCache cacheEntries = do
           ]
     )
     cacheEntries
-  bracketExecute "DROP INDEX IF EXISTS idx_cache_entry_id;"
-  bracketExecute $ "CREATE UNIQUE INDEX idx_cache_entry_id ON " ++ tableName ++ "(entry_id);"
-  bracketExecute "DROP VIEW IF EXISTS cache"
-  bracketExecute $
+  bracketExecute' "DROP INDEX IF EXISTS idx_cache_entry_id;"
+  bracketExecute' $ "CREATE UNIQUE INDEX idx_cache_entry_id ON " ++ tableName ++ "(entry_id);"
+  bracketExecute' "DROP VIEW IF EXISTS cache"
+  bracketExecute' $
     "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "
       ++ "as select cache_entry_id, "
       ++ "entries.entry_id as entry_id, cache_url, cache_content_type, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content "
@@ -489,17 +490,17 @@ writeCache cacheEntries = do
 wipeCache :: IO ()
 wipeCache = do
   backupDB
-  r <- bracketQuery "SELECT table_name FROM cache_meta" :: IO [[String]]
+  r <- bracketQuery' "SELECT table_name FROM cache_meta" :: IO [[String]]
   let flattened = concat r
   putStrLn $ "Removing tables \n" ++ show flattened
   mapM_
     ( \x ->
-        bracketExecute $ "DROP TABLE IF EXISTS " ++ x
+        bracketExecute' $ "DROP TABLE IF EXISTS " ++ x
     )
     flattened
-  bracketExecute "DROP TABLE IF EXISTS cache_meta"
-  bracketExecute "DROP VIEW IF EXISTS cache"
-  bracketExecute "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
+  bracketExecute' "DROP TABLE IF EXISTS cache_meta"
+  bracketExecute' "DROP VIEW IF EXISTS cache"
+  bracketExecute' "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
 
 replaceTag :: String -> String -> IO ()
 replaceTag fromTag toTag = do
@@ -583,20 +584,20 @@ search query = do
 wipeTesting :: IO ()
 wipeTesting = do
   putStrLn "removing entries and tags where tags==\"testing\""
-  bracketExecute "delete from entries where entries.entry_id in (select tags.entry_id from tags where tag==\"testing\")"
-  bracketExecute "delete from tags where tag==\"testing\""
+  bracketExecute' "delete from entries where entries.entry_id in (select tags.entry_id from tags where tag==\"testing\")"
+  bracketExecute' "delete from tags where tag==\"testing\""
 
 initDB :: String -> IO ()
 initDB dbFile = do
   copyFile dbFile (dbFile ++ ".backup")
   removeFile dbFile
   conn <- open dbFile
-  dropTables ["entries", "tags", "cache_meta", "annotations"]
-  bracketExecute "CREATE TABLE entries (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT, content TEXT);"
-  bracketExecute "CREATE TABLE tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
-  bracketExecute "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
-  bracketExecute "CREATE TABLE annotations(annotation_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, annotation_date TEXT, annotation_time TEXT, annotation_content TEXT);"
-  createIndices [Index "idx_tags_entry_id" "tags" "entry_id" False,
+  dropTables' ["entries", "tags", "cache_meta", "annotations"]
+  bracketExecute' "CREATE TABLE entries (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT, content TEXT);"
+  bracketExecute' "CREATE TABLE tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
+  bracketExecute' "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
+  bracketExecute' "CREATE TABLE annotations(annotation_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, annotation_date TEXT, annotation_time TEXT, annotation_content TEXT);"
+  createIndices' [Index "idx_tags_entry_id" "tags" "entry_id" False,
                  Index "idx_entries_time" "entries" "time" False,
                  Index "idx_entries_date" "entries" "date" False,
                  Index "idx_tags_tag" "tags" "tag" False,
@@ -610,13 +611,13 @@ initDB dbFile = do
       tm = formatTime defaultTimeLocale "%H:%M:%S" now
       timeStamp = formatTime defaultTimeLocale "%Y%m%d_%H%M%S" now
       tableName = "cache_" ++ timeStamp
-  bracketExecute $ "CREATE TABLE " ++ tableName
+  bracketExecute' $ "CREATE TABLE " ++ tableName
               ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
               ++ "cache_url TEXT, "
               ++ "cache_content_type TEXT, cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT, cache_ocr_file TEXT);"
-  bracketExecute $ "DROP TABLE IF EXISTS " ++ tableName ++ ";"
-  bracketExecute "DROP VIEW IF EXISTS cache;"
-  bracketExecute $
+  bracketExecute' $ "DROP TABLE IF EXISTS " ++ tableName ++ ";"
+  bracketExecute' "DROP VIEW IF EXISTS cache;"
+  bracketExecute' $
         "CREATE VIEW IF NOT EXISTS cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "
           ++ "as select cache_entry_id, "
           ++ "entries.entry_id as entry_id, cache_url, cache_content_type, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content "
@@ -626,3 +627,15 @@ initDB dbFile = do
           ++ " on "
           ++ tableName
           ++ ".entry_id=entries.entry_id;"
+
+bracketExecute' :: String -> IO ()
+bracketExecute' q = runReaderT (bracketExecute q) (Sqlite dbFile)
+
+bracketQuery' :: FromRow r => String -> IO [r]
+bracketQuery' q = runReaderT (bracketQuery q)  (Sqlite dbFile)
+
+dropTables' :: [String] -> IO ()
+dropTables' tables = runReaderT (dropTables tables) (Sqlite dbFile)
+
+createIndices' :: [Index] -> IO ()
+createIndices' indexList = runReaderT (createIndices indexList) (Sqlite dbFile)

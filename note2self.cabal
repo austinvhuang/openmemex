@@ -21,6 +21,7 @@ executable n2s
                      , aeson
                      , directory
                      , filepath
+                     , mtl
                      , sqlite-simple
                      , optparse-applicative
                      , optparse-generic
@@ -37,6 +38,7 @@ executable server
                      , directory
                      , filepath
                      , hasktorch
+                     , mtl
                      , network-uri
                      , pretty-simple
                      , process >= 1.6.9.0
