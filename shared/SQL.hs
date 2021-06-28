@@ -48,3 +48,38 @@ sql2string SqlQuery {..} =
     limitClause = case sqlLimit of
       Nothing -> ""
       Just n -> "LIMIT " ++ show n
+
+bracketQuery :: FromRow r => String -> IO [r]
+bracketQuery queryString = do
+  conn <- open dbFile
+  r <- query_ conn (Query . pack $ queryString)
+  close conn
+  pure r
+
+-- | Wrapper for sql query execution
+bracketExecute :: String -> IO ()
+bracketExecute queryString = do
+  conn <- open dbFile
+  execute_ conn (Query . pack $ queryString)
+  close conn
+
+-- | Given a list of table names, drop them
+dropTables tables = mapM_ (\table -> bracketExecute $ "DROP TABLE IF EXISTS " ++ table ++ ";") tables 
+
+data Index = Index {
+  indexName :: String,
+  indexTable :: String,
+  indexField :: String,
+  indexUnique :: Bool
+} deriving Show
+
+-- | Create an index
+createIndex Index{..} = 
+  if indexUnique then
+    bracketExecute $ "CREATE INDEX " ++ indexName ++ " on " ++ indexTable ++ "(" ++ indexField ++ ");"
+  else
+    bracketExecute $ "CREATE UNIQUE INDEX " ++ indexName ++ " on " ++ indexTable ++ "(" ++ indexField ++ ");"
+
+-- | Create indices
+createIndices :: [Index] -> IO ()
+createIndices indexList = mapM_ createIndex indexList

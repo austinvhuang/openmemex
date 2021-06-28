@@ -15,13 +15,16 @@ extra-source-files:  README.md
 executable n2s
   hs-source-dirs:      cli, shared
   main-is:             Main.hs
-  other-modules:       Backend, Parser
+  other-modules:       Backend, Parser, DB
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
+                     , aeson
                      , directory
+                     , filepath
                      , sqlite-simple
                      , optparse-applicative
                      , optparse-generic
+                     , text
                      , time
 
 executable server

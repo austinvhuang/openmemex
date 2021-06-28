@@ -20,7 +20,7 @@ import GHC.Generics (Generic)
 import GHC.Int (Int64)
 import OCR
 import SQL
-import System.Directory (copyFile)
+import System.Directory (copyFile, removeFile)
 import System.IO (hPutStrLn, stderr)
 import Text.Printf (printf)
 
@@ -339,9 +339,6 @@ writeOCR ocrEntries = do
     ocrEntries
   close conn
 
-
-
-
 data CurrTable = CurrTable
   { 
     currTable :: String
@@ -487,19 +484,6 @@ writeCache cacheEntries = do
       ++ ".entry_id=entries.entry_id;"
   close conn
 
-bracketQuery :: FromRow r => String -> IO [r]
-bracketQuery queryString = do
-  conn <- open dbFile
-  r <- query_ conn (Query . pack $ queryString)
-  close conn
-  pure r
-
-bracketExecute :: String -> IO ()
-bracketExecute queryString = do
-  conn <- open dbFile
-  execute_ conn (Query . pack $ queryString)
-  close conn
-
 -- | Wipe all caches and reset the cache metadata table
 -- meant to be run interactively from GHCI
 wipeCache :: IO ()
@@ -601,3 +585,44 @@ wipeTesting = do
   putStrLn "removing entries and tags where tags==\"testing\""
   bracketExecute "delete from entries where entries.entry_id in (select tags.entry_id from tags where tag==\"testing\")"
   bracketExecute "delete from tags where tag==\"testing\""
+
+initDB :: String -> IO ()
+initDB dbFile = do
+  copyFile dbFile (dbFile ++ ".backup")
+  removeFile dbFile
+  conn <- open dbFile
+  dropTables ["entries", "tags", "cache_meta", "annotations"]
+  bracketExecute "CREATE TABLE entries (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT, content TEXT);"
+  bracketExecute "CREATE TABLE tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
+  bracketExecute "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
+  bracketExecute "CREATE TABLE annotations(annotation_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, annotation_date TEXT, annotation_time TEXT, annotation_content TEXT);"
+  createIndices [Index "idx_tags_entry_id" "tags" "entry_id" False,
+                 Index "idx_entries_time" "entries" "time" False,
+                 Index "idx_entries_date" "entries" "date" False,
+                 Index "idx_tags_tag" "tags" "tag" False,
+                 Index "idx_entries_entry_id" "entries" "entry_id" True,
+                 Index "idx_annotations_date" "annotations" "annotation_date" False,
+                 Index "idx_annotations_time" "annotations" "annotation_time" False,
+                 Index "idx_annotations_entry_id" "annotations" "entry_id" False
+                 ]
+  now <- getZonedTime
+  let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
+      tm = formatTime defaultTimeLocale "%H:%M:%S" now
+      timeStamp = formatTime defaultTimeLocale "%Y%m%d_%H%M%S" now
+      tableName = "cache_" ++ timeStamp
+  bracketExecute $ "CREATE TABLE " ++ tableName
+              ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
+              ++ "cache_url TEXT, "
+              ++ "cache_content_type TEXT, cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT, cache_ocr_file TEXT);"
+  bracketExecute $ "DROP TABLE IF EXISTS " ++ tableName ++ ";"
+  bracketExecute "DROP VIEW IF EXISTS cache;"
+  bracketExecute $
+        "CREATE VIEW IF NOT EXISTS cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "
+          ++ "as select cache_entry_id, "
+          ++ "entries.entry_id as entry_id, cache_url, cache_content_type, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content "
+          ++ "from entries"
+          ++ " left join "
+          ++ tableName
+          ++ " on "
+          ++ tableName
+          ++ ".entry_id=entries.entry_id;"
