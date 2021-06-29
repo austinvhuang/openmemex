@@ -39,12 +39,9 @@ sql2string :: SqlQuery -> String
 sql2string SqlQuery {..} =
   "SELECT"
     ++ (intercalate "," (sqlCol <$> sqlSelect))
-    ++ (sqlFromTable sqlFrom)
-    ++ " "
-    ++ whereClause
-    ++ " "
-    ++ orderClause
-    ++ " "
+    ++ (sqlFromTable sqlFrom) ++ " "
+    ++ whereClause ++ " "
+    ++ orderClause ++ " "
     ++ limitClause
   where
     whereClause = case sqlWhere of
@@ -61,18 +58,20 @@ sql2string SqlQuery {..} =
 bracketQuery :: FromRow r => String -> ReaderT Sqlite IO [r]
 bracketQuery queryString = do
   dbFile <- asks sqliteFile
-  conn <- liftIO $ open dbFile
-  r <- liftIO $ query_ conn (Query . pack $ queryString)
-  liftIO $ close conn
-  liftIO $ pure r
+  liftIO $ do
+    conn <- open dbFile
+    r <- query_ conn (Query . pack $ queryString)
+    close conn
+    pure r
 
 -- | Wrapper for sql query execution
 bracketExecute :: String -> ReaderT Sqlite IO ()
 bracketExecute queryString = do
   dbFile <- asks sqliteFile
-  conn <- liftIO $ open dbFile
-  liftIO $ execute_ conn (Query . pack $ queryString)
-  liftIO $ close conn
+  liftIO $ do
+    conn <- open dbFile
+    execute_ conn (Query . pack $ queryString)
+    close conn
 
 -- | Given a list of table names, drop them
 dropTables :: [String] -> ReaderT Sqlite IO ()

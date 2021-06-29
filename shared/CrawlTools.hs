@@ -2,6 +2,8 @@
 
 module CrawlTools where
 
+
+import qualified Data.ByteString.Char8 as Str
 import Control.Concurrent (threadDelay)
 import Control.Exception (SomeException, catch)
 import DB
@@ -196,10 +198,10 @@ ocrShots entries = do
   ocrEntries <-
     mapM
       ( \file -> do
-          content <- readFile $ "ocr/" ++ file
+          content <- Str.readFile $ "ocr/" ++ file
           let entryid = readMaybe (takeBaseName file) :: Maybe Int
           case entryid of
-            Just entryid -> pure $ Just (OCREntry entryid (ocr2ssFilename file) content)
+            Just entryid -> pure $ Just (OCREntry entryid (ocr2ssFilename file) (Str.unpack content))
             Nothing -> pure Nothing
       )
       ocrFiles

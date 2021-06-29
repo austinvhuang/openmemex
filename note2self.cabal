@@ -35,6 +35,7 @@ executable server
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , bytestring
                      , directory
                      , filepath
                      , hasktorch
@@ -64,6 +65,7 @@ executable crawler
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , bytestring
                      , directory
                      , filepath
                      , http-conduit
@@ -75,12 +77,3 @@ executable crawler
                      , tagsoup
                      , text
                      , time
-
--- executable model
---  hs-source-dirs:      models
---  ld-options:          -static
---  ghc-options:         -fPIC
---  main-is:             TestServe.hs
---  default-language:    Haskell2010
---  build-depends:       base >= 4.7 && < 5
---                     , hasktorch
