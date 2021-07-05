@@ -69,6 +69,7 @@ executable crawler
                      , directory
                      , filepath
                      , http-conduit
+                     , mtl
                      , network-uri
                      , pretty-simple
                      , process >= 1.6.9.0

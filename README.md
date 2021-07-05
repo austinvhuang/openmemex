@@ -14,6 +14,13 @@ Additionally, there's two supporting command line tools (`n2s` command line inte
 
 - `cli/` - [[mostly deprecated except for initialization]] the command line tool. this is mostly no longer needed except to initialize the table schemas of the database (`n2s --reset --note ""`), but can also be used to test adding notes at the command line eg `n2s --note "blah blah" --tag "atag" --tag "anothertag`)
 - `crawler/` - [[mostly deprecated]] for all notes consisting of urls, this crawls them, pulls html content into the database, but also takes screenshots, thumbnails, and runs ocr for a text representation of screenshots. This tool is also mostly deprecated in favor of running these operations synchronously upon adding a note instead of requiring users to run this process in batch on-demand (which leaves part of the database un-crawled).
+- `electron/` - experimental Electron UI (not functioning yet)
+
+There's also 2 directories where some artifacts are stored:
+
+- `screenshots/` - screenshots captured by the headless browser
+- `thumbnails/` - scaled down version of screenshots
+- `ocr/` - tesseract ocr output of screenshots (in the future this might be derived from a higher-resolution image of the full site)
 
 # Installation & Building
 
@@ -61,15 +68,33 @@ Set shared library paths:
 
 ## Initializing the database
 
-[[ TODO ]] 
+TODO: Web API version of this functionality
 
-## Building the frontend
+For now, the way to initialize the database is with the command line tool:
 
-[[ TODO ]] 
+```
+stack build cli
+stack run n2s --reset --note ""
+```
 
-## Running the server
+This creates and initializes tables in the `note2self.db` file which is the main backend data store.
 
-[[ TODO ]]
+## Web frontend and API server
+
+First build the wasm artifact:
+
+```
+cd frontend-rs
+make
+```
+
+This creates `wasm_bg.wasm` in the `frontend-rs/static` directory. The `frontend-rs/static` is hosted by the servant server.
+
+Setup environment variables with `source setenv` if you haven't already and start the server:
+
+```
+stack run server
+```
 
 # Things to do
 
