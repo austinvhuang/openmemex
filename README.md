@@ -96,6 +96,8 @@ Setup environment variables with `source setenv` if you haven't already and star
 stack run server
 ```
 
+You should be in the top level directory where note2self.db is located when running the server.
+
 # Things to do
 
 See the [kanban board](https://github.com/austinvhuang/note2self/projects/1)

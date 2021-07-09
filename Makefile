@@ -99,4 +99,8 @@ test-screenshot:
 test-post-note:
 	curl -g --header "Content-Type: application/json" --request POST --data '{"pnContent":"https://monoskop.org/images/5/51/Wiener_Norbert_The_Human_Use_of_Human_Beings.pdf", "pnTags":["book"]}' --request POST http://localhost:3000/submit/note
 
+docker-build:
+	sudo docker build -t openmemex:v1
 
+docker-it:
+	sudo docker run -it openmemex:v1
