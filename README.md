@@ -98,6 +98,12 @@ stack run server
 
 You should be in the top level directory where note2self.db is located when running the server.
 
+To get to the main UI, point a browser to:
+
+```
+http://localhost:3000/frontend/index.html
+```
+
 # Things to do
 
 See the [kanban board](https://github.com/austinvhuang/note2self/projects/1)
