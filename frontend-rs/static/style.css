@@ -53,7 +53,12 @@ margin: 40px 80px;
 
 .tag-input {
   width: 100%;
-  font-size: 20pt;
+  font-size: 16pt;
+}
+
+.add-note-submit {
+  width: 25%;
+  font-size: 16pt;
 }
 
 .card-outline {

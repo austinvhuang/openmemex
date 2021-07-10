@@ -137,15 +137,23 @@ impl Component for AddNote {
     fn view(&self) -> Html {
         html! {
             <div>
-
-                <input type="text" class="tag-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="tag" id="tagInput"
+                <input type="text" class="tag-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="tags (press enter to add tags)" id="tagInput"
                     value = { &self.tag }
                     oninput = { self.link.callback(move |e: InputData| AddNoteMsg::TagEdit(e.value)) }
                     onkeydown= { self.link.callback(move |e: KeyboardEvent| AddNoteMsg::TagKeyDown(e)) }
                 />
                 <p/>
 
-                <textarea rows="8" class="note-input shadow-sm p-3 mb-5 bg-white rounded"  placeholder="note" id="noteContent"
+                <div>
+                {
+                    for self.tags.iter().map(|mut curr_tag| {
+                        html!{ <div class="topic-tag">{ curr_tag }</div> }
+                    })
+                }
+                </div>
+
+                <textarea rows="8" class="note-input shadow-sm p-3 mb-5 bg-white rounded"  
+                    placeholder="note" id="noteContent"
                     value = { &self.content }
                     oninput={ self.link.callback(move |e: InputData| AddNoteMsg::NoteEdit(e.value)) }
                     onkeydown={ self.link.batch_callback(move
@@ -157,14 +165,8 @@ impl Component for AddNote {
                             }) }
                     onsubmit={ self.link.callback(move |e: FocusEvent| AddNoteMsg::SubmitNote) }>
                 </textarea>
-
-                <div>
-                {
-                    for self.tags.iter().map(|mut curr_tag| {
-                        html!{ <div class="topic-tag">{ curr_tag }</div> }
-                    })
-                }
-                </div>
+                <input type="submit" value="Add Event" class="add-note-submit shadow-sm p-3 mb-5 bg-white rounded" 
+                    onclick = { self.link.callback(move |e: MouseEvent| AddNoteMsg::SubmitNote) } />
 
             </div>
         }
