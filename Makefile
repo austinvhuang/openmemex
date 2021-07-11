@@ -104,3 +104,8 @@ docker-build:
 
 docker-it:
 	sudo docker run -it openmemex:v1
+
+appimg-deps:
+	pip3 install appimage-builder
+  pip3 install ruamel_yaml
+	

@@ -14,7 +14,7 @@ extra-deps:
   - webdriver-w3c-0.0.2@sha256:f07934702391238d79a06727a11f5c0518819e69814bc34b3fd4e2d3905ff464,4116
   - script-monad-0.0.3@sha256:ba3bad28d6f6400fe492101300dad63989afc813cc6c8dc23832170275951ef0,2218
   - git: https://github.com/hasktorch/hasktorch.git
-    commit: 6bd54dd6280854b534eaf868c445a1de272aecd3
+    commit: 95d902b7005de6b7ac3b949fc440ee9cac3a2d80
     subdirs:
       - hasktorch
       - libtorch-ffi

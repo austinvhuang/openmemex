@@ -114,6 +114,7 @@ impl Component for AddNote {
                     },
                 );
                 self.content = String::from(""); // TODO - oninput callback still fires and we're left with a black note
+                self.tags = [].to_vec();
                 log::info!("request payload {:?}", payload);
                 let task = FetchService::fetch(request, callback).expect("failed to start request");
                 self.submit_task = Some(task);
@@ -144,7 +145,7 @@ impl Component for AddNote {
                 />
                 <p/>
 
-                <div>
+                <div class="tags-list-div">
                 {
                     for self.tags.iter().map(|mut curr_tag| {
                         html!{ <div class="topic-tag">{ curr_tag }</div> }

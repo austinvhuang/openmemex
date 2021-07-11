@@ -144,6 +144,10 @@ margin: 40px 80px;
   /* font-size: 10pt; */
 }
 
+.tags-list-div {
+  height: 30px;
+}
+
 @keyframes anim-hover-color {
   from {background-color: #ffffff;}
   to {background-color: #ccccff;}
