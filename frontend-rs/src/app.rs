@@ -252,8 +252,6 @@ impl Component for App {
                     <button class=button_class onclick=self.link.callback(|m| { 
                         AppMsg::SortByDate
                         })> {"▼ Date"}</button>
-                    <button class=button_class onclick=self.link.callback(|m| { AppMsg::SortByUrl
-                        })>{"▼ Url"}</button>
                     <input type="text" class="search-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="Search" accesskey="/" 
                     oninput = { self.link.callback(move |e: InputData| AppMsg::SearchEdit(e.value)) }
                     onkeydown = { self.link.callback(move |e: KeyboardEvent| AppMsg::SearchKeyDown(e)) }

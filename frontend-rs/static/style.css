@@ -18,13 +18,13 @@ margin: 40px 80px;
 }
 
 .search-input {
-  width: 60%;
+  width: 85%;
+  border-color: #00000022;
   font-size: 16pt;
 }
 
-
 .sort-button {
-  width: 15%;
+  width: 10%;
   /*
   margin-top: 0px;
   margin-left: 15px;
@@ -33,7 +33,7 @@ margin: 40px 80px;
   float: center;
   background-color:white;
   font-size: 16pt;
-  border-color: #cccccc;
+  border-color: #00000022;
   /*
   border-radius: 5px;
   border-width: 1px;
@@ -113,7 +113,7 @@ margin: 40px 80px;
 
 .cards {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   grid-column-gap: 4px;
 }
 
