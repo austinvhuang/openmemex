@@ -141,7 +141,6 @@ impl Component for AddNote {
                     onkeydown= { self.link.callback(move |e: KeyboardEvent| AddNoteMsg::TagKeyDown(e)) }
                 />
                 <p/>
-
                 <div class="tags-list-div">
                 {
                     for self.tags.iter().map(|mut curr_tag| {
@@ -149,7 +148,6 @@ impl Component for AddNote {
                     })
                 }
                 </div>
-
                 <textarea rows="8" class="note-input shadow-sm p-3 mb-5 bg-white rounded"  
                     placeholder="note" id="noteContent"
                     value = { &self.content }
@@ -163,9 +161,9 @@ impl Component for AddNote {
                             }) }
                     onsubmit={ self.link.callback(move |e: FocusEvent| AddNoteMsg::SubmitNote) }>
                 </textarea>
+                <p/>
                 <input type="submit" value="Add Event" class="add-note-submit shadow-sm p-3 mb-5 bg-white rounded" 
                     onclick = { self.link.callback(move |e: MouseEvent| AddNoteMsg::SubmitNote) } />
-
             </div>
         }
     }

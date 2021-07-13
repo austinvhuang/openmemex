@@ -41,7 +41,7 @@ margin: 40px 80px;
 }
 
 .note-input {
-  width: 100%;
+  width: 50%;
   font-size: 16pt;
 }
 
@@ -52,12 +52,12 @@ margin: 40px 80px;
 }
 
 .tag-input {
-  width: 100%;
+  width: 50%;
   font-size: 16pt;
 }
 
 .add-note-submit {
-  width: 25%;
+  width: 50%;
   font-size: 16pt;
 }
 
@@ -145,7 +145,8 @@ margin: 40px 80px;
 }
 
 .tags-list-div {
-  height: 30px;
+  height: 60px;
+  width: 100%;
 }
 
 @keyframes anim-hover-color {
