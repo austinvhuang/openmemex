@@ -62,9 +62,11 @@ impl Component for AddNote {
             }
             AddNoteMsg::NoteKeyDown(keypress) => {
                 log::info!("note keydown {:?}", keypress.key());
+                /*
                 if keypress.key() == "Enter" {
                     self.link.send_message(AddNoteMsg::SubmitNote);
                 }
+                */
                 false
             }
 
@@ -88,12 +90,7 @@ impl Component for AddNote {
             }
 
             AddNoteMsg::SubmitNote => {
-                // self.content.truncate(self.content.len() - 1); // truncate trailing \n (... note
-                // this doesn't
-                // work since the submitnote triggers before editnote)
                 log::info!("self.content {:?}", self.content);
-                log::info!("self.content.clone() {:?}", self.content.clone());
-                log::info!("submit note: {:?}", self.content);
                 let query = format!("http://{}/submit/note", server);
                 let payload = AddNotePayload {
                     note_content: self.content.clone(),

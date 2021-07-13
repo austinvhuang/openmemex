@@ -10,7 +10,7 @@ use yew::{
 use yew::Properties;
 use wasm_bindgen::prelude::*;
 use crate::external::*;
-use wasm_bindgen::JsCast;
+// use wasm_bindgen::JsCast;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct CompletedResponse {
@@ -52,13 +52,33 @@ fn iframeify_url(url: String) -> (String, String) {
     let mut new_url = url.clone();
     let mut iframe_style = String::from("width:100%; height:90vh;");
     log::info!("checking url {:?}", new_url);
-    if (url.contains("www.youtube.com") && url.contains("watch?v=")) {
+    if url.contains("www.youtube.com") && url.contains("watch?v=") {
         new_url = youtube_url(url);
         iframe_style = String::from("width:100%; height:50vh;");
     }
     log::info!("new url is {:?}", new_url);
     log::info!("style is {:?}", iframe_style);
     (new_url, iframe_style)
+}
+
+fn completed_checkbox(detail: &Detail) -> Html {
+    html! {
+        <div>
+            {
+                html! {
+                    <div class="item">
+                        <input type="checkbox" id="finished" name="finished" 
+                         onchange = {
+                             detail.link.callback(move |e: ChangeData| DetailMsg::CompletedChange(e))
+                             }
+                         checked = detail.completed
+                        />
+                    </div>
+                }
+            }
+            <label style="height:10%; margin-left: 10px"> {" Completed"} </label>
+        </div>
+    }
 }
 
 impl Component for Detail {
@@ -141,7 +161,7 @@ impl Component for Detail {
             }
             DetailMsg::GetCompleted => {
                 match &self.entry { 
-                    None => { unimplemented!() }
+                    None => { log::info!("no entry value"); }
                     Some(e) => {
                         let server = host().unwrap();
                         let query = format!("http://{}/get/completed/{:?}", server,e.entry_id).to_string();
@@ -210,31 +230,7 @@ impl Component for Detail {
                         </div>
                         <p/>
                         <center>
-                            {
-                                if self.completed {
-                                    html! {
-                                        <div class="item">
-                                            <input type="checkbox" id="finished" name="finished" 
-                                             onchange = {
-                                                 self.link.callback(move |e: ChangeData| DetailMsg::CompletedChange(e))
-                                                 }
-                                             checked = self.completed
-                                            />
-                                        </div>
-                                    }
-                                } else {
-                                    html! {
-                                        <div class="item">
-                                            <input type="checkbox" id="finished" name="finished" 
-                                             onchange = {
-                                                 self.link.callback(move |e: ChangeData| DetailMsg::CompletedChange(e))
-                                                 }
-                                            />
-                                        </div>
-                                    }
-                                }
-                            }
-                                <label style="height:10%; margin-left: 10px"> {" Completed"} </label>
+                        { completed_checkbox(self) }
                         </center>
                     </div>
                 </div>
