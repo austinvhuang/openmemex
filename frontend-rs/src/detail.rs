@@ -215,6 +215,7 @@ impl Component for Detail {
             None => &default,
         };
         let (src_mapped, iframe_style) = iframeify_url(src.to_string());
+        let title: String = self.entry.clone().unwrap().content.unwrap_or("".to_string());
         log::info!("Screen {:?}", src);
         html! {
             <div>
@@ -226,7 +227,7 @@ impl Component for Detail {
                     </div>
                     <div style="height:85vh" class="shadow p-3 mb-5 bg-body rounded">
                         <div id="editor" style="height:90%;">
-                            {"# Notes"}
+                            { ["# Notes on", &title].join(" ")} 
                         </div>
                         <p/>
                         <center>
