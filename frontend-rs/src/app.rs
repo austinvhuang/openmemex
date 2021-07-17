@@ -77,12 +77,14 @@ impl App {
                         <li class="nav-item" accesskey="d">
                             <Link route=AppRoute::Detail><div class="nav-link">{ "Detail" }</div></Link>
                         </li>
+                        /*
                         <li class="nav-item" accesskey="s">
                             <Link route=AppRoute::Space><div class="nav-link">{ "Space" }</div></Link>
                         </li>
                         <li class="nav-item" accesskey="q">
                             <Link route=AppRoute::Queue><div class="nav-link">{ "Queue" }</div></Link>
                         </li>
+                        */
                         <li class="nav-item" accesskey=",">
                             <Link route=AppRoute::Settings><div class="nav-link">{ "Settings" }</div></Link>
                         </li>

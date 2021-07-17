@@ -58,6 +58,8 @@ type AllTagsAPI = "all" :> "tags" :> QueryParam "min" Int :> Get '[JSON] [String
 
 type AllEntriesAPI = "all" :> "entries" :> Get '[JSON] [Entry]
 
+type AllTimestampsAPI = "all" :> "timestamps" :> Get '[JSON] [DateTime]
+
 type AllCacheAPI =
   "all"
     :> "cache"
@@ -106,6 +108,7 @@ type CombinedAPI =
     :<|> AllTagsAPI
     :<|> AllEntriesAPI
     :<|> AllCacheAPI
+    :<|> AllTimestampsAPI
     :<|> ContentAPI
     :<|> EntryAPI 
     :<|> CompletedAPI 
@@ -127,6 +130,7 @@ server =
     :<|> allTagsH
     :<|> allEntriesH
     :<|> allCacheH
+    :<|> allTimestampsH
     :<|> queryContentH
     :<|> postNoteH
     :<|> postCompletedH
@@ -172,6 +176,9 @@ allEntriesH = liftIO allEntries
 
 allCacheH :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> Maybe Bool -> Handler [CacheView]
 allCacheH sortby sortdir filterTags limit hideCompleted = liftIO (allCache sortby sortdir filterTags limit hideCompleted)
+
+allTimestampsH :: Handler [DateTime]
+allTimestampsH = liftIO allTimeStamps
 
 frontendH = serveDirectoryFileServer "./frontend-rs/static/."
 -- frontendH = serveDirectoryWebApp "./frontend-rs/static/"

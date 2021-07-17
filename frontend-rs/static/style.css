@@ -287,13 +287,17 @@ a {
   text-decoration: none;
 }
 
-.tooltip {
+div.tooltip {
+  visibility: visible;
+  width: 100px;
+  /*
   position: relative;
   display: inline-block;
   border-bottomhidden: 1px dotted black;
+  */
 }
 
-.tooltip .tooltiptext {
+div.tooltip > span.tooltiptext {
   visibility: hidden;
   width: 120px;
   background-color: black;
@@ -306,7 +310,7 @@ a {
   z-index: 1;
 }
 
-.tooltip:hover .tooltiptext {
+div.tooltip:hover > span.tooltiptext  {
   visibility: visible;
 }
 

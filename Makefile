@@ -107,5 +107,5 @@ docker-it:
 
 appimg-deps:
 	pip3 install appimage-builder
-  pip3 install ruamel_yaml
+	pip3 install ruamel_yaml
 	

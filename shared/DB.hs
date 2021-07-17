@@ -15,7 +15,9 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.List (intercalate)
 import Data.Maybe (catMaybes)
 import Data.Text (Text, pack, unpack)
-import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
+import Data.Time (defaultTimeLocale, formatTime, getZonedTime, Day(..), TimeOfDay(..))
+import Data.Time.Format (parseTimeM)
+import Data.Time.Calendar (toGregorian)
 import Database.SQLite.Simple
 import GHC.Generics (Generic)
 import GHC.Int (Int64)
@@ -31,6 +33,13 @@ data Date = Date
     day :: String
   }
   deriving (Show, Generic)
+
+data DateTime = DateTime {
+  dtDay :: (Int, Int, Int),
+  dtTimeOfDay :: (Int, Int, Int)
+} deriving (Show, Generic) 
+
+instance ToJSON DateTime
 
 -- Note entries
 
@@ -206,6 +215,23 @@ queryRange startYear startMonth startDay endYear endMonth endDay = do
   r <- query_ conn queryString :: IO [Entry]
   close conn
   pure r
+
+-- | Get time stamps of all entries
+allTimeStamps :: IO [DateTime]
+allTimeStamps = do
+  r <- bracketQuery' "SELECT DISTINCT date, time from entries"
+  mapM mkDate r
+  -- pure r
+  where
+    mkDate :: (String, String) -> IO DateTime
+    mkDate val = do
+      let Just day = parseTimeM True defaultTimeLocale "%Y-%m-%d" (fst val) :: Maybe Day
+          Just timeOfDay = parseTimeM True defaultTimeLocale "%H:%M:%S" (snd val) :: Maybe TimeOfDay
+          (year, month, dayOfMonth) = toGregorian day
+          year' = fromIntegral year
+          (hour, min, sec) = (todHour timeOfDay, todMin timeOfDay, round . todSec $ timeOfDay)
+      pure $ DateTime (year', month, dayOfMonth) (hour, min, sec)
+
 
 -- | Returns a unique list of all tags
 -- See https://stackoverflow.com/questions/32098328/no-instance-for-database-sqlite-simple-fromfield-fromfield-char
@@ -508,6 +534,7 @@ replaceTag fromTag toTag = do
   -- TODO - fill-in
   pure ()
 
+-- | Get current date and time
 getDateTime = do
   now <- getZonedTime
   let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
