@@ -12,6 +12,7 @@ mod queue;
 mod settings;
 mod space;
 mod tags;
+mod timeline;
 
 use wasm_bindgen::prelude::*;
 

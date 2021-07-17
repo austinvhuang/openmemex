@@ -6,6 +6,7 @@ use crate::detail::*;
 use crate::space::*;
 use crate::queue::*;
 use crate::settings::*;
+use crate::timeline::*;
 use crate::tags::*;
 use std::collections::HashSet;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
@@ -261,6 +262,7 @@ impl Component for App {
                     onkeydown = { self.link.callback(move |e: KeyboardEvent| AppMsg::SearchKeyDown(e)) }
                     />
                 </div>
+                <Timeline />
                 <p/>
                 <div class="twocol">
                     <Cards entries=&self.entries card_click_callback=card_callback/>
