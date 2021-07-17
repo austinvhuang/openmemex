@@ -18,4 +18,6 @@ pub enum AppRoute {
     Queue,
     #[to = "/frontend/index.html"]
     Gallery,
+    #[to = "/frontend/settings"]
+    Settings,
 }

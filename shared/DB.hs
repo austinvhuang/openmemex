@@ -577,8 +577,12 @@ search query = do
   putStrLn $ "Searching for " ++ query
   conn <- open dbFile
   let queryString = Query $ pack (
-                    "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from cache " ++ 
-                    "WHERE cache_url LIKE '%" ++ query ++ "%' OR cache_title LIKE '%" ++ query ++ "%' ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC")
+                    "SELECT DISTINCT cache.entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file " ++
+                    "FROM cache " ++
+                    "LEFT JOIN tags ON cache.entry_id=tags.entry_id " ++ 
+                    "WHERE cache_url LIKE '%" ++ query ++ "%' OR cache_title LIKE '%" ++ query ++ "%' OR tags.tag LIKE '%" ++ query ++ "%' " ++
+                    "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC")
+  print queryString
   query_ conn queryString :: IO [CacheView]
 
 wipeTesting :: IO ()

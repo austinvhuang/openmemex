@@ -3,8 +3,9 @@ use crate::api::*;
 use crate::app_router::*;
 use crate::cards::*;
 use crate::detail::*;
-use crate::queue::*;
 use crate::space::*;
+use crate::queue::*;
+use crate::settings::*;
 use crate::tags::*;
 use std::collections::HashSet;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
@@ -80,6 +81,9 @@ impl App {
                         </li>
                         <li class="nav-item" accesskey="q">
                             <Link route=AppRoute::Queue><div class="nav-link">{ "Queue" }</div></Link>
+                        </li>
+                        <li class="nav-item" accesskey=",">
+                            <Link route=AppRoute::Settings><div class="nav-link">{ "Settings" }</div></Link>
                         </li>
                     </ul>
                 </div>
@@ -279,6 +283,7 @@ impl Component for App {
             AppRoute::Detail => html! { <Detail entry=&entry /> },
             AppRoute::Space => html! { <Space /> },
             AppRoute::Queue => html! { <Queue /> },
+            AppRoute::Settings => html! { <Settings/> },
         });
 
         html! {

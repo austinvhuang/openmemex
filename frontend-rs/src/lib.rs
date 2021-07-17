@@ -9,6 +9,7 @@ mod cards;
 mod detail;
 mod external;
 mod queue;
+mod settings;
 mod space;
 mod tags;
 

@@ -29,7 +29,7 @@ impl Component for Queue {
     fn view(&self) -> Html {
         html! {
             <div>
-            {"test"}
+            {"Queue"}
             </div>
         }
     }
