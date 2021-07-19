@@ -169,7 +169,7 @@ impl Component for App {
                         self.entries = Some(result);
                     }
                     Err(error) => {
-                        log::info!("cache receive error, error is:");
+                        log::info!("cache receive error:");
                         log::info!("{}", &error.to_string());
                         self.error = Some(error.to_string());
                     }

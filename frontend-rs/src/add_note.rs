@@ -136,7 +136,7 @@ impl Component for AddNote {
         html! {
             <div>
                 <input type="text" class="tag-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="tags (press enter to add tags)" id="tagInput"
-                    value = { &self.tag }
+                    value = { self.tag.clone() }
                     oninput = { self.link.callback(move |e: InputData| AddNoteMsg::TagEdit(e.value)) }
                     onkeydown= { self.link.callback(move |e: KeyboardEvent| AddNoteMsg::TagKeyDown(e)) }
                 />
@@ -150,7 +150,7 @@ impl Component for AddNote {
                 </div>
                 <textarea rows="8" class="note-input shadow-sm p-3 mb-5 bg-white rounded"  
                     placeholder="note" id="noteContent"
-                    value = { &self.content }
+                    value = { self.content.clone() }
                     oninput={ self.link.callback(move |e: InputData| AddNoteMsg::NoteEdit(e.value)) }
                     onkeydown={ self.link.batch_callback(move
                         |e: KeyboardEvent|

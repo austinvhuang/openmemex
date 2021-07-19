@@ -33,11 +33,13 @@ pub struct Tag {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct TimeStamp {
+pub struct Timestamp {
     #[serde(rename(deserialize = "dtDay"))]
     pub day: (i32, i32, i32),
     #[serde(rename(deserialize = "dtTimeOfDay"))]
-    pub time_of_day: (i32, i32, i32)
+    pub time_of_day: (i32, i32, i32),
+    #[serde(rename(deserialize = "dtUTC"))]
+    pub utc: i64
 }
 
 // add_note

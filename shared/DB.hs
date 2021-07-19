@@ -15,9 +15,11 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.List (intercalate)
 import Data.Maybe (catMaybes)
 import Data.Text (Text, pack, unpack)
-import Data.Time (defaultTimeLocale, formatTime, getZonedTime, Day(..), TimeOfDay(..))
+import Data.Time (defaultTimeLocale, formatTime, getZonedTime, Day(..), TimeOfDay(..), UTCTime(..), diffDays, nominalDiffTimeToSeconds)
+import Data.Time.Clock.POSIX
 import Data.Time.Format (parseTimeM)
 import Data.Time.Calendar (toGregorian)
+import Data.Time.LocalTime (timeOfDayToTime)
 import Database.SQLite.Simple
 import GHC.Generics (Generic)
 import GHC.Int (Int64)
@@ -36,7 +38,9 @@ data Date = Date
 
 data DateTime = DateTime {
   dtDay :: (Int, Int, Int),
-  dtTimeOfDay :: (Int, Int, Int)
+  dtTimeOfDay :: (Int, Int, Int),
+  dtUTC :: Int
+  -- dtRelative :: Int -- relative time
 } deriving (Show, Generic) 
 
 instance ToJSON DateTime
@@ -216,21 +220,27 @@ queryRange startYear startMonth startDay endYear endMonth endDay = do
   close conn
   pure r
 
+mkTime :: (String, String) -> (Day, TimeOfDay)
+mkTime (d, tod) = (day, timeOfDay)
+  where
+    -- warning - no exception checking
+    Just day = parseTimeM True defaultTimeLocale "%Y-%m-%d" d :: Maybe Day
+    Just timeOfDay = parseTimeM True defaultTimeLocale "%H:%M:%S" tod :: Maybe TimeOfDay
+
+mkDate :: (Day, TimeOfDay) -> IO DateTime
+mkDate (day, timeOfDay) = do
+  let (year, month, dayOfMonth) = toGregorian day
+      year' = fromIntegral year
+      (hour, min, sec) = (todHour timeOfDay, todMin timeOfDay, round . todSec $ timeOfDay)
+      utc = UTCTime day (timeOfDayToTime $ timeOfDay)
+      utc' = floor . nominalDiffTimeToSeconds . utcTimeToPOSIXSeconds $ utc
+  pure $ DateTime (year', month, dayOfMonth) (hour, min, sec) utc'
+
 -- | Get time stamps of all entries
 allTimeStamps :: IO [DateTime]
 allTimeStamps = do
-  r <- bracketQuery' "SELECT DISTINCT date, time from entries"
-  mapM mkDate r
-  -- pure r
-  where
-    mkDate :: (String, String) -> IO DateTime
-    mkDate val = do
-      let Just day = parseTimeM True defaultTimeLocale "%Y-%m-%d" (fst val) :: Maybe Day
-          Just timeOfDay = parseTimeM True defaultTimeLocale "%H:%M:%S" (snd val) :: Maybe TimeOfDay
-          (year, month, dayOfMonth) = toGregorian day
-          year' = fromIntegral year
-          (hour, min, sec) = (todHour timeOfDay, todMin timeOfDay, round . todSec $ timeOfDay)
-      pure $ DateTime (year', month, dayOfMonth) (hour, min, sec)
+  r <- bracketQuery' "SELECT DISTINCT date, time from entries" :: IO [(String, String)]
+  mapM mkDate (mkTime <$> r)
 
 
 -- | Returns a unique list of all tags

@@ -78,7 +78,7 @@ impl Cards {
             self.link
                 .callback(move |m| CardsMsg::CardClick(m, entry_id, item_clone.clone()))
         };
-        log::info!("thumbnail file is {:?}", &thumbnail_file);
+        // log::info!("thumbnail file is {:?}", &thumbnail_file);
         let mut content = item.content.clone().unwrap_or("".to_owned());
         let max_length = 70;
         if (content.len() > max_length) {
