@@ -27,23 +27,7 @@ import OCR
 import SQL
 import System.Directory (copyFile, removeFile)
 import System.IO (hPutStrLn, stderr)
-import Text.Printf (printf)
-
-data Date = Date
-  { year :: String,
-    month :: String,
-    day :: String
-  }
-  deriving (Show, Generic)
-
-data DateTime = DateTime {
-  dtDay :: (Int, Int, Int),
-  dtTimeOfDay :: (Int, Int, Int),
-  dtUTC :: Int
-  -- dtRelative :: Int -- relative time
-} deriving (Show, Generic) 
-
-instance ToJSON DateTime
+import Date
 
 -- Note entries
 
@@ -174,10 +158,6 @@ dbFile = "note2self.db"
 
 -- Helper functions
 
--- | date2string year month day
-date2string :: Int -> Int -> Int -> String
-date2string = printf "%.4d-%.2d-%.2d"
-
 -- Handlers
 
 getCompleted :: Int -> IO [Bool]
@@ -283,6 +263,7 @@ allCache sortby sortdir filterTags limit hideCompleted = do
             sqlLimit = limit
           }
   let queryString = sql2string query
+  print query
   -- TODO finish this builder, use querystring instead of hard coding
   let limitStr = case limit of
         Nothing -> ""
@@ -292,12 +273,11 @@ allCache sortby sortdir filterTags limit hideCompleted = do
         lst ->
           let tagList = "('" ++ (intercalate "','" $ unpack <$> lst) ++ "')"
            in "SELECT cache.entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from tags LEFT JOIN cache ON cache.entry_id=tags.entry_id where tag in " ++ tagList ++ " "
-  -- let query = "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file from cache "
+
   r <- case (sortby, sortdir) of
     (Just SortUrl, Just SortRev) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url DESC " ++ limitStr)
     (Just SortUrl, _) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url " ++ limitStr)
     (Just SortTime, Just SortFwd) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) " ++ limitStr)
-    -- (_, _) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC " ++ limitStr)
     (_, _) -> query_ conn (Query . pack $ query ++ "ORDER BY date DESC, time DESC " ++ limitStr)
   close conn
   pure r

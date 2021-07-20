@@ -1,11 +1,14 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module SQL where
 
 import Control.Monad.Reader
+import GHC.Generics (Generic)
 import Data.List (intercalate)
 import Data.Text (Text, pack, unpack)
 import Database.SQLite.Simple
+import Date
 
 -- Tiny String Builder
 newtype SqlCol = SqlCol {sqlCol :: String} deriving Show
@@ -34,6 +37,13 @@ defaultQuery = SqlQuery {
   sqlOrder = Nothing,
   sqlLimit = Nothing
 }
+
+range2Sql:: Date -> Date -> SqlCond
+range2Sql start end =
+  SqlCond $ "date BETWEEN \"" ++ date2string (year start) (month start) (day start) 
+              ++ "\" AND \""
+              ++ date2string (year end) (month end) (day end)
+              ++ "\""
 
 sql2string :: SqlQuery -> String
 sql2string SqlQuery {..} =

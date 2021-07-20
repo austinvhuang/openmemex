@@ -29,6 +29,7 @@ import Text.Printf (printf)
 import Torch
 import Tokenizers
 import CrawlTools
+import Date
 
 -- API Types
 
@@ -36,6 +37,14 @@ data PostSearch =
   PostSearch { psQuery :: String } deriving (Show, Generic)
 instance ToJSON PostSearch
 instance FromJSON PostSearch
+
+data TimeWindow = TimeWindow {
+  twStart :: Date,
+  twEnd :: Date
+} deriving (Show, Generic)
+
+instance ToJSON TimeWindow
+instance FromJSON TimeWindow
 
 type RootAPI = Get '[JSON] [String]
 
