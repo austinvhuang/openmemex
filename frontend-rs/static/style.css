@@ -78,14 +78,21 @@ margin: 40px 80px;
   /* box-shadow 0px 5px 10px 0px rgba(0, 0, 0, 0.2); */
   /* border-radius: 5px; */
   border: none;
-  border-radius: 0px;
+  border-color: black;
+  border-radius: 5px;
+  border-top: 5px solid #00000011;
   float: left;
-  margin-bottom: 0px;
   margin-top: 0px;
   margin-left: 10px;
   margin-right: 10px;
   padding: 10px;
   text-align: left;
+}
+
+.card-highlight {
+  border-color: black;
+  border-radius: 5px;
+  border-top: 5px solid #bb7b52;
 }
 
 @keyframes anim-card-img {
@@ -132,15 +139,16 @@ margin: 40px 80px;
   border-radius: 5px;
   border-width: 1px;
   float: left;
-  margin-bottom: 5px;
-  margin-top: 5px;
+  margin-bottom: 3px;
+  margin-top: 3px;
   margin-right: 5px;
-  padding: 10px;
+  padding: 5px;
   text-align: left;
   background-color: white;
   border-style: solid;
-  border-color: #cccccc;
-  width: 140px;
+  /* border-color: #cccccc; */
+  border-color: #cccccc00;
+  /* width: 140px; */
   /* font-size: 10pt; */
 }
 
@@ -168,17 +176,17 @@ margin: 40px 80px;
   border-radius: 5px;
   border-width: 1px;
   float: left;
-  margin-bottom: 5px;
-  margin-top: 5px;
+  margin-bottom: 3px;
+  margin-top: 3px;
   margin-right: 5px;
-  padding: 10px;
+  padding: 5px;
   text-align: left;
   background-color: #ccccff;
   animation-name: anim-hover-color;
   animation-duration: .5s;
   border-style: solid;
   border-color: #cccccc;
-  width: 140px;
+  /* width: 140px; */
   /* font-size: 10pt; */
 }
 
@@ -186,17 +194,17 @@ margin: 40px 80px;
   border-radius: 5px;
   border-width: 1px;
   float: left;
-  margin-bottom: 5px;
-  margin-top: 5px;
+  margin-bottom: 3px;
+  margin-top: 3px;
   margin-right: 5px;
-  padding: 10px;
+  padding: 5px;
   text-align: left;
   background-color: #bbbbbb;
   animation-name: anim-select-color;
   animation-duration: .5s;
   border-style: solid;
   border-color: #cccccc;
-  width: 140px;
+  /* width: 140px; */
   /* font-size: 10pt; */
 }
 
