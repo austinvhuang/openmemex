@@ -159,16 +159,16 @@ margin: 40px 80px;
 
 @keyframes anim-hover-color {
   from {background-color: #ffffff;}
-  to {background-color: #ccccff;}
+  to {background-color: #bb7b5244; /* #ccccff; */}
 }
 
 @keyframes anim-select-color {
-  from {background-color: #ccccff;}
-  to {background-color: #bbbbbb;}
+  from {background-color: #bb7b5244; /* #ccccff; */}
+  to {background-color: #bb7b5288;}
 }
 
 @keyframes anim-deselect-color {
-  from {background-color: #bbbbbb;}
+  from {background-color: #bb7b5288;}
   to {background-color: #ffffff;}
 }
 
@@ -181,7 +181,8 @@ margin: 40px 80px;
   margin-right: 5px;
   padding: 5px;
   text-align: left;
-  background-color: #ccccff;
+  /* background-color: #ccccff; */
+  background-color: #bb7b5244;
   animation-name: anim-hover-color;
   animation-duration: .5s;
   border-style: solid;
@@ -199,7 +200,7 @@ margin: 40px 80px;
   margin-right: 5px;
   padding: 5px;
   text-align: left;
-  background-color: #bbbbbb;
+  background-color: #bb7b5288;
   animation-name: anim-select-color;
   animation-duration: .5s;
   border-style: solid;
