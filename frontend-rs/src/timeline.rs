@@ -110,30 +110,15 @@ impl Component for Timeline {
         };
         html! {
             <div>
-                /*
-                {"hi"}
-                <div class="tooltip"> 
-                    {"Hover over me2"}
-                    <span class="tooltiptext">{"Tooltip text2"}</span>
-                </div>
-                {"hey"}
-
-                <a href="http://www.yahoo.com" data-toggle="tooltip" title="Some text"> {"hello hover"} </a>
-                */
-
                 <svg height="50" width="100%" onmouseover=hover_callback("ma".to_string()) onmousemove=hover_callback("svg".to_string())>
-                    <div class="tooltip"> {"Hover over me"}
-                        <span class="tooltiptext">{"Tooltip text"}</span>
-                    </div>
                     <line x1="0%" y1="25" x2="100%" y2="25" style="stroke:rgb(0,0,0);stroke-width:2" onmouseover=hover_callback("line".to_string()) onmousemove=hover_callback("line".to_string())  />
                     <line x1="0%" y1="20" x2="0%" y2="30" style="stroke:rgb(0,0,0);stroke-width:4" />
                     <line x1="100%" y1="20" x2="100%" y2="30" style="stroke:rgb(0,0,0);stroke-width:4" />
-                    <line x1=self.time_coord y1="0%" x2=self.time_coord y2="100%" style="stroke:rgb(0,0,0, 0.2);stroke-width:8" />
-
+                    <line x1=self.time_coord y1="0%" x2=self.time_coord y2="100%" style="stroke:rgb(0,0,0, 0.2);stroke-width:32" />
                     {
                         for self.locations.iter().map(move |loc| {
                             html! {
-                                <line x1=format!("{:.0}%", loc) y1="33%" x2=format!("{:.0}%", loc) y2="66%" style="stroke:rgb(0,0,0,0.2);stroke-width:2" />
+                                <circle cx=format!("{:.0}%", loc) cy="50%" r="3" style="stroke:rgb(0,0,0,0.1);fill:rgb(0,0,0,0.1);" />
                             }
                         })
                     }
@@ -142,3 +127,5 @@ impl Component for Timeline {
         }
     }
 }
+
+// <line x1=format!("{:.0}%", loc) y1="33%" x2=format!("{:.0}%", loc) y2="66%" style="stroke:rgb(0,0,0,0.2);stroke-width:2" />

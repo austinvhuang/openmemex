@@ -258,27 +258,18 @@ allCache sortby sortdir filterTags limit hideCompleted = do
   conn <- open dbFile
   let query =
         defaultQuery
-          { sqlSelect = SqlCol <$> ["entry_id", "cache_url", "cache_content_type", "cache_title", "date", "time", "cache_screenshot_file", "cache_thumbnail_file"],
-            sqlFrom = SqlFrom "cache",
-            sqlLimit = limit
+          { sqlSelect = SqlCol <$> ["cache.entry_id", "cache_url", "cache_content_type", "cache_title", "date", "time", "cache_screenshot_file", "cache_thumbnail_file"],
+            sqlFrom = SqlFrom $ "tags LEFT JOIN cache ON cache.entry_id=tags.entry_id",
+            sqlLimit = Just 50,
+            sqlWhere = if (null filterTags) 
+                        then [] 
+                        else [SqlCond (if null filterTags then "" else "tag IN ('" ++ (intercalate "','" $ unpack <$> filterTags) ++ "')")],
+            sqlOrder = [SqlOrder "date DESC, time DESC"] -- TODO represent individual termws instead of using a string blob
           }
   let queryString = sql2string query
   print query
-  -- TODO finish this builder, use querystring instead of hard coding
-  let limitStr = case limit of
-        Nothing -> ""
-        Just n -> "LIMIT " ++ show n
-  let query = case filterTags of
-        [] -> "SELECT entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from cache "
-        lst ->
-          let tagList = "('" ++ (intercalate "','" $ unpack <$> lst) ++ "')"
-           in "SELECT cache.entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file from tags LEFT JOIN cache ON cache.entry_id=tags.entry_id where tag in " ++ tagList ++ " "
-
-  r <- case (sortby, sortdir) of
-    (Just SortUrl, Just SortRev) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url DESC " ++ limitStr)
-    (Just SortUrl, _) -> query_ conn (Query . pack $ query ++ "ORDER BY cache_url " ++ limitStr)
-    (Just SortTime, Just SortFwd) -> query_ conn (Query . pack $ query ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) " ++ limitStr)
-    (_, _) -> query_ conn (Query . pack $ query ++ "ORDER BY date DESC, time DESC " ++ limitStr)
+  putStrLn $ "\n" ++ queryString ++ "\n"
+  r <- query_ conn (Query . pack $ queryString)
   close conn
   pure r
 

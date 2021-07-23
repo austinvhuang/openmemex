@@ -15,7 +15,7 @@ use yew::{
     prelude::*,
     utils::host,
 };
-
+use urlencoding::encode;
 use yew_router::prelude::*;
 
 pub type Link = RouterAnchor<AppRoute>;
@@ -238,7 +238,8 @@ impl Component for App {
                 false
             }
             AppMsg::SearchSubmit => {
-                self.query = format!("http://{}/search/{}", server, self.search_query.trim()).to_string();
+                self.query = format!("http://{}/search/{}", server, encode(self.search_query.trim()).to_string());
+                log::info!("Query: {}", &self.query);
                 self.link.send_message(AppMsg::GetEntries);
                 false
             }
@@ -255,15 +256,15 @@ impl Component for App {
 
         let gallery = html! {
             <div>
-                <div>
+                /*
                     <button class=button_class onclick=self.link.callback(|m| { 
                         AppMsg::SortByDate
                         })> {"▼ Date"}</button>
-                    <input type="text" class="search-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="Search" accesskey="/" 
-                    oninput = { self.link.callback(move |e: InputData| AppMsg::SearchEdit(e.value)) }
-                    onkeydown = { self.link.callback(move |e: KeyboardEvent| AppMsg::SearchKeyDown(e)) }
-                    />
-                </div>
+                */
+                <input type="text" class="search-input shadow-sm p-3 mb-5 bg-white rounded" placeholder="Search" accesskey="/" 
+                oninput = { self.link.callback(move |e: InputData| AppMsg::SearchEdit(e.value)) }
+                onkeydown = { self.link.callback(move |e: KeyboardEvent| AppMsg::SearchKeyDown(e)) }
+                />
                 <Timeline />
                 <p/>
                 <div class="twocol">

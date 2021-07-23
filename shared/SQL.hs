@@ -14,7 +14,8 @@ import Date
 newtype SqlCol = SqlCol {sqlCol :: String} deriving Show
 newtype SqlCond = SqlCond {sqlCond :: String} deriving Show
 newtype SqlFrom = SqlFrom {sqlFromTable :: String} deriving Show -- TODO: expand this representation
-data SqlOrder = SqlAscending SqlCol | SqlDescending SqlCol | SqlDirFunction String deriving Show
+-- data SqlOrder = SqlAscending SqlCol | SqlDescending SqlCol | SqlDirFunction String deriving Show
+data SqlOrder = SqlOrder {sqlOrd :: String} deriving Show
 
 data Sqlite = Sqlite {
   sqliteFile :: String
@@ -26,7 +27,7 @@ data SqlQuery = SqlQuery
   { sqlSelect :: [SqlCol],
     sqlFrom :: SqlFrom,
     sqlWhere :: [SqlCond],
-    sqlOrder :: Maybe SqlOrder,
+    sqlOrder :: [SqlOrder],
     sqlLimit :: Maybe Int
   } deriving (Show)
 
@@ -34,7 +35,7 @@ defaultQuery = SqlQuery {
   sqlSelect = [],
   sqlFrom = SqlFrom "",
   sqlWhere = [],
-  sqlOrder = Nothing,
+  sqlOrder = [],
   sqlLimit = Nothing
 }
 
@@ -47,23 +48,24 @@ range2Sql start end =
 
 sql2string :: SqlQuery -> String
 sql2string SqlQuery {..} =
-  "SELECT"
-    ++ (intercalate "," (sqlCol <$> sqlSelect))
-    ++ (sqlFromTable sqlFrom) ++ " "
-    ++ whereClause ++ " "
-    ++ orderClause ++ " "
+  "SELECT " ++ (intercalate "," (sqlCol <$> sqlSelect))
+    ++ fromClause
+    ++ whereClause
+    ++ orderClause
     ++ limitClause
   where
+    fromClause = " FROM " ++ (sqlFromTable sqlFrom)
     whereClause = case sqlWhere of
       [] -> ""
-      lst -> " " ++ (intercalate " AND " (sqlCond <$> lst)) ++ " "
+      lst -> " WHERE " ++ (intercalate " AND " (sqlCond <$> lst)) ++ " "
     orderClause = case sqlOrder of
-      Nothing -> ""
-      Just (SqlAscending (SqlCol colName)) -> "ORDER BY " ++ colName
-      Just (SqlDescending (SqlCol colName)) -> "ORDER BY " ++ colName ++ "DESC"
+      [] -> ""
+      (SqlOrder x:_) -> " ORDER BY " ++ x 
+      -- ((SqlAscending (SqlCol colName)) -> " ORDER BY " ++ colName
+      -- Just (SqlDescending (SqlCol colName)) -> " ORDER BY " ++ colName ++ " DESC"
     limitClause = case sqlLimit of
       Nothing -> ""
-      Just n -> "LIMIT " ++ show n
+      Just n -> " LIMIT " ++ show n
 
 bracketQuery :: FromRow r => String -> ReaderT Sqlite IO [r]
 bracketQuery queryString = do

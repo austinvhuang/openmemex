@@ -84,8 +84,6 @@ impl Cards {
         if (content.len() > max_length) {
             content = content.chars().take(max_length).collect::<String>();
             content.push_str("...");
-            // content.truncate(max_length);
-            // content.push_str("...");
         }
         html! {
             <div class={ div_class } onmouseover=callback_mouseover(item.entry_id) onclick = callback_click(item.entry_id)>
@@ -113,7 +111,7 @@ impl Cards {
                                 <a href={ url.to_string() }> { content } </a>
                             },
                             None => html! {
-                                { item.content.clone().unwrap_or("".to_owned()) }
+                                { content }
                             }
                         }
                     }
