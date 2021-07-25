@@ -184,7 +184,7 @@ margin: 40px 80px;
   /* background-color: #ccccff; */
   background-color: #bb7b5244;
   animation-name: anim-hover-color;
-  animation-duration: .5s;
+  animation-duration: .2s;
   border-style: solid;
   border-color: #cccccc;
   /* width: 140px; */
@@ -202,7 +202,7 @@ margin: 40px 80px;
   text-align: left;
   background-color: #bb7b5288;
   animation-name: anim-select-color;
-  animation-duration: .5s;
+  animation-duration: .2s;
   border-style: solid;
   border-color: #cccccc;
   color: #ffffff
@@ -221,7 +221,7 @@ margin: 40px 80px;
   text-align: left;
   background-color: #ffffff;
   animation-name: anim-deselect-color;
-  animation-duration: .5s;
+  animation-duration: .2s;
   border-style: solid;
   border-color: #cccccc;
   width: 140px;

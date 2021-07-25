@@ -101,7 +101,7 @@ impl Cards {
                 <center>
 
                     <Link route=AppRoute::Detail>
-                    <img  src=thumbnail_file style=img_style class=img_class/>
+                    <img src=thumbnail_file.to_string() style=img_style class=img_class/>
                     </Link>
                 </center>
                 <center>

@@ -28,7 +28,8 @@ fn grid() -> Html {
                     let y_max = y + 50;
                     html! {
                         <>
-                        <circle id={id.clone()} r="5" cx={x} cy={y} fill="orange"  opacity="0.3">
+                            /*
+                        <circle id={id.clone().to_string()} r="5" cx={x.to_string()} cy={y.to_string()} fill="orange"  opacity="0.3">
                         <title> {"test point"} </title>
                         </circle>
 
@@ -58,6 +59,7 @@ fn grid() -> Html {
                         repeatCount="indefinite"
                         id={y_id_anim} />
 
+                            */
                         </>
                     }
                 })

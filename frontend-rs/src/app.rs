@@ -268,9 +268,9 @@ impl Component for App {
                 <Timeline />
                 <p/>
                 <div class="twocol">
-                    <Cards entries=&self.entries card_click_callback=card_callback/>
+                    <Cards entries=self.entries.clone() card_click_callback=card_callback/>
                     <div>
-                        <Tags tags=exist_tags tag_click_callback=tag_callback/>
+                        <Tags tags=exist_tags.clone() tag_click_callback=tag_callback/>
                         //<p/>
                         //<input type="checkbox" id="hidecompleted" name="hidecompleted"/>
                         //<label style="height:10%; margin-left: 10px"> {"Hide Completed"} </label>
@@ -285,7 +285,7 @@ impl Component for App {
         let render = Router::render(move |switch: AppRoute| match switch {
             AppRoute::Gallery => gallery.clone(),
             AppRoute::AddNote => html! { <AddNote/> },
-            AppRoute::Detail => html! { <Detail entry=&entry /> },
+            AppRoute::Detail => html! { <Detail entry=entry.clone() /> },
             AppRoute::Space => html! { <Space /> },
             AppRoute::Queue => html! { <Queue /> },
             AppRoute::Settings => html! { <Settings/> },

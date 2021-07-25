@@ -11,6 +11,7 @@ import Control.Monad.IO.Class (liftIO)
 import DB
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Int (Int64)
+import Data.Time ( Day(..), TimeOfDay(..), UTCTime(..))
 import Data.Text (Text, pack, unpack)
 import GHC.Generics (Generic)
 import Models
@@ -77,14 +78,16 @@ type AllCacheAPI =
     :> QueryParams "tag" Text
     :> QueryParam "limit" Int
     :> QueryParam "hidecompleted" Bool
+    :> QueryParam "startDate" Day
+    :> QueryParam "endDate" Day
     :> Get '[JSON] [CacheView]
 
 type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [CacheView]
 
 type EntryAPI = "submit" :> "note" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
+
 type CompletedAPI = "submit" :> "completed" :> ReqBody '[JSON] PostCompleted :> Post '[JSON] Int64
   
-
 type GetCompletedAPI = "get" :> "completed" :> Capture "entry_id" Int :> Get '[JSON] [Bool]
   
 type SearchAPI = "search" :> Capture "query" String :> Get '[JSON] [CacheView]
@@ -183,15 +186,32 @@ allTagsH minCount = liftIO $ allTags minCount
 allEntriesH :: Handler [Entry]
 allEntriesH = liftIO allEntries
 
-allCacheH :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> Maybe Bool -> Handler [CacheView]
-allCacheH sortby sortdir filterTags limit hideCompleted = liftIO (allCache sortby sortdir filterTags limit hideCompleted)
+allCacheH 
+  :: Maybe SortBy 
+  -> Maybe SortDir 
+  -> [Text] -- ^ filterTags
+  -> Maybe Int -- ^ limit
+  -> Maybe Bool 
+  -> Maybe Day 
+  -> Maybe Day 
+  -> Handler [CacheView]
+allCacheH 
+  sortby 
+  sortdir 
+  filterTags 
+  limit 
+  hideCompleted 
+  startDate
+  endDate
+  = liftIO (allCache sortby sortdir filterTags limit hideCompleted startDate endDate)
+    
 
 allTimestampsH :: Handler [DateTime]
 allTimestampsH = liftIO allTimeStamps
 
 frontendH = serveDirectoryFileServer "./frontend-rs/static/."
 -- frontendH = serveDirectoryWebApp "./frontend-rs/static/"
-
+ 
 queryContentH q = liftIO $ queryContent q :: Handler [CacheView]
 
 linkEntryTagsH filterTag = liftIO $ linkEntryTags filterTag

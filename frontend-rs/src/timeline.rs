@@ -114,7 +114,7 @@ impl Component for Timeline {
                     <line x1="0%" y1="25" x2="100%" y2="25" style="stroke:rgb(0,0,0);stroke-width:2" onmouseover=hover_callback("line".to_string()) onmousemove=hover_callback("line".to_string())  />
                     <line x1="0%" y1="20" x2="0%" y2="30" style="stroke:rgb(0,0,0);stroke-width:4" />
                     <line x1="100%" y1="20" x2="100%" y2="30" style="stroke:rgb(0,0,0);stroke-width:4" />
-                    <line x1=self.time_coord y1="0%" x2=self.time_coord y2="100%" style="stroke:rgb(0,0,0, 0.2);stroke-width:32" />
+                    <line x1=self.time_coord.to_string()  y1="0%" x2=self.time_coord.to_string() y2="100%" style="stroke:rgb(0,0,0, 0.2);stroke-width:32" />
                     {
                         for self.locations.iter().map(move |loc| {
                             html! {

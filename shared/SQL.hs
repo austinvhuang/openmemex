@@ -25,6 +25,7 @@ newtype Transaction = Transaction String
 
 data SqlQuery = SqlQuery
   { sqlSelect :: [SqlCol],
+    sqlDistinct :: Bool,
     sqlFrom :: SqlFrom,
     sqlWhere :: [SqlCond],
     sqlOrder :: [SqlOrder],
@@ -33,6 +34,7 @@ data SqlQuery = SqlQuery
 
 defaultQuery = SqlQuery {
   sqlSelect = [],
+  sqlDistinct = False,
   sqlFrom = SqlFrom "",
   sqlWhere = [],
   sqlOrder = [],
@@ -48,12 +50,13 @@ range2Sql start end =
 
 sql2string :: SqlQuery -> String
 sql2string SqlQuery {..} =
-  "SELECT " ++ (intercalate "," (sqlCol <$> sqlSelect))
+  "SELECT" ++ distinctClause ++ " " ++ (intercalate "," (sqlCol <$> sqlSelect))
     ++ fromClause
     ++ whereClause
     ++ orderClause
     ++ limitClause
   where
+    distinctClause = if sqlDistinct then " DISTINCT" else ""
     fromClause = " FROM " ++ (sqlFromTable sqlFrom)
     whereClause = case sqlWhere of
       [] -> ""

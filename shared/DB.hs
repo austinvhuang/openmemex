@@ -28,6 +28,7 @@ import SQL
 import System.Directory (copyFile, removeFile)
 import System.IO (hPutStrLn, stderr)
 import Date
+import Servant
 
 -- Note entries
 
@@ -79,6 +80,23 @@ instance FromRow EntryTag where
   fromRow = EntryTag <$> field <*> field
 
 instance ToJSON EntryTag
+
+-- Simple integer date specifier for uri
+
+data URIDate = URIDate {
+  uridYear :: Int,
+  uridMonth :: Int,
+  uridDay :: Int
+  } deriving (Show, Generic)
+
+{-
+instance FromHttpApiData URIDate where
+  parseUrlPiece txt = case day of
+    Just d -> Right d
+    Nothing -> Left "Error parsing date" 
+    where
+      day = parseTimeM True defaultTimeLocale "%Y-%m-%d" txt :: Maybe Day
+-}
 
 -- Cache Tables
 
@@ -252,14 +270,24 @@ getEntry entryID = do
 
 -- handlers
 
-allCache :: Maybe SortBy -> Maybe SortDir -> [Text] -> Maybe Int -> Maybe Bool -> IO [CacheView]
-allCache sortby sortdir filterTags limit hideCompleted = do
+allCache 
+  :: Maybe SortBy 
+  -> Maybe SortDir 
+  -> [Text] 
+  -> Maybe Int 
+  -> Maybe Bool 
+  -> Maybe Day 
+  -> Maybe Day 
+  -> IO [CacheView]
+allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
   -- TODO: support hideCompleted
   conn <- open dbFile
   let query =
         defaultQuery
           { sqlSelect = SqlCol <$> ["cache.entry_id", "cache_url", "cache_content_type", "cache_title", "date", "time", "cache_screenshot_file", "cache_thumbnail_file"],
-            sqlFrom = SqlFrom $ "tags LEFT JOIN cache ON cache.entry_id=tags.entry_id",
+            sqlFrom = if null filterTags
+                      then SqlFrom "cache"
+                      else SqlFrom $ "tags LEFT JOIN cache ON cache.entry_id=tags.entry_id",
             sqlLimit = Just 50,
             sqlWhere = if (null filterTags) 
                         then [] 
