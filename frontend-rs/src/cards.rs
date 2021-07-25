@@ -128,7 +128,7 @@ impl Cards {
 
                 html! {
                     {
-                        for entries.iter().map(|mut item| {
+                        for entries.iter().map(|item| {
                             // log::info!("{:#?} : item.", item);
                             let parsed = Url::parse(item.url.as_ref().unwrap_or(&"".to_owned()));
                             let thumbnail_file = item.thumbnail_file.as_ref().unwrap_or(&blank);
