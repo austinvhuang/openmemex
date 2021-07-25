@@ -196,29 +196,6 @@ postCompleted (PostCompleted entryID state) = do
   
   pure 0
 
-queryDate :: Int -> Int -> Int -> IO [Entry]
-queryDate year month day = do
-  conn <- open dbFile
-  let queryString = Query $ pack $ "SELECT * FROM entries WHERE date == \"" ++ date2string year month day ++ "\""
-  r <- query_ conn queryString :: IO [Entry]
-  close conn
-  pure r
-
-queryRange :: Int -> Int -> Int -> Int -> Int -> Int -> IO [Entry]
-queryRange startYear startMonth startDay endYear endMonth endDay = do
-  conn <- open dbFile
-  let queryString =
-        Query $
-          pack $
-            "SELECT * FROM entries WHERE date BETWEEN \""
-              ++ date2string startYear startMonth startDay
-              ++ "\" AND \""
-              ++ date2string endYear endMonth endDay
-              ++ "\""
-  r <- query_ conn queryString :: IO [Entry]
-  close conn
-  pure r
-
 mkTime :: (String, String) -> (Day, TimeOfDay) 
 mkTime (d, tod) = (day, timeOfDay)
   where

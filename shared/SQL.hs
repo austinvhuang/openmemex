@@ -41,13 +41,6 @@ defaultQuery = SqlQuery {
   sqlLimit = Nothing
 }
 
-range2Sql:: Date -> Date -> SqlCond
-range2Sql start end =
-  SqlCond $ "date BETWEEN \"" ++ date2string (year start) (month start) (day start) 
-              ++ "\" AND \""
-              ++ date2string (year end) (month end) (day end)
-              ++ "\""
-
 sql2string :: SqlQuery -> String
 sql2string SqlQuery {..} =
   "SELECT" ++ distinctClause ++ " " ++ (intercalate "," (sqlCol <$> sqlSelect))

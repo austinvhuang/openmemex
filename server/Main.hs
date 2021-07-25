@@ -39,30 +39,7 @@ data PostSearch =
 instance ToJSON PostSearch
 instance FromJSON PostSearch
 
-data TimeWindow = TimeWindow {
-  twStart :: Date,
-  twEnd :: Date
-} deriving (Show, Generic)
-
-instance ToJSON TimeWindow
-instance FromJSON TimeWindow
-
 type RootAPI = Get '[JSON] [String]
-
-type DateAPI =
-  "date" :> Capture "year" Int :> Capture "month" Int :> Capture "day" Int :> Get '[JSON] [Entry]
-
-type RangeAPI =
-  "range"
-    -- start of the range
-    :> Capture "year" Int
-    :> Capture "month" Int
-    :> Capture "day" Int
-    -- end of the range
-    :> Capture "year" Int
-    :> Capture "month" Int
-    :> Capture "day" Int
-    :> Get '[JSON] [Entry]
 
 type AllTagsAPI = "all" :> "tags" :> QueryParam "min" Int :> Get '[JSON] [String]
 
@@ -115,8 +92,6 @@ type HelloHuggingfaceAPI =
 
 type CombinedAPI =
   RootAPI
-    :<|> DateAPI
-    :<|> RangeAPI
     :<|> AllTagsAPI
     :<|> AllEntriesAPI
     :<|> AllCacheAPI
@@ -137,8 +112,6 @@ combinedApi = Proxy
 server :: Server CombinedAPI
 server =
   getRoot
-    :<|> queryDateH
-    :<|> queryRangeH
     :<|> allTagsH
     :<|> allEntriesH
     :<|> allCacheH
@@ -174,11 +147,6 @@ date2string = printf "%.4d-%.2d-%.2d" :: String
 
 getRoot :: Handler [String]
 getRoot = return ["n2s API"]
-
-queryDateH y m d = liftIO $ queryDate y m d :: Handler [Entry]
-
-queryRangeH :: Int -> Int -> Int -> Int -> Int -> Int -> Handler [Entry]
-queryRangeH y1 m1 d1 y2 m2 d2 = (liftIO $ queryRange y1 m1 d1 y2 m2 d2) :: Handler [Entry]
 
 allTagsH :: Maybe Int -> Handler [String]
 allTagsH minCount = liftIO $ allTags minCount
