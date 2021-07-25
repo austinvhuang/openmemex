@@ -29,6 +29,7 @@ import System.Directory (copyFile, removeFile)
 import System.IO (hPutStrLn, stderr)
 import Date
 import Servant
+import Text.Printf (printf)
 
 -- Note entries
 
@@ -218,7 +219,7 @@ queryRange startYear startMonth startDay endYear endMonth endDay = do
   close conn
   pure r
 
-mkTime :: (String, String) -> (Day, TimeOfDay)
+mkTime :: (String, String) -> (Day, TimeOfDay) 
 mkTime (d, tod) = (day, timeOfDay)
   where
     -- warning - no exception checking
@@ -282,6 +283,16 @@ allCache
 allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
   -- TODO: support hideCompleted
   conn <- open dbFile
+  let tagCond = case filterTags of
+                [] -> []
+                _ -> [SqlCond ("tag IN ('" ++ (intercalate "','" $ unpack <$> filterTags) ++ "')")]
+  let dateStartCond = case startDay of 
+                      Nothing -> []
+                      Just t -> let (y, m, d) = toGregorian t in [SqlCond $ printf "date >= \"%.4d-%.2d-%.2d\"" y m d]
+  let dateEndCond = case endDay of 
+                      Nothing -> []
+                      Just t -> let (y, m, d) = toGregorian t in [SqlCond $ printf "date <= \"%.4d-%.2d-%.2d\"" y m d]
+  let conditions = tagCond ++ dateStartCond  ++ dateEndCond
   let query =
         defaultQuery
           { sqlSelect = SqlCol <$> ["cache.entry_id", "cache_url", "cache_content_type", "cache_title", "date", "time", "cache_screenshot_file", "cache_thumbnail_file"],
@@ -289,9 +300,7 @@ allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
                       then SqlFrom "cache"
                       else SqlFrom $ "tags LEFT JOIN cache ON cache.entry_id=tags.entry_id",
             sqlLimit = Just 50,
-            sqlWhere = if (null filterTags) 
-                        then [] 
-                        else [SqlCond (if null filterTags then "" else "tag IN ('" ++ (intercalate "','" $ unpack <$> filterTags) ++ "')")],
+            sqlWhere = conditions,
             sqlOrder = [SqlOrder "date DESC, time DESC"] -- TODO represent individual termws instead of using a string blob
           }
   let queryString = sql2string query
