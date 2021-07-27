@@ -65,7 +65,7 @@ impl App {
                 </div>
                 */
 
-                <a class="navbar-brand" href="#"> { "OpenMemex" } </a>
+                <a class="navbar-brand" href="/frontend/index.html"> <span style="color:#bb7b52">{"Open"}</span><span style="color:#000000">{"Memex"}</span> </a>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
                         <li class="nav-item active">
@@ -297,10 +297,12 @@ impl Component for App {
                 { self.view_navbar() }
                 <div class="main-inner">
                     <div class="main-top">
+                    /*
                         <a href="/frontend/index.html" style="text-decoration: none">
                         <h1 class="big-title"> <span style="color:#bb7b52">{"Open"}</span><span style="color:#000000">{"Memex"}</span></h1>
                         </a>
                         <hr/>
+                    */
                         <Router<AppRoute, ()> render=render/>
                     </div>
                 </div>
