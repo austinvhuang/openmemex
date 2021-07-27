@@ -7,10 +7,13 @@ use yew::{
     utils::host,
 };
 
+use wasm_bindgen::prelude::*;
+
 pub enum TimelineMsg {
     GetTimeline,
     ReceiveTimeline(Result<Vec<Timestamp>, anyhow::Error>),
     Hover(MouseEvent, String),
+    Click(MouseEvent),
 }
 
 #[derive(Debug)]
@@ -96,21 +99,46 @@ impl Component for Timeline {
             }
             Hover(m, s) => { 
                 self.time_coord = m.offset_x();
-                // log::info!("Timeline hover msg: {}", &s);
-                // log::info!("Timeline hover mouse state: {} {}", &m.client_x(), &m.client_y());
+                let window = web_sys::window().expect("no global `window` exists");
+                let document = window.document().expect("should have a document on window");
+                let timeline = document.get_element_by_id("timeline-svg").expect("get element by id shouldn't fail");
+                let width = timeline.client_width();
+                let height = timeline.client_height();
+
+                log::info!("Timeline hover mouse state: {} {}", &m.offset_x(), &m.offset_y());
+                log::info!("Timeline hover width and height: {} {}", &width, &height);
                 true 
+            }
+            Click(m) => {
+                self.time_coord = m.offset_x();
+                let window = web_sys::window().expect("no global `window` exists");
+                let document = window.document().expect("should have a document on window");
+                let timeline = document.get_element_by_id("timeline-svg").expect("get element by id shouldn't fail");
+                let width = timeline.client_width();
+                let height = timeline.client_height();
+
+                log::info!("Click Timeline hover mouse state: {} {}", &m.offset_x(), &m.offset_y());
+                log::info!("Click Timeline hover width and height: {} {}", &width, &height);
+                true 
+
             }
         }
     }
 
     fn view(&self) -> Html {
         let hover_callback = |input: String| {
-            self.link
-                .callback(move |m| TimelineMsg::Hover(m, input.clone()))
+            self.link.callback(move |m| TimelineMsg::Hover(m, input.clone()))
+        };
+        let click_callback = || {
+            self.link.callback(move |m| TimelineMsg::Click(m))
         };
         html! {
             <div>
-                <svg height="50" width="100%" onmouseover=hover_callback("ma".to_string()) onmousemove=hover_callback("svg".to_string())>
+                <svg height="50" width="100%" 
+                    onmouseover=hover_callback("moousover".to_string()) 
+                    onmousemove=hover_callback("hover".to_string()) 
+                    onclick=click_callback()
+                    id="timeline-svg">
                     <line x1="0%" y1="25" x2="100%" y2="25" style="stroke:rgb(0,0,0);stroke-width:2" onmouseover=hover_callback("line".to_string()) onmousemove=hover_callback("line".to_string())  />
                     <line x1="0%" y1="20" x2="0%" y2="30" style="stroke:rgb(0,0,0);stroke-width:4" />
                     <line x1="100%" y1="20" x2="100%" y2="30" style="stroke:rgb(0,0,0);stroke-width:4" />
