@@ -78,3 +78,4 @@ executable crawler
                      , tagsoup
                      , text
                      , time
+                     , servant-server
