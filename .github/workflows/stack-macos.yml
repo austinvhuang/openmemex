@@ -18,12 +18,10 @@ jobs:
           brew install libtorch-prebuild@1.8.1 || true
           brew tap hasktorch/tokenizers https://github.com/hasktorch/tokenizers || true
           brew install libtokenizers || true
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-#      - name: build
-#        run: |
-#          stack build
-#          stack install note2self:exe:n2s
-#      - name: run
-#        run: |
-#          stack run n2s --help
+      - name: build
+        run: |
+          stack build
+          stack install note2self:exe:n2s
+      - name: run
+        run: |
+          stack run n2s --help
