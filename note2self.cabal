@@ -27,6 +27,7 @@ executable n2s
                      , optparse-generic
                      , text
                      , time
+                     , servant-server
 
 executable server
   hs-source-dirs:      server, shared
