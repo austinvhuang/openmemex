@@ -1,0 +1,27 @@
+name: stack-macos
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup packages
+        run: |
+          /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+          brew install libomp || true
+          wget -qO- https://get.haskellstack.org/ | sh || true
+          clang --version
+          stack --version
+          brew tap hasktorch/libtorch-prebuild https://github.com/hasktorch/homebrew-libtorch-prebuild || true
+          brew install libtorch-prebuild@1.8.1 || true
+          brew tap hasktorch/tokenizers https://github.com/hasktorch/tokenizers || true
+          brew install libtokenizers || true
+      - name: build
+        run: |
+          stack build
+          stack install note2self:exe:n2s
+      - name: run
+        run: |
+          stack run n2s --help
