@@ -21,14 +21,14 @@ clean-cache-files:
 download-libtorch-mac:
 	rm -rf ./libtorch
 	rm -f cpu-libtorch-macos-latest.zip
-	wget https://github.com/hasktorch/libtorch-binary-for-ci/releases/download/1.8.0/cpu-libtorch-macos-latest.zip
+	wget https://github.com/hasktorch/libtorch-binary-for-ci/releases/download/1.9.0/cpu-libtorch-macos-latest.zip
 	unzip cpu-libtorch-macos-latest.zip
 	rm -f cpu-libtorch-macos-latest.zip
 
 libtorch/lib/libtorch_cpu.so:
 	rm -rf ./libtorch
 	rm -f cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
-	wget https://github.com/hasktorch/libtorch-binary-for-ci/releases/download/1.8.0/cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
+	wget https://github.com/hasktorch/libtorch-binary-for-ci/releases/download/1.9.0/cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
 	unzip cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
 	rm -f cpu-libtorch-cxx11-abi-shared-with-deps-latest.zip
 

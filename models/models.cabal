@@ -19,6 +19,10 @@ executable simple-test
                      , hasktorch
                      , libtorch-ffi
                      , libtorch-ffi-helper
+                     , tokenizers
+  extra-lib-dirs:     ../deps/tokenizers
+  extra-libraries:
+      tokenizers_haskell
 --  ld-options:          -static
 --  ghc-options:         -fPIC
 
@@ -30,5 +34,9 @@ executable t5
                      , hasktorch
                      , libtorch-ffi
                      , libtorch-ffi-helper
+                     , tokenizers
+  extra-lib-dirs:     ../deps/tokenizers
+  extra-libraries:
+      tokenizers_haskell
 --  ld-options:          -static
 --  ghc-options:         -fPIC
