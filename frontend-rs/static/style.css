@@ -152,6 +152,20 @@ margin: 40px 80px;
   /* font-size: 10pt; */
 }
 
+.topic-tag-addnote {
+  border-radius: 5px;
+  border-width: 1px;
+  float: left;
+  margin-bottom: 3px;
+  margin-top: 3px;
+  margin-right: 5px;
+  padding: 5px;
+  text-align: left;
+  background-color: white;
+  border-style: solid;
+  border-color: #cccccc;
+}
+
 .tags-list-div {
   height: 60px;
   width: 100%;

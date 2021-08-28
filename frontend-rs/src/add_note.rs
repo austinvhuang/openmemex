@@ -144,7 +144,7 @@ impl Component for AddNote {
                 <div class="tags-list-div">
                 {
                     for self.tags.iter().map(|curr_tag| {
-                        html!{ <div class="topic-tag">{ curr_tag }</div> }
+                        html!{ <div class="topic-tag-addnote">{ curr_tag }</div> }
                     })
                 }
                 </div>
