@@ -33,8 +33,6 @@ allTimestampsH = liftIO allTimeStamps
 frontendH = serveDirectoryFileServer "./frontend-rs/static/."
 -- frontendH = serveDirectoryWebApp "./frontend-rs/static/"
  
-queryContentH q = liftIO $ queryContent q :: Handler [CacheView]
-
 linkEntryTagsH filterTag = liftIO $ linkEntryTags filterTag
 
 -- | Post a note 

@@ -88,7 +88,6 @@ type CombinedAPI =
     :<|> AllEntriesAPI
     :<|> AllCacheAPI
     :<|> AllTimestampsAPI
-    :<|> ContentAPI
     :<|> EntryAPI 
     :<|> CompletedAPI 
     :<|> GetCompletedAPI 
@@ -108,7 +107,6 @@ server =
     :<|> allEntriesH
     :<|> allCacheH
     :<|> allTimestampsH
-    :<|> queryContentH
     :<|> postNoteH
     :<|> postCompletedH
     :<|> getCompletedH

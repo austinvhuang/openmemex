@@ -270,15 +270,6 @@ allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
   close conn
   pure r
 
-queryContent :: String -> IO [CacheView]
-queryContent query = do
-  conn <- open dbFile
-  let queryString =
-        Query $ pack $ "SELECT entry_id, cache_url, cache_content_type, cache_title, date,  time, cache_screenshot_file, cache_thumbnail_file from cache ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC WHERE cache_title LIKE '%" ++ query ++ "%'"
-  r <- query_ conn queryString
-  close conn
-  pure r
-
 linkEntryTags :: [String] -> IO [EntryTag]
 linkEntryTags filterTags = do
   conn <- open dbFile
