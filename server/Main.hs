@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -7,14 +6,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
-import Control.Monad.IO.Class (liftIO)
-import DB
-import Data.Aeson (FromJSON, ToJSON)
 import Data.Int (Int64)
 import Data.Time ( Day(..), TimeOfDay(..), UTCTime(..))
-import Data.Text (Text, pack, unpack)
-import GHC.Generics (Generic)
-import Models
+import Data.Text (Text)
 import Network.Wai.Handler.Warp
   ( defaultSettings,
     runSettings,
@@ -23,21 +17,19 @@ import Network.Wai.Handler.Warp
     setPort,
   )
 import Network.Wai.Logger (withStdoutLogger)
-import Network.Wai.Middleware.Cors (simpleCors)
+-- import Network.Wai.Middleware.Cors (simpleCors)
 import Servant
 import System.IO (hPutStrLn, stderr)
-import Text.Printf (printf)
+
+import DB
 import Torch
 import Tokenizers
 import CrawlTools
 import Date
+import API
+import Models
 
 -- API Types
-
-data PostSearch =
-  PostSearch { psQuery :: String } deriving (Show, Generic)
-instance ToJSON PostSearch
-instance FromJSON PostSearch
 
 type RootAPI = Get '[JSON] [String]
 
@@ -137,70 +129,6 @@ instance FromHttpApiData SortDir where
     "fwd" -> Right SortFwd
     "rev" -> Right SortRev
     _ -> Left "Invalid sort direction"
-
--- Helper functions
-
--- year month day
-date2string = printf "%.4d-%.2d-%.2d" :: String
-
--- Handlers
-
-getRoot :: Handler [String]
-getRoot = return ["n2s API"]
-
-allTagsH :: Maybe Int -> Handler [String]
-allTagsH minCount = liftIO $ allTags minCount
-
-allEntriesH :: Handler [Entry]
-allEntriesH = liftIO allEntries
-
-allCacheH 
-  :: Maybe SortBy 
-  -> Maybe SortDir 
-  -> [Text] -- ^ filterTags
-  -> Maybe Int -- ^ limit
-  -> Maybe Bool 
-  -> Maybe Day 
-  -> Maybe Day 
-  -> Handler [CacheView]
-allCacheH 
-  sortby 
-  sortdir 
-  filterTags 
-  limit 
-  hideCompleted 
-  startDate
-  endDate
-  = liftIO (allCache sortby sortdir filterTags limit hideCompleted startDate endDate)
-    
-
-allTimestampsH :: Handler [DateTime]
-allTimestampsH = liftIO allTimeStamps
-
-frontendH = serveDirectoryFileServer "./frontend-rs/static/."
--- frontendH = serveDirectoryWebApp "./frontend-rs/static/"
- 
-queryContentH q = liftIO $ queryContent q :: Handler [CacheView]
-
-linkEntryTagsH filterTag = liftIO $ linkEntryTags filterTag
-
-postNote :: PostNote -> IO Int64
-postNote note = do
-  putStrLn "Adding note"
-  print note
-  entryID <- addEntryInferDate (pnContent note) (pnTags note)
-  entry <- getEntry (fromIntegral entryID)
-  print entry
-  crawlEntries entry
-  pure entryID
-
-postNoteH note = liftIO $ postNote note
-
-postCompletedH entryID = liftIO $ postCompleted entryID
-
-getCompletedH entryID = liftIO $ getCompleted entryID
-
-searchH query = liftIO $ search query
 
 mkApp :: IO Application
 mkApp = pure $ serve combinedApi server

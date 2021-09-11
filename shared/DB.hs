@@ -179,23 +179,6 @@ dbFile = "note2self.db"
 
 -- Handlers
 
-getCompleted :: Int -> IO [Bool]
-getCompleted entryID = do
-  print entryID
-  result <- checkCompleted entryID
-  print result
-  pure [result]
-
-postCompleted :: PostCompleted -> IO Int64
-postCompleted (PostCompleted entryID state) = do
-  putStrLn $ "Marking complete as " ++ show state
-  print entryID
-  case state of
-    True -> addCompleted entryID
-    False -> removeCompleted entryID
-  
-  pure 0
-
 mkTime :: (String, String) -> (Day, TimeOfDay) 
 mkTime (d, tod) = (day, timeOfDay)
   where
