@@ -215,7 +215,16 @@ impl Component for Detail {
             None => &default,
         };
         let (src_mapped, iframe_style) = iframeify_url(src.to_string());
-        let title: String = self.entry.clone().unwrap().content.unwrap_or("".to_string());
+        let title: String = match &self.entry {
+            Some(entry) => entry.content.clone().unwrap_or("".to_string()),
+            None => "".to_string(),
+        };
+        // TODO note_content branch on is url?
+        let note_content = match &self.entry {
+            Some(entry) => if entry.url.is_none() { title } 
+                           else { ["# Notes on", &title].join(" ") },
+            None => "No Entry Selected".to_string(),
+        };
         log::info!("Screen {:?}", src);
         html! {
             <div>
@@ -227,7 +236,7 @@ impl Component for Detail {
                     </div>
                     <div style="height:85vh" class="shadow p-3 mb-5 bg-body rounded">
                         <div id="editor" style="height:90%;">
-                            { ["# Notes on", &title].join(" ")} 
+                            { note_content } 
                         </div>
                         <p/>
                         <center>

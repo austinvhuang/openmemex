@@ -123,7 +123,7 @@ impl Component for App {
     }
 
     fn change(&mut self, _props: Self::Properties) -> bool {
-        false
+        true
     }
 
     fn update(&mut self, msg: Self::Message) -> bool {
@@ -189,7 +189,7 @@ impl Component for App {
                     }
                 }
                 self.tag_task = None;
-                false
+                true
             }
             AppMsg::KeyDown => {
                 log::info!("keydown event");
