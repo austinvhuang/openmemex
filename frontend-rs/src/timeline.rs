@@ -7,6 +7,8 @@ use yew::{
     utils::host,
 };
 
+use chrono::DateTime;
+
 use wasm_bindgen::prelude::*;
 
 pub enum TimelineMsg {
@@ -20,8 +22,10 @@ pub enum TimelineMsg {
 pub struct Timeline {
     pub link: ComponentLink<Self>,
     pub events: Vec<Timestamp>,
+    pub time_window: Option<(Timestamp, Timestamp)>,
     pub locations: Vec<f32>,
-    time_coord: i32,
+    pub time_coord: i32,
+    pub utc_range: (f32, f32),
     task: Option<FetchTask>,
 }
 
@@ -41,7 +45,9 @@ impl Component for Timeline {
             link: link,
             time_coord: 0,
             events: [].to_vec(),
+            time_window: None,
             locations: [].to_vec(),
+            utc_range: (0.0, 0.0),
             task: None,
         }
     }
@@ -83,12 +89,8 @@ impl Component for Timeline {
                         let min: f32 = (*timestamps.iter().min().unwrap_or(&0)) as f32;
                         let max: f32 = (*timestamps.iter().max().unwrap_or(&0)) as f32;
                         let rng = max - min;
-                        self.locations = timestamps.into_iter().map(|x| (100.0 * ((x as f32) - min) / rng)).collect();
-                        /*
-                        for t in &self.locations {
-                            log::info!("loc: {}", t);
-                        }
-                        */
+                        self.locations = timestamps.into_iter().map(|x| 100.0 * (((x as f32) - min) / rng)).collect();
+                        self.utc_range = (min, max);
                     }
                     Err(error) => {
                         log::info!("timeline error:");
@@ -117,8 +119,11 @@ impl Component for Timeline {
                 let width = timeline.client_width();
                 let height = timeline.client_height();
 
-                log::info!("Click Timeline hover mouse state: {} {}", &m.offset_x(), &m.offset_y());
-                log::info!("Click Timeline hover width and height: {} {}", &width, &height);
+                let frac_position: f32 = 100.0 * (self.time_coord as f32) / (width as f32);
+
+                log::info!("Click Timeline mouse state: {} {}", &m.offset_x(), &m.offset_y());
+                log::info!("Click Timeline width and height: {} {}", &width, &height);
+                log::info!("Click Timeline fractional position: {}", &frac_position);
                 true 
 
             }

@@ -76,6 +76,7 @@ searchH query = liftIO $ search query
 
 {- Implementations (any DB queries are in DB.hs) -}
 
+-- | Add a note
 postNote :: PostNote -> IO Int64
 postNote note = do
   putStrLn "Adding note"
@@ -86,6 +87,7 @@ postNote note = do
   crawlEntries entry
   pure entryID
 
+-- | Retrieve content completion (for detail checkbox) flag state
 getCompleted :: Int -> IO [Bool]
 getCompleted entryID = do
   print entryID
@@ -93,6 +95,7 @@ getCompleted entryID = do
   print result
   pure [result]
 
+-- | Set content completion (for detail checkbox) flag state
 postCompleted :: PostCompleted -> IO Int64
 postCompleted (PostCompleted entryID state) = do
   putStrLn $ "Marking complete as " ++ show state

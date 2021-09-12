@@ -90,7 +90,7 @@ impl Component for Tags {
                         { for exist_tags.iter().map((move |item: &String| {
                             let hs = self.selected.clone().unwrap_or(HashSet::new());
                             let mut style = "topic-tag";
-                            if (hovered.eq(item)) {
+                            if hovered.eq(item) {
                                 style = "topic-tag-hover";
                             }
                             if hs.contains(item) {

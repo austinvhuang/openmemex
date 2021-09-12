@@ -20,6 +20,7 @@ wasm-logger = "0.2.0"
 log = "0.4.6"
 url = "2.2.0"
 urlencoding = "2.1.0"
+chrono = "0.4.0"
 
 [dependencies.web-sys]
 version = "0.3.4"
