@@ -17,6 +17,7 @@ use yew::{
 };
 use urlencoding::encode;
 use yew_router::prelude::*;
+use chrono::*;
 
 pub type Link = RouterAnchor<AppRoute>;
 
@@ -41,8 +42,12 @@ pub enum AppMsg {
     ReceiveEntries(Result<Vec<Cache>, anyhow::Error>),
     ReceiveTags(Result<Vec<String>, anyhow::Error>),
     KeyDown,
+    // callback events
     CardClick(Option<Cache>),
     TagClick(Option<String>),
+    TimelineEvt(Option<(NaiveDateTime, NaiveDateTime)>),
+
+    //
     SortByDate,
     SortByUrl,
     SearchEdit(String),
@@ -203,14 +208,28 @@ impl Component for App {
             AppMsg::TagClick(tag) => {
                 log::info!("tag click event");
                 log::info!("{:?}", tag);
-                let query = match tag {
+                self.query = match tag {
                     Some(tag_name) => {
                         format!("http://{}/all/cache?sort=time&tag={}&limit=50", server, tag_name)
                     }
                     None => format!("http://{}/all/cache?sort=time&limit=50", server),
                 };
-                log::info!("Query is: {:?}", &query);
-                self.query = query.clone(); // TODO - make queryparams compose
+                log::info!("Query is: {:?}", &self.query);
+                // self.query = query.clone(); // TODO - make queryparams compose
+                self.link.send_message(AppMsg::GetEntries);
+                false
+            }
+            AppMsg::TimelineEvt(evt) => {
+                log::info!("Timeline event");
+                self.query = match evt {
+                    Some((dt_min, dt_max)) => {
+                        format!("http://{}/all/cache?sort=time&startDate={}&endDate={}&limit=50", server,
+                            dt_min.format("%Y-%m-%d").to_string(), 
+                            dt_max.format("%Y-%m-%d").to_string())
+                    }
+                    None => format!("http://{}/all/cache?sort=time&limit=50", server),
+                };
+                log::info!("Query is: {:?}", &self.query);
                 self.link.send_message(AppMsg::GetEntries);
                 false
             }
@@ -249,8 +268,9 @@ impl Component for App {
     fn view(&self) -> Html {
         let empty_vec = &[].to_vec();
         let exist_tags = self.tags.as_ref().unwrap_or(empty_vec);
-        let card_callback = self.link.callback(move |tag| AppMsg::CardClick(tag));
+        let card_callback = self.link.callback(move |card| AppMsg::CardClick(card));
         let tag_callback = self.link.callback(move |tag| AppMsg::TagClick(tag));
+        let timeline_callback = self.link.callback(move |dt| AppMsg::TimelineEvt(dt));
 
         let button_class = "sort-button shadow-sm p-3 mb-5 bg-white rounded";
 
@@ -265,7 +285,7 @@ impl Component for App {
                 oninput = { self.link.callback(move |e: InputData| AppMsg::SearchEdit(e.value)) }
                 onkeydown = { self.link.callback(move |e: KeyboardEvent| AppMsg::SearchKeyDown(e)) }
                 />
-                <Timeline />
+                <Timeline timeline_callback = timeline_callback/>
                 <p/>
                 <div class="twocol">
                     <Cards entries=self.entries.clone() card_click_callback=card_callback/>

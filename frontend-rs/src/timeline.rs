@@ -7,7 +7,7 @@ use yew::{
     utils::host,
 };
 
-use chrono::DateTime;
+use chrono::*;
 
 use wasm_bindgen::prelude::*;
 
@@ -22,15 +22,20 @@ pub enum TimelineMsg {
 pub struct Timeline {
     pub link: ComponentLink<Self>,
     pub events: Vec<Timestamp>,
-    pub time_window: Option<(Timestamp, Timestamp)>,
+    pub time_window: Option<(NaiveDateTime, NaiveDateTime)>,
     pub locations: Vec<f32>,
     pub time_coord: i32,
-    pub utc_range: (f32, f32),
+    pub utc_range: (i64, i64),
+    pub timeline_callback: Callback<Option<(NaiveDateTime, NaiveDateTime)>>,
     task: Option<FetchTask>,
 }
 
+const window_half_duration: i64 = 3;
+
 #[derive(Clone, Properties)]
-pub struct Props {}
+pub struct Props {
+    pub timeline_callback: Callback<Option<(NaiveDateTime, NaiveDateTime)>>,
+}
 
 impl Component for Timeline {
     type Message = TimelineMsg;
@@ -47,7 +52,8 @@ impl Component for Timeline {
             events: [].to_vec(),
             time_window: None,
             locations: [].to_vec(),
-            utc_range: (0.0, 0.0),
+            utc_range: (0, 0),
+            timeline_callback: props.timeline_callback,
             task: None,
         }
     }
@@ -86,10 +92,12 @@ impl Component for Timeline {
                         for (i, timestamp) in result.iter().enumerate() {
                             timestamps[i] = timestamp.utc
                         }
-                        let min: f32 = (*timestamps.iter().min().unwrap_or(&0)) as f32;
-                        let max: f32 = (*timestamps.iter().max().unwrap_or(&0)) as f32;
-                        let rng = max - min;
-                        self.locations = timestamps.into_iter().map(|x| 100.0 * (((x as f32) - min) / rng)).collect();
+                        let min = (*timestamps.iter().min().unwrap_or(&0)) as i64;
+                        let max = (*timestamps.iter().max().unwrap_or(&0)) as i64;
+                        // let (minf, maxf) = (min as f32, max as f32);
+                        let minf = min as f32;
+                        let maxf = max as f32;
+                        self.locations = timestamps.into_iter().map(|x| 100.0 * (((x as f32) - minf) / (maxf - minf))).collect();
                         self.utc_range = (min, max);
                     }
                     Err(error) => {
@@ -99,7 +107,7 @@ impl Component for Timeline {
                 }
                 true
             }
-            Hover(m, s) => { 
+            Hover(m, _s) => { 
                 self.time_coord = m.offset_x();
                 let window = web_sys::window().expect("no global `window` exists");
                 let document = window.document().expect("should have a document on window");
@@ -119,11 +127,28 @@ impl Component for Timeline {
                 let width = timeline.client_width();
                 let height = timeline.client_height();
 
-                let frac_position: f32 = 100.0 * (self.time_coord as f32) / (width as f32);
+                let frac_position: f32 = (self.time_coord as f32) / (width as f32);
+                let utc: i64 = (self.utc_range.0 as f32 + frac_position * (self.utc_range.1 - self.utc_range.0) as f32).round() as i64;
+
+                let dt = NaiveDateTime::from_timestamp(utc, 0);
+
+                // if adding / subtractiong the time window fails, clamp at the dt value
+                let window_max = dt.checked_add_signed(Duration::days(window_half_duration))
+                                   .unwrap_or(dt);
+                let window_min = dt.checked_sub_signed(Duration::days(window_half_duration))
+                                   .unwrap_or(dt);
+                self.time_window = Some((window_min, window_max));
+
+                self.timeline_callback.emit(Some((window_min, window_max)));
+
+                // let dt: NaiveDateTime = NaiveDate::from_ymd(2016, 7, 8).and_hms(9, 10, 11);
 
                 log::info!("Click Timeline mouse state: {} {}", &m.offset_x(), &m.offset_y());
                 log::info!("Click Timeline width and height: {} {}", &width, &height);
                 log::info!("Click Timeline fractional position: {}", &frac_position);
+                log::info!("Click Timeline chrono: {}", &dt);
+                log::info!("Click Timeline chrono min: {}", &window_min);
+                log::info!("Click Timeline chrono max: {}", &window_max);
                 true 
 
             }

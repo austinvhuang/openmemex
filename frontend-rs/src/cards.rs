@@ -81,7 +81,7 @@ impl Cards {
         // log::info!("thumbnail file is {:?}", &thumbnail_file);
         let mut content = item.content.clone().unwrap_or("".to_owned());
         let max_length = 70;
-        if (content.len() > max_length) {
+        if content.len() > max_length {
             content = content.chars().take(max_length).collect::<String>();
             content.push_str("...");
         }
