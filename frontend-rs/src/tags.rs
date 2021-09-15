@@ -5,6 +5,7 @@ use yew::Properties;
 pub enum TagsMsg {
     TagClick(MouseEvent, String),
     TagHover(MouseEvent, String),
+    TagExit(MouseEvent, String),
 }
 
 #[derive(Debug)]
@@ -67,6 +68,11 @@ impl Component for Tags {
                 self.hovered = Some(tag_name);
                 true
             }
+            TagExit(_m, tag_name) => {
+                log::info!("tag exit event");
+                self.hovered = None;
+                true
+            }
         }
     }
 
@@ -80,6 +86,10 @@ impl Component for Tags {
         let hover_callback = |item: String| {
             self.link
                 .callback(move |m| TagsMsg::TagHover(m, item.to_string()))
+        };
+        let exit_callback = |item: String| {
+            self.link
+                .callback(move |m| TagsMsg::TagExit(m, item.to_string()))
         };
 
         let hovered = self.hovered.clone().unwrap_or("".to_string());
@@ -97,7 +107,9 @@ impl Component for Tags {
                                 style = "topic-tag-selected";
                             }
                             html! {
-                                <div class= { style } onclick=callback(item.clone()).clone() onmouseover=hover_callback(item.clone()).clone()>
+                                <div class= { style } onclick=callback(item.clone()).clone() 
+                                    onmouseover=hover_callback(item.clone()).clone()
+                                    onmouseleave=exit_callback(item.clone()).clone()>
                                 { item.clone() }
                                 </div>
                             }

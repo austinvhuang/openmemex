@@ -1,22 +1,22 @@
 # OpenMemex
 
-WARNING - not recommended for use other than development.
+*ATTENTION CONSERVATION NOTICE - this is an early stage project and is not recommended for use other than by contributing developers*
 
 # Project Organization
 
 There are currently 3 main components.
 
 - `frontend-rs/` - this is the frontend user interface implementation, uses rust + yew compiles to wasm.
-- `server/` - this is the backend server, interacts with the database and in the future runs various automation tasks and (in the future) models.
+- `server/` - this is the backend server, interacts with the database and in the future runs various automation tasks and (in the future) machine learning models.
 - `shared/` - shared backend operations - more or less reused modules between `server` and the two supporting command line tools below (`cli/` and `crawler/`)
 
 Additionally, there's two supporting command line tools (`n2s` command line interface under `cli/` and `crawler` command line tool) which are mostly deprecated, except that the CLI is still needed on a first use to initialize the database table schemas.
 
-- `cli/` - [[mostly deprecated except for initialization]] the command line tool. this is mostly no longer needed except to initialize the table schemas of the database (`n2s --reset --note ""`), but can also be used to test adding notes at the command line eg `n2s --note "blah blah" --tag "atag" --tag "anothertag`)
-- `crawler/` - [[mostly deprecated]] for all notes consisting of urls, this crawls them, pulls html content into the database, but also takes screenshots, thumbnails, and runs ocr for a text representation of screenshots. This tool is also mostly deprecated in favor of running these operations synchronously upon adding a note instead of requiring users to run this process in batch on-demand (which leaves part of the database un-crawled).
-- `electron/` - experimental Electron UI (not functioning yet)
+- `cli/` - [[mostly deprecated except for initialization]] the command line tool. this is mostly no longer needed except to initialize the table schemas of the database (`n2s --reset --note ""`), but can also be used to test adding notes at the command line eg `n2s --note "this is a note" --tag "some_tag" --tag "another_tag`)
+- `crawler/` - [[mostly deprecated]] for all notes consisting of urls, this crawls them, pulls html content into the database, but also takes screenshots, thumbnails, and runs ocr for a text representation of screenshots. This tool is also mostly deprecated in favor of running these operations synchronously upon adding a note instead of requiring users to run this process in batch on-demand.
+- `electron/` - experimental Electron UI (not functioning yet).
 
-There's also 2 directories where some artifacts are stored:
+There's also directories where artifacts are stored:
 
 - `screenshots/` - screenshots captured by the headless browser
 - `thumbnails/` - scaled down version of screenshots
@@ -24,14 +24,14 @@ There's also 2 directories where some artifacts are stored:
 
 # Installation & Building
 
-Warning - installation is still a bit finicky at this point. Ping me on the hasktorch slack if you run into issues.
+Warning - installation is still finicky at this stage. Ping @austinvhuang on twitter or on the hasktorch slack if you run into issues.
 
 ## System Dependencies
 
 Make sure you have system dependencies:
 
 - chromium (for headless browsing)
-- imagemagick + libva-dev (for image processing - cropping, downsampling, etc.)
+- imagemagick + libva-dev (for image processing - cropping, downsampling, etc. TODO - get rid of this dependency)
 - tesseract + libtesseract-dev (ocr for screenshots)
 
 On linux, run:
