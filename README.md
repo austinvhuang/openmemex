@@ -2,6 +2,20 @@
 
 *ATTENTION CONSERVATION NOTICE - this is an early stage project and is not recommended for use other than by contributing developers*
 
+OpenMemex is an open source, local-first knowledge garden app.
+
+The OpenMemex app is a self-hosted server (haskell) which hosts a web ui (rust/yew/wasm) and persists your data as a sqlite data store.
+
+The central data structure is a time stamped event stream. Notes or links to external sites can be captured as events (eventually there may be other types of event data - audio/photos/etc). 
+
+The general pattern of use is that the event stream is intended to persist botht he intake and production of information. A link to a piece of information (e.g. a blog, a video, a paper, etc.) can be persisted as an event and it is automatically time stamped with the time of the capture. An idea or thought can also be captured as a note, with the note persisted as an event at the time it is written. Both links and notes can be annotated with relevant topic tags.
+
+For links to external sites, a headless browser automatically caches the content of the link and stores it to create a local database of linked content. Each event is tied to metadata - self-added topic category tags, text notes associated with the event, and a "done" flag.
+
+Events can be filtered and retrieved in three ways - search, time, and topics. Search approximates a google-like search over the stream, time filters events by their time stamp, topic filters events by topic tags. 
+
+The goal is to allow an individual's consumption and production of information to be asynchronous in nature. In the future, I'd like to add automated processes that operate on the events, the content, and metadata associated with them, for example machine learning models that transform and aggregate ingested data in useful ways. 
+
 # Project Organization
 
 There are currently 3 main components.
