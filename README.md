@@ -8,9 +8,9 @@ The OpenMemex app is a self-hosted server (haskell) which hosts a web ui (rust/y
 
 The central data structure is a time stamped event stream. Notes or links to external sites can be captured as events (eventually there may be other types of event data - audio/photos/etc). 
 
-The general pattern of use is that the event stream is intended to persist botht he intake and production of information. A link to a piece of information (e.g. a blog, a video, a paper, etc.) can be persisted as an event and it is automatically time stamped with the time of the capture. An idea or thought can also be captured as a note, with the note persisted as an event at the time it is written. Both links and notes can be annotated with relevant topic tags.
+The general pattern of use is that the event stream is intended to persist both he intake and production of information. A link to a piece of information (e.g. a blog, a video, a paper, etc.) can be persisted as an event and it is automatically time stamped with the time of the capture. An idea or thought can also be captured as a note, with the note persisted as an event at the time it is written. Both links and notes can be annotated with relevant topic tags.
 
-For links to external sites, a headless browser automatically caches the content of the link and stores it to create a local database of linked content. Each event is tied to metadata - self-added topic category tags, text notes associated with the event, and a "done" flag.
+For links to external sites, a headless browser automatically caches the content of the link and stores it to create a local cached database of contents of all externally linked data. Besides the content cache and topic tags, each event has a few pieces (still-evolving) of additional metadata - a text note which can be edited to annotate the event, and a completion flag (intended to indicate that an event has bene "worked" by the user).
 
 Events can be filtered and retrieved in three ways - search, time, and topics. Search approximates a google-like search over the stream, time filters events by their time stamp, topic filters events by topic tags. 
 
