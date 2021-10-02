@@ -1,6 +1,4 @@
-# Dependencies ##################################################
-
-install-haskell-tools:
+haskell-dependencies:
 	stack install ormolu ghcid
 
 install-dependencies:
@@ -100,10 +98,10 @@ test-post-note:
 	curl -g --header "Content-Type: application/json" --request POST --data '{"pnContent":"https://monoskop.org/images/5/51/Wiener_Norbert_The_Human_Use_of_Human_Beings.pdf", "pnTags":["book"]}' --request POST http://localhost:3000/submit/note
 
 docker-build:
-	sudo docker build -t openmemex:v1
+	sudo docker build -t openmemex:v1 .
 
 docker-it:
-	sudo docker run -it openmemex:v1
+	sudo docker run -it -v "$(PWD)":/openmemex openmemex:v1 bash
 
 appimg-deps:
 	pip3 install appimage-builder

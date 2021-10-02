@@ -111,7 +111,7 @@ impl Component for App {
         cb.emit("".to_string()); // TODO - what's the right way to handle a message without parameters
         log::info!("sent message");
         // let kb_cb = link.callback(Msg::KeyDown);
-        let default_query = format!("http://{}/all/cache?limit=50", server).to_string();
+        let default_query = format!("http://{}/all/cache?limit=150", server).to_string();
         Self {
             cache_task: None,
             tag_task: None,
@@ -210,9 +210,9 @@ impl Component for App {
                 log::info!("{:?}", tag);
                 self.query = match tag {
                     Some(tag_name) => {
-                        format!("http://{}/all/cache?sort=time&tag={}&limit=50", server, tag_name)
+                        format!("http://{}/all/cache?sort=time&tag={}&limit=150", server, tag_name)
                     }
-                    None => format!("http://{}/all/cache?sort=time&limit=50", server),
+                    None => format!("http://{}/all/cache?sort=time&limit=150", server),
                 };
                 log::info!("Query is: {:?}", &self.query);
                 // self.query = query.clone(); // TODO - make queryparams compose
@@ -223,11 +223,11 @@ impl Component for App {
                 log::info!("Timeline event");
                 self.query = match evt {
                     Some((dt_min, dt_max)) => {
-                        format!("http://{}/all/cache?sort=time&startDate={}&endDate={}&limit=50", server,
+                        format!("http://{}/all/cache?sort=time&startDate={}&endDate={}&limit=150", server,
                             dt_min.format("%Y-%m-%d").to_string(), 
                             dt_max.format("%Y-%m-%d").to_string())
                     }
-                    None => format!("http://{}/all/cache?sort=time&limit=50", server),
+                    None => format!("http://{}/all/cache?sort=time&limit=150", server),
                 };
                 log::info!("Query is: {:?}", &self.query);
                 self.link.send_message(AppMsg::GetEntries);
@@ -235,13 +235,13 @@ impl Component for App {
             }
             AppMsg::SortByDate => {
                 log::info!("sort date");
-                self.query = format!("http://{}/all/cache?sort=time&limit=50", server).to_string();
+                self.query = format!("http://{}/all/cache?sort=time&limit=150", server).to_string();
                 self.link.send_message(AppMsg::GetEntries);
                 true
             }
             AppMsg::SortByUrl => {
                 log::info!("sort url");
-                self.query = format!("http://{}/all/cache?sort=url&limit=50", server).to_string();
+                self.query = format!("http://{}/all/cache?sort=url&limit=150", server).to_string();
                 self.link.send_message(AppMsg::GetEntries);
                 true
             }

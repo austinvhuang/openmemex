@@ -12,6 +12,3 @@ RUN curl -sSL https://get.haskellstack.org/ | sh
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 RUN . /root/.cargo/env && curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-
-COPY ./ /openmemex/
-RUN cd /openmemex && stack setup

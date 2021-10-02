@@ -259,7 +259,7 @@ allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
             sqlFrom = if null filterTags
                       then SqlFrom "cache"
                       else SqlFrom $ "tags LEFT JOIN cache ON cache.entry_id=tags.entry_id",
-            sqlLimit = Just 50,
+            sqlLimit = Just limit',
             sqlWhere = conditions,
             sqlOrder = [SqlOrder "date DESC, time DESC"] -- TODO represent individual termws instead of using a string blob
           }
@@ -269,6 +269,10 @@ allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
   r <- query_ conn (Query . pack $ queryString)
   close conn
   pure r
+  where
+    limit' = case limit of
+      Nothing -> 50
+      Just l -> l
 
 linkEntryTags :: [String] -> IO [EntryTag]
 linkEntryTags filterTags = do
