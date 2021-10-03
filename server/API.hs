@@ -30,8 +30,8 @@ allTimestampsH :: Handler [DateTime]
 allTimestampsH = liftIO allTimeStamps
 
 -- | Static file serving endpoint
-frontendH = serveDirectoryFileServer "./frontend-rs/static/."
--- frontendH = serveDirectoryWebApp "./frontend-rs/static/"
+frontendH = serveDirectoryFileServer "./static/."
+-- frontendH = serveDirectoryWebApp "./static/"
  
 linkEntryTagsH filterTag = liftIO $ linkEntryTags filterTag
 

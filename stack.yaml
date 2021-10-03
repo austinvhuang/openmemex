@@ -39,4 +39,4 @@ extra-lib-dirs:
 
 packages:
   - .
-  - models
+  - experimental

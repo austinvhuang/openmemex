@@ -3,11 +3,11 @@ version:             0.1.0.0
 -- synopsis:
 -- description:
 homepage:            https://github.com/austinvhuang/openmemex#readme
-license:             BSD3
+license:             Apache
 license-file:        LICENSE
 author:              Austin Huang
-copyright:           2020 Austin Huang
-category:            CLI
+copyright:           2021 Austin Huang
+category:            Tools
 build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:  README.md
