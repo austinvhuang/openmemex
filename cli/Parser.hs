@@ -30,7 +30,7 @@ optionsParser :: ParserInfo CommandLine
 optionsParser =
   info
     (helper <*> commandLine)
-    ( fullDesc <> progDesc "note2self"
+    ( fullDesc <> progDesc "openmemex"
         <> header
-          "note2self - take notes for yourself v0.2"
+          "An open source, local-first knowledge garden."
     )

@@ -1,4 +1,4 @@
-name:                note2self
+name:                openmemex
 version:             0.1.0.0
 -- synopsis:
 -- description:
@@ -12,10 +12,10 @@ build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:  README.md
 
-executable n2s
+executable omx
   hs-source-dirs:      cli, shared
   main-is:             Main.hs
-  other-modules:       Backend, Parser, DB, Date
+  other-modules:       Backend, Parser, DB, Date, OCR, SQL
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , aeson
@@ -31,7 +31,7 @@ executable n2s
 executable server
   hs-source-dirs:      server, shared
   main-is:             Main.hs
-  other-modules:       DB, OCR, Models, SQL, CrawlTools, Date
+  other-modules:       DB, OCR, Models, SQL, CrawlTools, Date, API
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , aeson

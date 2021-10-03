@@ -28,7 +28,6 @@ import SQL
 import System.Directory (copyFile, removeFile)
 import System.IO (hPutStrLn, stderr)
 import Date
-import Servant
 import Text.Printf (printf)
 
 -- Note entries
@@ -173,7 +172,7 @@ data PostCompleted = PostCompleted { pcEntryID :: Int, pcState :: Bool} deriving
 instance ToJSON PostCompleted
 instance FromJSON PostCompleted
 
-dbFile = "note2self.db"
+dbFile = "openmemex.db"
 
 -- Helper functions
 

@@ -8,7 +8,7 @@ import umap
 import datetime
 
 if __name__ == "__main__":
-    conn = sqlite3.connect("note2self.db")
+    conn = sqlite3.connect("openmemex.db")
     df_cache = pd.read_sql_query("SELECT * FROM cache ", conn)
     titles = df_cache.cache_title
     tokenizer = RobertaTokenizerFast.from_pretrained("roberta-base")

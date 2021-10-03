@@ -9,7 +9,7 @@ install-dependencies:
 	sudo snap install chromium
 
 clean-backups:
-	rm note2self.db.backup.20*.db
+	rm openmemex.db.backup.20*.db
 
 clean-cache-files:
 	rm screenshots/*.png
@@ -35,24 +35,24 @@ download-libtorch-linux: libtorch/lib/libtorch_cpu.so
 # Builds ##################################################
 
 cli-watcher:
-	~/.local/bin/ghcid -c "stack ghci note2self:exe:n2s" -Tmain
+	~/.local/bin/ghcid -c "stack ghci openmemex:exe:n2s" -Tmain
 
 frontend-rs/static/wasm_bg.wasm: $(wildcard frontend-rs/src/*.rs)
 	cd frontend-rs; $(MAKE) build
 
 # run `source setenv` before invoking this
 watch-server: frontend-rs/static/wasm_bg.wasm libtorch/lib/libtorch_cpu.so
-	~/.local/bin/ghcid -c "stack ghci note2self:exe:server" -Tmain 
+	~/.local/bin/ghcid -c "stack ghci openmemex:exe:server" -Tmain 
 	
 watch-crawler:
-	~/.local/bin/ghcid -c "stack ghci note2self:exe:crawler" -Tmain
+	~/.local/bin/ghcid -c "stack ghci openmemex:exe:crawler" -Tmain
 
 watch-crawler-build:
-	~/.local/bin/ghcid -c "stack ghci note2self:exe:crawler"
+	~/.local/bin/ghcid -c "stack ghci openmemex:exe:crawler"
 
 server-release:
 	stack clean
-	stack build note2self:server --ghc-options="-O2"
+	stack build openmemex:server --ghc-options="-O2"
 	stack run server
 
 thumbnails:

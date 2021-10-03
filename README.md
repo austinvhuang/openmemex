@@ -88,10 +88,10 @@ For now, the way to initialize the database is with the command line tool:
 
 ```
 stack build cli
-stack run n2s --reset --note ""
+stack run omx --reset --note ""
 ```
 
-This creates and initializes tables in the `note2self.db` file which is the main backend data store.
+This creates and initializes tables in the `openmemex.db` file which is the main backend data store.
 
 ## Web frontend and API server
 
@@ -110,7 +110,7 @@ Setup environment variables with `source setenv` if you haven't already and star
 stack run server
 ```
 
-You should be in the top level directory where note2self.db is located when running the server.
+You should be in the top level directory where openmemex.db is located when running the server.
 
 To get to the main UI, point a browser to:
 
@@ -120,4 +120,4 @@ http://localhost:3000/frontend/index.html
 
 # Things to do
 
-See the [kanban board](https://github.com/austinvhuang/note2self/projects/1)
+See the [kanban board](https://github.com/austinvhuang/openmemex/projects/1)
