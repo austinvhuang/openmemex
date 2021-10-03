@@ -2,9 +2,23 @@
 
 *ATTENTION CONSERVATION NOTICE - this is an early stage project and is not recommended for use other than by contributing developers*
 
-OpenMemex is an open source, local-first knowledge garden app.
+OpenMemex is an open source, local-first knowledge automation app.
 
-The OpenMemex app is a self-hosted server (haskell) which hosts a web ui (rust/yew/wasm) and persists your data as a sqlite data store.
+# What is OpenMemex for?
+
+There's a lot of "knowledge garden" tools that don't work for me for the same reason that real gardens don't work for me. Both *should* make your life more pleasant but in reality they just create more work because you need to maintain them.
+
+A core value of OpenMemex is that a memex should extend your brain like a co-processor + cache,  *OpenMemex is designed to maximize a user's leverage*.
+
+- Instead of markdown documents being the central data store, we use sqlite.
+- Instead of the user organizing the structure of ideas by curating a knowledge graph, data is organized automatically by timestamp. Topical/conceptual connections will be automated by a combination of lightweight tagging and machine learning capabilities, rather than relying on the user to hand-curate cross references.
+- While authoring notes is part of the functionality, the focus is on effective automated persistence, retrieval, and (future work) optimizing compression/consumption of information.
+
+Instead of focusing on developing an environment for you to write, curate, and massage content for extended periods of time, the goal is to wiretap into one's (often-messy) stream of conscious intake and production of information, then automate the organization of it and surface it for asynchronous consumption/retrieval when needed at a future point in time.
+
+# Implementation Notes
+
+The app is a self-hosted server (haskell) which hosts a web ui (rust/yew/wasm) and persists your data as a sqlite data store.
 
 The central data structure is a time stamped event stream. Notes or links to external sites can be captured as events (eventually there may be other types of event data - audio/photos/etc). 
 
@@ -13,19 +27,6 @@ The general pattern of use is that the event stream is intended to persist both 
 For links to external sites, a headless browser automatically caches the content of the link and stores it to create a local cached database of contents of all externally linked data. Besides the content cache and topic tags, each event has a few pieces (still-evolving) of additional metadata - a text note which can be edited to annotate the event, and a completion flag (intended to indicate that an event has bene "worked" by the user).
 
 Events can be filtered and retrieved in three ways - search, time, and topics. Search approximates a google-like search over the stream, time filters events by their time stamp, topic filters events by topic tags. 
-
-## What is OpenMemex for?
-
-There's a lot of "knowledge garden" tools that don't work for me for the same reason that real gardens don't work for me - they should make your life more pleasant but in reality they require work to maintain. 
-
-A core value of OpenMemex is that a memex should extend your brain like a co-processor + cache, not add to your list of obligations. 
-
-This is the starting point for a lot of design choices - *OpenMemex is designed to maximize user leverage*.
-
-- Instead of markdown documents being the central data store, we use a sqlite data store.
-- Instead of the user organizing the structure of ideas by curating a knowledge graph, data is organized automatically by timestamp. Topical connections should be automated by a combination of lightweight tagging and machine learning capabilities, not hand-curated cross references.
-- While authoring notes is part of the functionality, the focus is on effective automated persistence, retrieval, and (future work) optimized compression/consumption of ideas.
-- Instead of focusing on developing an environment for you to write, curate, and massage content for extended periods of time, the goal is to wiretap into one's (often-messy) stream of conscious intake and production of information, then automate the organization of it and surface it for asynchronous consumption/retrieval when needed at a future point in time.
 
 # Project Organization
 
