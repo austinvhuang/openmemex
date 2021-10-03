@@ -37,6 +37,29 @@ pub struct Props {
     pub timeline_callback: Callback<Option<(NaiveDateTime, NaiveDateTime)>>,
 }
 
+// TODO
+/*
+fn get_time(&mut self) -> (NaiveDateTime, NaiveDateTime) {
+        let window = web_sys::window().expect("no global `window` exists");
+        let document = window.document().expect("should have a document on window");
+        let timeline = document.get_element_by_id("timeline-svg").expect("get element by id shouldn't fail");
+        let width = timeline.client_width();
+        let height = timeline.client_height();
+        let frac_position: f32 = (self.time_coord as f32) / (width as f32);
+        let utc: i64 = 
+            (self.utc_range.0 as f32 
+             + frac_position * (self.utc_range.1 - self.utc_range.0) as f32)
+            .round() as i64;
+        let dt = NaiveDateTime::from_timestamp(utc, 0);
+        // if adding / subtractiong the time window fails, clamp at the dt value
+        let window_max = dt.checked_add_signed(Duration::days(window_half_duration))
+                           .unwrap_or(dt);
+        let window_min = dt.checked_sub_signed(Duration::days(window_half_duration))
+                           .unwrap_or(dt);
+        (window_min, window_max)
+}
+*/
+
 impl Component for Timeline {
     type Message = TimelineMsg;
     type Properties = Props;
@@ -94,10 +117,12 @@ impl Component for Timeline {
                         }
                         let min = (*timestamps.iter().min().unwrap_or(&0)) as i64;
                         let max = (*timestamps.iter().max().unwrap_or(&0)) as i64;
-                        // let (minf, maxf) = (min as f32, max as f32);
                         let minf = min as f32;
                         let maxf = max as f32;
-                        self.locations = timestamps.into_iter().map(|x| 100.0 * (((x as f32) - minf) / (maxf - minf))).collect();
+                        self.locations = timestamps
+                            .into_iter()
+                            .map(|x| 100.0 * (((x as f32) - minf) / (maxf - minf)))
+                            .collect();
                         self.utc_range = (min, max);
                     }
                     Err(error) => {
@@ -108,30 +133,44 @@ impl Component for Timeline {
                 true
             }
             Hover(m, _s) => { 
+
                 self.time_coord = m.offset_x();
                 let window = web_sys::window().expect("no global `window` exists");
                 let document = window.document().expect("should have a document on window");
                 let timeline = document.get_element_by_id("timeline-svg").expect("get element by id shouldn't fail");
                 let width = timeline.client_width();
                 let height = timeline.client_height();
+                let frac_position: f32 = (self.time_coord as f32) / (width as f32);
+                let utc: i64 = 
+                    (self.utc_range.0 as f32 
+                     + frac_position * (self.utc_range.1 - self.utc_range.0) as f32)
+                    .round() as i64;
+                let dt = NaiveDateTime::from_timestamp(utc, 0);
+                // if adding / subtractiong the time window fails, clamp at the dt value
+                let window_max = dt.checked_add_signed(Duration::days(window_half_duration))
+                                   .unwrap_or(dt);
+                let window_min = dt.checked_sub_signed(Duration::days(window_half_duration))
+                                   .unwrap_or(dt);
+                self.time_window = Some((window_min, window_max));
 
                 log::info!("Timeline hover mouse state: {} {}", &m.offset_x(), &m.offset_y());
                 log::info!("Timeline hover width and height: {} {}", &width, &height);
                 true 
             }
             Click(m) => {
+
                 self.time_coord = m.offset_x();
                 let window = web_sys::window().expect("no global `window` exists");
                 let document = window.document().expect("should have a document on window");
                 let timeline = document.get_element_by_id("timeline-svg").expect("get element by id shouldn't fail");
                 let width = timeline.client_width();
                 let height = timeline.client_height();
-
                 let frac_position: f32 = (self.time_coord as f32) / (width as f32);
-                let utc: i64 = (self.utc_range.0 as f32 + frac_position * (self.utc_range.1 - self.utc_range.0) as f32).round() as i64;
-
+                let utc: i64 = 
+                    (self.utc_range.0 as f32 
+                     + frac_position * (self.utc_range.1 - self.utc_range.0) as f32)
+                    .round() as i64;
                 let dt = NaiveDateTime::from_timestamp(utc, 0);
-
                 // if adding / subtractiong the time window fails, clamp at the dt value
                 let window_max = dt.checked_add_signed(Duration::days(window_half_duration))
                                    .unwrap_or(dt);
@@ -162,24 +201,57 @@ impl Component for Timeline {
         let click_callback = || {
             self.link.callback(move |m| TimelineMsg::Click(m))
         };
+
+        let stroke = "stroke:rgb(0,0,0,0.3); stroke-width:2";
+        let cursor_style = "stroke:rgb(0,0,0,0.3); stroke-width:32";
+        let data_style = "stroke:rgb(0,0,0,0.1); fill:rgb(0,0,0,0.1)";
+        let text_style = "font: 13px sans-serif; opacity: 0.3;";
+
         html! {
             <div>
+
                 <svg height="50" width="100%" 
                     onmouseover=hover_callback("moousover".to_string()) 
                     onmousemove=hover_callback("hover".to_string()) 
                     onclick=click_callback()
                     id="timeline-svg">
-                    <line x1="0%" y1="25" x2="100%" y2="25" style="stroke:rgb(0,0,0);stroke-width:2" onmouseover=hover_callback("line".to_string()) onmousemove=hover_callback("line".to_string())  />
-                    <line x1="0%" y1="20" x2="0%" y2="30" style="stroke:rgb(0,0,0);stroke-width:4" />
-                    <line x1="100%" y1="20" x2="100%" y2="30" style="stroke:rgb(0,0,0);stroke-width:4" />
-                    <line x1=self.time_coord.to_string()  y1="0%" x2=self.time_coord.to_string() y2="100%" style="stroke:rgb(0,0,0, 0.2);stroke-width:32" />
+
+                    // Horizontal timeline
+                    <line x1="0%" y1="25" x2="100%" y2="25" style=stroke
+                     onmouseover=hover_callback("line".to_string())
+                     onmousemove=hover_callback("line".to_string()) />
+
+                    // LHS line
+                    <line x1="0%" y1="20" x2="0%" y2="30" style=stroke />
+
+                    // RHS line
+                    <line x1="100%" y1="20" x2="100%" y2="30" style=stroke />
+
+                    // cursor
+                    <line x1=self.time_coord.to_string()  y1="0%" 
+                     x2=self.time_coord.to_string() y2="100%" style=cursor_style />
+
+                     // date annotation
+                    <text x=(self.time_coord + 16).to_string()  y="20%" style=text_style>
+                    {
+                        match &self.time_window {
+                            Some((start, end)) => {
+                                start.format("%Y-%m-%d").to_string()
+                            }
+                            None => { "".to_string() }
+                        }
+                    }
+                    </text>
+
+                    // data points
                     {
                         for self.locations.iter().map(move |loc| {
                             html! {
-                                <circle cx=format!("{:.0}%", loc) cy="50%" r="3" style="stroke:rgb(0,0,0,0.1);fill:rgb(0,0,0,0.1);" />
+                                <circle cx=format!("{:.0}%", loc) cy="50%" r="2" style=data_style />
                             }
                         })
                     }
+
                 </svg>
             </div>
         }

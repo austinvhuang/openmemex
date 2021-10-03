@@ -153,7 +153,7 @@ impl Component for App {
                 self.cache_task = Some(task);
                 // define request
                 log::info!("submitting tag request");
-                let request = Request::get(format!("http://{}/all/tags?min=3", server))
+                let request = Request::get(format!("http://{}/all/tags?min=10", server))
                     .body(Nothing)
                     .expect("Could not build request.");
                 // define callback
