@@ -14,7 +14,18 @@ For links to external sites, a headless browser automatically caches the content
 
 Events can be filtered and retrieved in three ways - search, time, and topics. Search approximates a google-like search over the stream, time filters events by their time stamp, topic filters events by topic tags. 
 
-The goal is to allow an individual's consumption and production of information to be asynchronous in nature. In the future, I'd like to add automated processes that operate on the events, the content, and metadata associated with them, for example machine learning models that transform and aggregate ingested data in useful ways. 
+## What is OpenMemex for?
+
+There's a lot of "knowledge garden" tools that don't work for me for the same reason that real gardens don't work for me - they should make your life more pleasant but in reality they require work to maintain. 
+
+A core value of OpenMemex is that a memex should extend your brain like a co-processor + cache, not add to your list of obligations. 
+
+This is the starting point for a lot of design choices - *OpenMemex is designed to maximize user leverage*.
+
+- Instead of markdown documents being the central data store, we use a sqlite data store.
+- Instead of the user organizing the structure of ideas by curating a knowledge graph, data is organized automatically by timestamp. Topical connections should be automated by a combination of lightweight tagging and machine learning capabilities, not hand-curated cross references.
+- While authoring notes is part of the functionality, the focus is on effective automated persistence, retrieval, and (future work) optimized compression/consumption of ideas.
+- Instead of focusing on developing an environment for you to write, curate, and massage content for extended periods of time, the goal is to wiretap into one's (often-messy) stream of conscious intake and production of information, then automate the organization of it and surface it for asynchronous consumption/retrieval when needed at a future point in time.
 
 # Project Organization
 
