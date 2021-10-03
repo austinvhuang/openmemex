@@ -4,7 +4,7 @@
 
 OpenMemex is an open source, local-first knowledge automation app.
 
-# What is OpenMemex for?
+## What is OpenMemex for?
 
 There's a lot of "knowledge garden" tools that don't work for me for the same reason that real gardens don't work for me. Both *should* make your life more pleasant but in reality they just create more work because you need to maintain them.
 
@@ -16,7 +16,7 @@ A core value of OpenMemex is that a memex should extend your brain like a co-pro
 
 Instead of focusing on developing an environment for you to write, curate, and massage content for extended periods of time, the goal is to wiretap into one's (often-messy) stream of conscious intake and production of information, then automate the organization of it and surface it for asynchronous consumption/retrieval when needed at a future point in time.
 
-# Implementation Notes
+## Implementation Notes
 
 The app is a self-hosted server (haskell) which hosts a web ui (rust/yew/wasm) and persists your data as a sqlite data store.
 
