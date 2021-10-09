@@ -10,6 +10,7 @@ OpenMemex is an open source, local-first knowledge integration platform (aka "se
 
 OpenMemex is designed to maximize a user's leverage as a brain cache/co-processor while minimizing curation friction. In contrast to productivity tools that require substantial user investment to organize and manage information:
 
+- No centralized server dependency - OpenMemex is intended to be fully functional as a self-hosted application.
 - SQLite is the central data storage medium, rather than a collection of markdown documents.
 - Instead of users manually curating a knowledge graph, data is organized automatically by timestamp. Topical/conceptual connections can be automatically linked by a combination of lightweight tagging and NLP models (WIP) rather than relying on the user to hand-curate relatedness.
 - Although capturing markdown notes is in scope, the focus is on automated persistence, retrieval, and (future work) optimizing compression/consumption of information over UI-heavy notetaking tools.
