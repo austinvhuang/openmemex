@@ -2,21 +2,27 @@
 
 *ATTENTION CONSERVATION NOTICE - this is an early stage project and is not recommended for use other than by contributing developers*
 
-OpenMemex is an open source, local-first knowledge integration platform (aka "second brain" or "knowledge garden") optimized for automation (including caching and indexing of content) and machine learning integrations.
+OpenMemex is an open source, local-first knowledge integration platform (aka "second brain" or "knowledge garden") optimized for automation (including caching and indexing of content) as well as enabling neural network machine learning integrations.
 
 ## What is OpenMemex for?
 
-There's many tools-for-thought and knowledge garden software that should make life easier but in reality require work on the part of the user to maintain and organize the information themselves.
+<img align="right" src="https://user-images.githubusercontent.com/20875313/136660771-3d32b50d-c4aa-46fb-9473-5d9c29f1b9b3.gif" alt="openmemex_demo" width="50%">
 
-OpenMemex is designed to maximize a user's leverage as a cache and co-processor and minimize curation effort.
+OpenMemex is designed to maximize a user's leverage as a brain cache/co-processor while minimizing curation friction. In contrast to productivity tools that require substantial user investment to organize and manage information:
 
-- Instead of markdown documents being the central data store, we use sqlite.
-- Instead of the user organizing the structure of ideas by curating a knowledge graph, data is organized automatically by timestamp. Topical/conceptual connections is intended to be automated by a combination of lightweight tagging and NLP rather than relying on the user to hand-curate cross references.
-- Although capturing markdown notes is in scope, the focus is on automated persistence, retrieval, and (future work) optimizing compression/consumption of information over UI-heavy notetaking tooling.
+- SQLite is the central data storage medium, rather than a collection of markdown documents.
+- Instead of users manually curating a knowledge graph, data is organized automatically by timestamp. Topical/conceptual connections can be automatically linked by a combination of lightweight tagging and NLP models (WIP) rather than relying on the user to hand-curate relatedness.
+- Although capturing markdown notes is in scope, the focus is on automated persistence, retrieval, and (future work) optimizing compression/consumption of information over UI-heavy notetaking tools.
 
-Instead of focusing on developing an environment for you to write, curate, and massage content for extended periods of time, the goal is to wiretap into one's (often-messy) stream of conscious intake and production of information, then automate the organization of it and surface it for asynchronous consumption/retrieval when needed at a future point in time.
+Instead of focusing on developing an environment for a user to write, curate, and massage content, the goal is to enable a minimally-disruptive wiretap into one's (often-messy) stream of conscious intake and production of information, then automate organization/indexing for asynchronous future consumption.
 
-## Implementor Notes
+## Contributing and Current Project State
+
+The implementation is currently at functioning pre-alpha MVP maturity. As the note at the top says, it should primarily be used by contributors at this point.
+
+There's lots of functionality to fill in and we're happy to have contributors join development, can DM [@austinvhuang on twitter](https://twitter.com/austinvhuang), message me on the Hasktorch slack server, or [join the OpenMemex discord](https://discord.gg/Afm4SVQn).
+
+## Implementer Notes
 
 The app is a self-hosted server (Haskell Servant) which hosts a web ui (Rust/Yew - wasm) and persists your data as a sqlite data store.
 
@@ -27,12 +33,6 @@ The general pattern of use is that the event stream is intended to persist both 
 For links to external sites, a headless browser automatically caches the content of the link and stores it to create a local cached database of contents of all externally linked data. Besides the content cache and topic tags, each event has a few pieces (still-evolving) of additional metadata - a text note which can be edited to annotate the event, and a completion flag (intended to indicate that an event has bene "worked" by the user).
 
 Events can be filtered and retrieved in three ways - search, time, and topics. Search functionality allows searching the stream (including locally cached content of links), time filters events by their time stamp, topic filters events by topic tags. 
-
-## Contributing and Current Project State
-
-The implementation is currently at functioning pre-alpha MVP maturity. As the note at the top says, it should primarily be used by contributors at this point.
-
-There's lots of functionality to fill in and we're happy to have contributors join development, can DM [@austinvhuang on twitter](https://twitter.com/austinvhuang), message me on the Hasktorch slack server, or [join the OpenMemex discord](https://discord.gg/Afm4SVQn).
 
 # Project Organization
 
@@ -48,11 +48,11 @@ Additionally, there's two supporting command line tools (`omx` command line inte
 - `crawler/` - [[mostly deprecated]] for all notes consisting of urls, this crawls them, pulls html content into the database, but also takes screenshots, thumbnails, and runs ocr for a text representation of screenshots. This tool is also mostly deprecated in favor of running these operations synchronously upon adding a note instead of requiring users to run this process in batch on-demand.
 - `electron/` - experimental Electron UI (not functioning yet).
 
-There's also directories where artifacts are stored:
+There's also placeholder directories (consisting of a single `.gitkeep` file) where artifacts are intended to be stored:
 
 - `screenshots/` - screenshots captured by the headless browser
 - `thumbnails/` - scaled down version of screenshots
-- `ocr/` - tesseract ocr output of screenshots (in the future this might be derived from a higher-resolution image of the full site)
+- `ocr/` - ocr output of screenshots
 
 # Installation & Building
 
