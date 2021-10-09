@@ -2,23 +2,23 @@
 
 *ATTENTION CONSERVATION NOTICE - this is an early stage project and is not recommended for use other than by contributing developers*
 
-OpenMemex is an open source, local-first knowledge automation app.
+OpenMemex is an open source, local-first knowledge integration platform (aka "second brain" or "knowledge garden") optimized for automation (including caching and indexing of content) and machine learning integrations.
 
 ## What is OpenMemex for?
 
-There's a lot of "knowledge garden" tools that don't work for me for the same reason that real gardens don't work for me. Both *should* make your life more pleasant but in reality they just create more work because you need to maintain them.
+There's many tools-for-thought and knowledge garden software that should make life easier but in reality require work on the part of the user to maintain and organize the information themselves.
 
-A core value of OpenMemex is that a memex should extend your brain like a co-processor + cache,  *OpenMemex is designed to maximize a user's leverage*.
+OpenMemex is designed to maximize a user's leverage as a cache and co-processor and minimize curation effort.
 
 - Instead of markdown documents being the central data store, we use sqlite.
-- Instead of the user organizing the structure of ideas by curating a knowledge graph, data is organized automatically by timestamp. Topical/conceptual connections will be automated by a combination of lightweight tagging and machine learning capabilities, rather than relying on the user to hand-curate cross references.
-- While authoring notes is part of the functionality, the focus is on effective automated persistence, retrieval, and (future work) optimizing compression/consumption of information.
+- Instead of the user organizing the structure of ideas by curating a knowledge graph, data is organized automatically by timestamp. Topical/conceptual connections is intended to be automated by a combination of lightweight tagging and NLP rather than relying on the user to hand-curate cross references.
+- Although capturing markdown notes is in scope, the focus is on automated persistence, retrieval, and (future work) optimizing compression/consumption of information over UI-heavy notetaking tooling.
 
 Instead of focusing on developing an environment for you to write, curate, and massage content for extended periods of time, the goal is to wiretap into one's (often-messy) stream of conscious intake and production of information, then automate the organization of it and surface it for asynchronous consumption/retrieval when needed at a future point in time.
 
-## Implementation Notes
+## Implementor Notes
 
-The app is a self-hosted server (haskell) which hosts a web ui (rust/yew/wasm) and persists your data as a sqlite data store.
+The app is a self-hosted server (Haskell Servant) which hosts a web ui (Rust/Yew - wasm) and persists your data as a sqlite data store.
 
 The central data structure is a time stamped event stream. Notes or links to external sites can be captured as events (eventually there may be other types of event data - audio/photos/etc). 
 
@@ -26,14 +26,20 @@ The general pattern of use is that the event stream is intended to persist both 
 
 For links to external sites, a headless browser automatically caches the content of the link and stores it to create a local cached database of contents of all externally linked data. Besides the content cache and topic tags, each event has a few pieces (still-evolving) of additional metadata - a text note which can be edited to annotate the event, and a completion flag (intended to indicate that an event has bene "worked" by the user).
 
-Events can be filtered and retrieved in three ways - search, time, and topics. Search approximates a google-like search over the stream, time filters events by their time stamp, topic filters events by topic tags. 
+Events can be filtered and retrieved in three ways - search, time, and topics. Search functionality allows searching the stream (including locally cached content of links), time filters events by their time stamp, topic filters events by topic tags. 
+
+## Contributing and Current Project State
+
+The implementation is currently at functioning pre-alpha MVP maturity. As the note at the top says, it should primarily be used by contributors at this point.
+
+There's lots of functionality to fill in and we're happy to have contributors join development, can DM [@austinvhuang on twitter](https://twitter.com/austinvhuang), message me on the Hasktorch slack server, or [join the OpenMemex discord](https://discord.gg/Afm4SVQn).
 
 # Project Organization
 
 There are currently 3 main components.
 
-- `frontend/` - this is the frontend user interface implementation, uses rust + yew compiles to wasm.
-- `server/` - this is the backend server, interacts with the database and in the future runs various automation tasks and (in the future) machine learning models.
+- `frontend/` - this is the frontend user interface implementation. The frontend is implemented in rust + yew and compiles to wasm.
+- `server/` - this is the backend implementation. It interacts with the sqlite database and in the future runs various automation tasks and (in the future) machine learning models.
 - `shared/` - shared backend operations - more or less reused modules between `server` and the two supporting command line tools below (`cli/` and `crawler/`)
 
 Additionally, there's two supporting command line tools (`omx` command line interface under `cli/` and `crawler` command line tool) which are mostly deprecated, except that the CLI is still needed on a first use to initialize the database table schemas.
