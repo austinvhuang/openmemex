@@ -8,14 +8,14 @@ OpenMemex is an open source, local-first knowledge integration platform (aka "se
 
 <img align="right" src="https://user-images.githubusercontent.com/20875313/136660771-3d32b50d-c4aa-46fb-9473-5d9c29f1b9b3.gif" alt="openmemex_demo" width="50%">
 
-OpenMemex is designed to maximize a user's leverage as a brain cache/co-processor while minimizing curation friction. In contrast to productivity tools that require substantial user investment to organize and manage information:
+OpenMemex is designed to maximize a user's leverage as a brain cache/co-processor while minimizing curation friction. In contrast to productivity tools that require substantial user investment to organize and manage information using a centralized service:
 
-- No centralized server dependency - OpenMemex is intended to be fully functional as a self-hosted application.
+- There is no centralized server dependency - OpenMemex is fully functional as a self-hosted application.
 - SQLite is the central data storage medium, rather than a collection of markdown documents.
 - Instead of users manually curating a knowledge graph, data is organized automatically by timestamp. Topical/conceptual connections can be automatically linked by a combination of lightweight tagging and NLP models (WIP) rather than relying on the user to hand-curate relatedness.
 - Although capturing markdown notes is in scope, the focus is on automated persistence, retrieval, and (future work) optimizing compression/consumption of information over UI-heavy notetaking tools.
 
-Instead of focusing on developing an environment for a user to write, curate, and massage content, the goal is to enable a minimally-disruptive wiretap into one's (often-messy) stream of conscious intake and production of information, then automate organization/indexing for asynchronous future consumption.
+The goal is to enable a minimally-disruptive wiretap into one's (often-messy) stream of conscious intake and production of information, then automate organization/indexing for asynchronous future consumption.
 
 ## Contributing and Current Project State
 
@@ -46,7 +46,7 @@ There are currently 3 main components.
 Additionally, there's two supporting command line tools (`omx` command line interface under `cli/` and `crawler` command line tool) which are mostly deprecated, except that the CLI is still needed on a first use to initialize the database table schemas.
 
 - `cli/` - [[mostly deprecated except for initialization]] the command line tool. this is mostly no longer needed except to initialize the table schemas of the database (`omx --reset --note ""`), but can also be used to test adding notes at the command line eg `omx --note "this is a note" --tag "some_tag" --tag "another_tag`)
-- `crawler/` - [[mostly deprecated]] for all notes consisting of urls, this crawls them, pulls html content into the database, but also takes screenshots, thumbnails, and runs ocr for a text representation of screenshots. This tool is also mostly deprecated in favor of running these operations synchronously upon adding a note instead of requiring users to run this process in batch on-demand.
+- `crawler/` - [[mostly deprecated]] for all notes consisting of urls, this crawls them, pulls html content into the database, but also takes screenshots, thumbnails, and runs ocr for a text representation of screenshots. This tool is also mostly deprecated in favor of running these operations synchronously upon adding an entry, but can be useful if the content cache needs to be refreshed or cleaned. TODO: merge this functionality into the `omx1` CLI.
 - `electron/` - experimental Electron UI (not functioning yet).
 
 There's also placeholder directories (consisting of a single `.gitkeep` file) where artifacts are intended to be stored:
@@ -91,7 +91,9 @@ For now the cpu build is probably sufficient since most operations are model inf
 
 Currently tokenizers has to be copied manually or symbolically linked locally.
 
-Under `deps/tokenizers/`, copy or link `libtokenizers_haskell.so` which is built from the [hasktorch fork of the huggingface tokenizers library](https://github.com/hasktorch/tokenizers)
+Under `deps/tokenizers/`, copy or link `libtokenizers_haskell.so` which is built from the [hasktorch fork of the huggingface tokenizers library](https://github.com/hasktorch/tokenizers). To build the tokenizers shared library, run `make` from the [haskell bindings directory](https://github.com/hasktorch/tokenizers/tree/master/bindings/haskell) which creates the shared library file. 
+
+Building shared library dependencies can be a bit tricky and simplification work is needed here, for now if you run into difficulties do [ask for help](https://discord.gg/Afm4SVQn).
 
 ## Environment variables
 
@@ -117,11 +119,11 @@ This creates and initializes tables in the `openmemex.db` file which is the main
 First build the wasm artifact:
 
 ```
-cd frontend-rs
+cd frontend
 make
 ```
 
-This creates `wasm_bg.wasm` in the `frontend-rs/static` directory. The `frontend-rs/static` is hosted by the servant server.
+This creates `wasm_bg.wasm` in the `frontend/static` directory. The `frontend/static` is hosted by the servant server.
 
 Setup environment variables with `source setenv` if you haven't already and start the server:
 
