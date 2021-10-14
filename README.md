@@ -52,7 +52,6 @@ There's also directories where artifacts are stored:
 
 - `screenshots/` - screenshots captured by the headless browser
 - `thumbnails/` - scaled down version of screenshots
-- `ocr/` - tesseract ocr output of screenshots (in the future this might be derived from a higher-resolution image of the full site)
 
 # Installation & Building
 
@@ -64,7 +63,6 @@ Make sure you have system dependencies:
 
 - chromium (for headless browsing)
 - imagemagick + libva-dev (for image processing - cropping, downsampling, etc. TODO - get rid of this dependency)
-- tesseract + libtesseract-dev (ocr for screenshots)
 
 On linux, run:
 

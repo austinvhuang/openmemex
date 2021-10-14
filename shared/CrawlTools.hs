@@ -229,12 +229,12 @@ crawlAll = do
   entries <- allEntries
   screenshotEntries False (Timeout 30) entries -- False to reconstruct screenshots directory
   thumbnails entries
-  ocrShots entries
+  -- ocrShots entries
   cacheEntries entries
 
 crawlEntries :: [Entry] -> IO ()
 crawlEntries entries = do
   screenshotEntries False (Timeout 30) entries -- False to reconstruct screenshots directory
   thumbnails entries
-  ocrShots entries
+  -- ocrShots entries
   appendEntries entries
