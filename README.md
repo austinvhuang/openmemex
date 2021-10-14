@@ -15,7 +15,7 @@ OpenMemex is designed to maximize a user's leverage as a brain cache/co-processo
 - Instead of users manually curating a knowledge graph, data is organized automatically by timestamp. Topical/conceptual connections can be automatically linked by a combination of lightweight tagging and NLP models (WIP) rather than relying on the user to hand-curate relatedness.
 - Although capturing markdown notes is in scope, the focus is on automated persistence, retrieval, and (future work) optimizing compression/consumption of information over UI-heavy notetaking tools.
 
-The goal is to enable a minimally-disruptive wiretap into one's (often-messy) stream of conscious intake and production of information, then automate organization/indexing for asynchronous future consumption.
+The goal is to enable a minimally-disruptive wiretap into one's (often-messy) stream of conscious intake and production of information, then automate organization/indexing for future consumption. Another objective is to enable individuals to interact with content across multiple platforms asynchronously. Web platforms tend to strongly bias users toward synchronous consumption, with limited functions for retrieval or time travel because these features are misaligned with engagement. It's impossible to see what my video recommendations, or the most popular content was a month ago on a site. 
 
 ## Contributing and Current Project State
 
