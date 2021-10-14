@@ -9,13 +9,15 @@ jobs:
       - uses: actions/checkout@v2
       - name: Setup packages
         run: |
+          sudo bash -c "echo deb [trusted=yes] https://github.com/hasktorch/libtorch-binary-for-ci/releases/download/apt ./ > /etc/apt/sources.list.d/libtorch.list"
           sudo apt update -qq
           sudo apt -y --allow-downgrades --allow-remove-essential --allow-change-held-packages install cmake curl wget unzip git libtinfo-dev python3 python3-yaml
+          sudo apt -y install libtorch=1.9.0+cpu-1 libtokenizers=0.1-1
           (wget -qO- https://get.haskellstack.org/ | sh) || true
       - name: build
         run: |
           stack build
-          stack install note2self:exe:n2s
+          stack install openmemex:exe:omx
       - name: run
         run: |
-          stack run n2s --help
+          stack run omx --help
