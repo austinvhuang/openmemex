@@ -15,9 +15,23 @@ jobs:
           clang --version
           stack --version
           brew tap hasktorch/libtorch-prebuild https://github.com/hasktorch/homebrew-libtorch-prebuild || true
-          brew install libtorch-prebuild@1.9.0 || true
+          brew install libtorch-prebuild@1.9 || true
           brew tap hasktorch/tokenizers https://github.com/hasktorch/tokenizers || true
           brew install libtokenizers || true
+      - name: Cache .stack
+        id: cache-stack
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.stack
+            .stack-work
+          key: "\
+            ${{ runner.os }}-stack\
+            -${{ hashFiles('**/stack.yaml.lock') }}\
+            -${{ hashFiles('**/package.yaml') }}\
+          "
+          restore-keys: |
+            ${{ runner.os }}-stack-
       - name: build
         run: |
           stack build
