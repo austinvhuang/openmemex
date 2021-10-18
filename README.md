@@ -1,7 +1,5 @@
 # OpenMemex
 
-*ATTENTION CONSERVATION NOTICE - this is an early stage project and is not recommended for use other than by contributing developers*
-
 OpenMemex is an open source, local-first knowledge integration platform (aka "second brain" or "knowledge garden") optimized for automation (including caching and indexing of content) as well as enabling neural network machine learning integrations.
 
 ## What is OpenMemex for?
@@ -15,13 +13,11 @@ OpenMemex is designed to maximize a user's leverage as a brain cache/co-processo
 - Instead of users manually curating a knowledge graph, data is organized automatically by timestamp. Topical/conceptual connections can be automatically linked by a combination of lightweight tagging and NLP models (WIP) rather than relying on the user to hand-curate relatedness.
 - Although capturing markdown notes is in scope, the focus is on automated persistence, retrieval, and (future work) optimizing compression/consumption of information over UI-heavy notetaking tools.
 
-The goal is to enable a minimally-disruptive wiretap into one's (often-messy) stream of conscious intake and production of information, then automate organization/indexing for future consumption.
-
-We also want to enable individuals to interact with content across multiple platforms asynchronously. Web platforms tend to strongly bias users toward synchronous consumption, with limited functions for retrieval or time travel because these features are misaligned with engagement. It's impossible to see what my video recommendations, or the most popular content was a month ago on a site. Furthermore, web platforms don't compose well. It's difficult to review the content I was interested in on multiple sites as a unified user experience.
+The goal is to enable a minimally-disruptive wiretap into one's (often-messy) stream of conscious intake and production of information, then automate organization/indexing for future consumption. Major content platforms today are able to accumulate content, asynchronously aggregate and serve content to maximize user engagement, while users are required to consume ephemeral recommendations synchronously with no composability between platforms. OpenMemex aims to give individual users tools to integrate content across multiple platforms and index/consume content asynchronously.
 
 ## Contributing and Current Project State
 
-The implementation is currently at functioning pre-alpha MVP maturity. As the note at the top says, it should primarily be used by contributors at this point.
+The implementation is currently at functioning pre-alpha MVP maturity. It should primarily be used by contributing developers at this point.
 
 There's lots of functionality to fill in and we're happy to have contributors join development, can DM [@austinvhuang on twitter](https://twitter.com/austinvhuang), message me on the Hasktorch slack server, or [join the OpenMemex discord](https://discord.gg/Afm4SVQn).
 
