@@ -19,7 +19,7 @@ The goal is to enable a minimally-disruptive wiretap into one's (often-messy) st
 
 The implementation is currently at functioning pre-alpha MVP maturity. It should primarily be used by contributing developers at this point.
 
-There's lots of functionality to fill in and we're happy to have contributors join development, can DM [@austinvhuang on twitter](https://twitter.com/austinvhuang), message me on the Hasktorch slack server, or [join the OpenMemex discord](https://discord.gg/Afm4SVQn).
+There's lots of functionality to fill in and we're happy to have contributors join development, can DM [@austinvhuang on twitter](https://twitter.com/austinvhuang), message me on the Hasktorch slack server, or [join the OpenMemex discord](https://discord.gg/mGy29Smv4g) (link fixed as of 10/24/2021).
 
 ## Implementer Notes
 
