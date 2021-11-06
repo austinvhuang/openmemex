@@ -99,6 +99,10 @@ Set shared library paths:
 
 ## Web frontend and API server
 
+The frontend uses the [Yew frontend framework](https://yew.rs/) which allows developing web apps using webassembly in the rust programming language.
+
+The rust wasm toolchain can be a bit tricky to setup. Have a look at this [yew tutorial](https://dev.to/davidedelpapa/yew-tutorial-01-introduction-13ce) and/or the [yew docs](https://yew.rs/) if you run into difficulties.
+
 First build the wasm artifact:
 
 ```
