@@ -98,9 +98,9 @@ data Index = Index {
 createIndex :: Index -> ReaderT Sqlite IO ()
 createIndex Index{..} = do
   if indexUnique then
-    bracketExecute $ "CREATE INDEX " ++ indexName ++ " on " ++ indexTable ++ "(" ++ indexField ++ ");"
-  else
     bracketExecute $ "CREATE UNIQUE INDEX " ++ indexName ++ " on " ++ indexTable ++ "(" ++ indexField ++ ");"
+  else
+    bracketExecute $ "CREATE INDEX " ++ indexName ++ " on " ++ indexTable ++ "(" ++ indexField ++ ");"
 
 -- | Create indices
 createIndices :: [Index] -> ReaderT Sqlite IO ()

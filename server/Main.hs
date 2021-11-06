@@ -6,6 +6,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
+import Control.Monad (when)
 import Data.Int (Int64)
 import Data.Time ( Day(..), TimeOfDay(..), UTCTime(..))
 import Data.Text (Text)
@@ -20,6 +21,7 @@ import Network.Wai.Logger (withStdoutLogger)
 -- import Network.Wai.Middleware.Cors (simpleCors)
 import Servant
 import System.IO (hPutStrLn, stderr)
+import System.Directory (doesFileExist)
 
 import DB
 import Torch
@@ -133,6 +135,12 @@ mkApp = pure $ serve combinedApi server
 
 runServer :: IO ()
 runServer = do
+  let config = defaultConfig
+  let dbFile = dbFilename config
+  check <- doesFileExist dbFile
+  when (not check) $ do
+    putStrLn $ "Database file " ++ dbFile ++ " not found. Creating a new database file."
+    initDB'
   let port = 3000
   withStdoutLogger $ \aplogger -> do
     let settings =
