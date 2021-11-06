@@ -638,6 +638,9 @@ initDB = do
               ++ " on "
               ++ tableName
               ++ ".entry_id=entries.entry_id;"
+      addEntryInferDate "Memex Created." []  -- TODO get rid of this hack
+      appendCache []
+      pure ()
 
 bracketExecute' :: String -> IO ()
 bracketExecute' q = runReaderT (bracketExecute q) (Sqlite dbFile)
