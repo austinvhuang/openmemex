@@ -22,6 +22,11 @@ use chrono::*;
 pub type Link = RouterAnchor<AppRoute>;
 
 #[derive(Debug)]
+pub struct Config {
+    tag_threshold: i32,
+}
+
+#[derive(Debug)]
 pub struct App {
     cache_task: Option<FetchTask>,
     tag_task: Option<FetchTask>,
@@ -34,6 +39,7 @@ pub struct App {
     default_query: String,
     query: String,
     search_query: String,
+    config: Config,
 }
 
 #[derive(Debug)]
@@ -124,6 +130,7 @@ impl Component for App {
             default_query: default_query.clone(),
             query: default_query.clone(),
             search_query: String::from(""),
+            config: Config { tag_threshold: 10 },
         }
     }
 
@@ -153,7 +160,7 @@ impl Component for App {
                 self.cache_task = Some(task);
                 // define request
                 log::info!("submitting tag request");
-                let request = Request::get(format!("http://{}/all/tags?min=10", server))
+                let request = Request::get(format!("http://{}/all/tags?min={}", server, self.config.tag_threshold))
                     .body(Nothing)
                     .expect("Could not build request.");
                 // define callback

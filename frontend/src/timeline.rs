@@ -124,6 +124,12 @@ impl Component for Timeline {
                             .map(|x| 100.0 * (((x as f32) - minf) / (maxf - minf)))
                             .collect();
                         self.utc_range = (min, max);
+
+                        let window = web_sys::window().expect("no global `window` exists");
+                        let document = window.document().expect("should have a document on window");
+                        let timeline = document.get_element_by_id("timeline-svg").expect("get element by id shouldn't fail");
+                        let width = timeline.client_width();
+                        self.time_coord = width;
                     }
                     Err(error) => {
                         log::info!("timeline error:");
@@ -202,10 +208,10 @@ impl Component for Timeline {
             self.link.callback(move |m| TimelineMsg::Click(m))
         };
 
-        let stroke = "stroke:rgb(0,0,0,0.3); stroke-width:2";
-        let cursor_style = "stroke:rgb(0,0,0,0.3); stroke-width:32";
+        let stroke = "stroke:rgb(0,0,0,0.1); stroke-width:2";
+        let cursor_style = "stroke:rgb(0,0,0,0.1); stroke-width:64";
         let data_style = "stroke:rgb(0,0,0,0.1); fill:rgb(0,0,0,0.1)";
-        let text_style = "font: 13px sans-serif; opacity: 0.3;";
+        let text_style = "font: 13px sans-serif; opacity: 0.4;";
 
         html! {
             <div>
@@ -228,15 +234,15 @@ impl Component for Timeline {
                     <line x1="100%" y1="20" x2="100%" y2="30" style=stroke />
 
                     // cursor
-                    <line x1=self.time_coord.to_string()  y1="0%" 
+                    <line x1=self.time_coord.to_string()  y1="30%" 
                      x2=self.time_coord.to_string() y2="100%" style=cursor_style />
 
                      // date annotation
-                    <text x=(self.time_coord + 16).to_string()  y="20%" style=text_style>
+                    <text x=(self.time_coord - 32).to_string()  y="20%" style=text_style>
                     {
                         match &self.time_window {
                             Some((start, end)) => {
-                                start.format("%Y-%m-%d").to_string()
+                                start.format("%Y.%m.%d").to_string()
                             }
                             None => { "".to_string() }
                         }
@@ -247,7 +253,7 @@ impl Component for Timeline {
                     {
                         for self.locations.iter().map(move |loc| {
                             html! {
-                                <circle cx=format!("{:.0}%", loc) cy="50%" r="2" style=data_style />
+                                <circle cx=format!("{:.2}%", loc) cy="50%" r="2" style=data_style />
                             }
                         })
                     }

@@ -25,7 +25,7 @@ import GHC.Generics (Generic)
 import GHC.Int (Int64)
 import OCR
 import SQL
-import System.Directory (copyFile, removeFile)
+import System.Directory (copyFile, removeFile, doesFileExist)
 import System.IO (hPutStrLn, stderr)
 import Date
 import Text.Printf (printf)
@@ -596,8 +596,12 @@ initDB :: ReaderT Sqlite IO ()
 initDB = do
   dbFile <- asks sqliteFile
   liftIO $ do
-      copyFile dbFile (dbFile ++ ".backup")
-      removeFile dbFile
+      fileExists <- doesFileExist dbFile
+      when fileExists $ do
+        copyFile dbFile (dbFile ++ ".backup")
+        removeFile dbFile
+      when (not fileExists) $ do
+        writeFile dbFile ""
       conn <- open dbFile
       dropTables' ["entries", "tags", "cache_meta", "annotations"]
       bracketExecute' "CREATE TABLE entries (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT, content TEXT);"
