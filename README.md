@@ -97,19 +97,6 @@ Set shared library paths:
 
 `source setenv`
 
-## Initializing the database
-
-TODO: Web API version of this functionality
-
-For now, the way to initialize the database is with the command line tool:
-
-```
-stack build cli
-stack run omx --reset --note ""
-```
-
-This creates and initializes tables in the `openmemex.db` file which is the main backend data store.
-
 ## Web frontend and API server
 
 First build the wasm artifact:
@@ -127,7 +114,7 @@ Setup environment variables with `source setenv` if you haven't already and star
 stack run server
 ```
 
-You should be in the top level directory where openmemex.db is located when running the server.
+You should be in the top level directory. The first time this runs it creates an `openmemex.db` sqlite file in the directory. If the file exists already, the server will read/write data from `openmemex.db` as its data store. 
 
 To get to the main UI, point a browser to:
 
