@@ -1,6 +1,6 @@
 {
-  "name": "memex-ai",
-  "productName": "memex-ai",
+  "name": "openmemex",
+  "productName": "openmemex",
   "version": "1.0.0",
   "main": "electron/index.js",
   "devDependencies": {
@@ -8,7 +8,7 @@
     "@electron-forge/maker-deb": "^6.0.0-beta.54",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
     "@electron-forge/maker-zip": "^6.0.0-beta.54",
-    "electron": "12.0.2"
+    "electron": "12.1.2"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0"

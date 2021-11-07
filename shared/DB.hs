@@ -260,7 +260,10 @@ allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
                       else SqlFrom $ "tags LEFT JOIN cache ON cache.entry_id=tags.entry_id",
             sqlLimit = Just limit',
             sqlWhere = conditions,
-            sqlOrder = [SqlOrder "date DESC, time DESC"] -- TODO represent individual termws instead of using a string blob
+            sqlOrder = case sortdir of
+                        Just SortRev -> [SqlOrder "date DESC, time DESC"] -- TODO represent individual termws instead of using a string blob
+                        Just SortFwd -> [SqlOrder "date, time"]
+                        Nothing -> [SqlOrder "date DESC, time DESC"] -- TODO represent individual termws instead of using a string blob
           }
   let queryString = sql2string query
   print query

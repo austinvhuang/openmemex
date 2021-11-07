@@ -159,8 +159,8 @@ impl Component for Timeline {
                                    .unwrap_or(dt);
                 self.time_window = Some((window_min, window_max));
 
-                log::info!("Timeline hover mouse state: {} {}", &m.offset_x(), &m.offset_y());
-                log::info!("Timeline hover width and height: {} {}", &width, &height);
+                // log::info!("Timeline hover mouse state: {} {}", &m.offset_x(), &m.offset_y());
+                // log::info!("Timeline hover width and height: {} {}", &width, &height);
                 true 
             }
             Click(m) => {
@@ -209,9 +209,10 @@ impl Component for Timeline {
         };
 
         let stroke = "stroke:rgb(0,0,0,0.1); stroke-width:2";
-        let cursor_style = "stroke:rgb(0,0,0,0.1); stroke-width:64";
-        let data_style = "stroke:rgb(0,0,0,0.1); fill:rgb(0,0,0,0.1)";
-        let text_style = "font: 13px sans-serif; opacity: 0.4;";
+        let cursor_bg = "stroke:rgb(0,0,0,0.1); stroke-width:12";
+        let data_style = "stroke:rgb(0.3,0.3,0.3,0.05); fill:rgb(0.3,0.3,0.3,0.05)";
+        let text_style = "font: 42px sans-serif; opacity: 0.2;";
+        let line_position = "90%";
 
         html! {
             <div>
@@ -223,26 +224,20 @@ impl Component for Timeline {
                     id="timeline-svg">
 
                     // Horizontal timeline
-                    <line x1="0%" y1="25" x2="100%" y2="25" style=stroke
+                    <line x1="0%" y1=line_position x2="100%" y2=line_position style=stroke
                      onmouseover=hover_callback("line".to_string())
                      onmousemove=hover_callback("line".to_string()) />
 
-                    // LHS line
-                    <line x1="0%" y1="20" x2="0%" y2="30" style=stroke />
-
-                    // RHS line
-                    <line x1="100%" y1="20" x2="100%" y2="30" style=stroke />
-
-                    // cursor
-                    <line x1=self.time_coord.to_string()  y1="30%" 
-                     x2=self.time_coord.to_string() y2="100%" style=cursor_style />
+                    // cursor background
+                    <line x1=(self.time_coord).to_string()  y1="60%" 
+                     x2=(self.time_coord + 40).to_string() y2="60%" style=cursor_bg stroke-linecap="round" />
 
                      // date annotation
-                    <text x=(self.time_coord - 32).to_string()  y="20%" style=text_style>
+                    <text x="0%"  y="80%" style=text_style>
                     {
                         match &self.time_window {
                             Some((start, end)) => {
-                                start.format("%Y.%m.%d").to_string()
+                                start.format("%Y-%b-%e").to_string()
                             }
                             None => { "".to_string() }
                         }
@@ -253,7 +248,7 @@ impl Component for Timeline {
                     {
                         for self.locations.iter().map(move |loc| {
                             html! {
-                                <circle cx=format!("{:.2}%", loc) cy="50%" r="2" style=data_style />
+                                <circle cx=format!("{:.2}%", loc) cy=line_position r="3" style=data_style />
                             }
                         })
                     }

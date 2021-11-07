@@ -35,7 +35,7 @@ download-libtorch-linux: libtorch/lib/libtorch_cpu.so
 # Builds ##################################################
 
 cli-watcher:
-	~/.local/bin/ghcid -c "stack ghci openmemex:exe:n2s" -Tmain
+	~/.local/bin/ghcid -c "stack ghci openmemex:exe:omx" -Tmain
 
 frontend-rs/static/wasm_bg.wasm: $(wildcard frontend-rs/src/*.rs)
 	cd frontend-rs; $(MAKE) build
@@ -57,10 +57,6 @@ server-release:
 
 thumbnails:
 	crawler/Thumbnails.hs
-
-roberta_traced.zip: 
-	./get_roberta.sh
-	python model/test_export.py
 
 electron:
 	cd electron; yarn start

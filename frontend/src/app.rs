@@ -230,7 +230,7 @@ impl Component for App {
                 log::info!("Timeline event");
                 self.query = match evt {
                     Some((dt_min, dt_max)) => {
-                        format!("http://{}/all/cache?sort=time&startDate={}&endDate={}&limit=150", server,
+                        format!("http://{}/all/cache?sort=time&startDate={}&endDate={}&limit=150&sortDir=fwd", server, // TODO : sortDir doesn't work
                             dt_min.format("%Y-%m-%d").to_string(), 
                             dt_max.format("%Y-%m-%d").to_string())
                     }
