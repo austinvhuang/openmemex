@@ -13,16 +13,6 @@ import Data.Text (Text, pack, unpack)
 import Data.Aeson (FromJSON, ToJSON)
 import GHC.Generics (Generic)
 
-data ServerConfig = ServerConfig {
-  tagThreshold :: Int,
-  dbFilename :: String
-}
-
-defaultConfig = ServerConfig {
-  tagThreshold = 10,
-  dbFilename = "openmemex.db"
-}
-
 data PostSearch =
   PostSearch { psQuery :: String } deriving (Show, Generic)
 instance ToJSON PostSearch
