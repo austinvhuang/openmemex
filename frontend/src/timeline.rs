@@ -237,7 +237,7 @@ impl Component for Timeline {
                     {
                         match &self.time_window {
                             Some((start, end)) => {
-                                start.format("%Y-%b-%e").to_string()
+                                start.format("%Y %b %e").to_string()
                             }
                             None => { "".to_string() }
                         }
