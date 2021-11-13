@@ -19,10 +19,13 @@ import Network.Wai.Handler.Warp
   )
 import Network.Wai.Logger (withStdoutLogger)
 -- import Network.Wai.Middleware.Cors (simpleCors)
+import Options.Applicative (execParser)
 import Servant
 import System.IO (hPutStrLn, stderr)
 import System.Directory (doesFileExist)
+import Text.Pretty.Simple
 
+import ArgParser
 import DB
 import Torch
 import Tokenizers
@@ -84,6 +87,10 @@ type HelloHuggingfaceAPI =
     :> Capture "value" String
     :> Get '[JSON] [TestHuggingface]
 
+type ConfigAPI =
+  "config"
+    :> Get '[JSON] [Configuration]
+
 type CombinedAPI =
   RootAPI
     :<|> AllTagsAPI
@@ -98,12 +105,13 @@ type CombinedAPI =
     :<|> LinkEntryTagsAPI
     :<|> HelloTorchAPI
     :<|> HelloHuggingfaceAPI
+    :<|> ConfigAPI
 
 combinedApi :: Proxy CombinedAPI
 combinedApi = Proxy
 
-server :: Server CombinedAPI
-server =
+server :: Configuration -> Server CombinedAPI
+server config =
   getRoot
     :<|> allTagsH
     :<|> allEntriesH
@@ -117,6 +125,9 @@ server =
     :<|> linkEntryTagsH
     :<|> helloTorchH
     :<|> helloHuggingfaceH
+    :<|> configH
+
+configH = undefined
 
 instance FromHttpApiData SortBy where
   parseUrlPiece value = case value of
@@ -130,25 +141,28 @@ instance FromHttpApiData SortDir where
     "rev" -> Right SortRev
     _ -> Left "Invalid sort direction"
 
-mkApp :: IO Application
-mkApp = pure $ serve combinedApi server
+mkApp :: Configuration -> IO Application
+mkApp config = pure $ serve combinedApi (server config)
 
 runServer :: IO ()
 runServer = do
-  let config = defaultConfig
-  let dbFile = dbFilename config
-  check <- doesFileExist dbFile
+  options <- execParser optionsParser
+  pPrint options
+  let file = dbFilename options
+  check <- doesFileExist file
   when (not check) $ do
-    putStrLn $ "Database file " ++ dbFile ++ " not found. Creating a new database file."
+    putStrLn $ "Database file " ++ file ++ " not found. Creating a new database file."
     initDB'
-  let port = 3000
-  withStdoutLogger $ \aplogger -> do
-    let settings =
-          setPort port $
-            setLogger aplogger $
-              setBeforeMainLoop (hPutStrLn stderr ("listening on port " ++ show port)) $
-                defaultSettings
-    runSettings settings =<< mkApp
+  let prt = port options
+  let logger = \aplogger -> do
+              let settings =
+                    setPort prt $
+                      setLogger aplogger $
+                        setBeforeMainLoop (hPutStrLn stderr ("OpenMemex server running on port " ++ show prt)) $
+                          defaultSettings
+              runSettings settings =<< (mkApp options)
+  withStdoutLogger logger
 
 main :: IO ()
-main = runServer
+main = do
+  runServer

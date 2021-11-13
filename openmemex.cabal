@@ -31,7 +31,7 @@ executable omx
 executable server
   hs-source-dirs:      server, shared
   main-is:             Main.hs
-  other-modules:       DB, OCR, Models, SQL, CrawlTools, Date, API
+  other-modules:       DB, OCR, Models, SQL, CrawlTools, Date, API, ArgParser
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , aeson
@@ -41,6 +41,8 @@ executable server
                      , hasktorch
                      , mtl
                      , network-uri
+                     , optparse-applicative
+                     , optparse-generic
                      , pretty-simple
                      , process >= 1.6.9.0
                      , scalpel
