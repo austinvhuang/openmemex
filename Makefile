@@ -1,9 +1,7 @@
 haskell-dependencies:
-	stack install ormolu ghcid
+	stack install ghcid
 
 install-dependencies:
-	sudo apt install libtesseract-dev
-	sudo apt install tesseract-ocr
 	sudo apt-install imagemagick
 	sudo apt install libva-dev
 	sudo snap install chromium

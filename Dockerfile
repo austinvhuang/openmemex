@@ -17,7 +17,7 @@ FROM ubuntu:20.04 as base
 # Install apt packages, clearing package cache in same layer
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update -qq \
-	&& apt -y install --no-install-recommends curl wget libtesseract-dev tesseract-ocr imagemagick libva-dev snapd chromium-browser libtinfo-dev neovim ripgrep unzip ca-certificates \
+	&& apt -y install --no-install-recommends curl wget imagemagick libva-dev snapd chromium-browser libtinfo-dev neovim ripgrep unzip ca-certificates \
 	&& rm -rf /var/cache/apt/lists
 
 # Install libtorch, removing the package download in the same layer
@@ -34,9 +34,7 @@ FROM base as build
 # Install haskell
 # TODO: Install a specific version (or range) of haskell stack, specified by an ARG. (e.g. `ARG STACK_VERSION=xyz`)
 ENV PATH="/root/.local/bin:/root/.stack/bin:$PATH"
-RUN curl -sSL https://get.haskellstack.org/ | sh \
-	&& stack setup \
-	&& stack install ormolu ghcid
+RUN curl -sSL https://get.haskellstack.org/ | sh
 
 # Install rust
 # TODO: Install a specific version (or range) of rust, specified by an ARG. (e.g. `ARG RUST_VERSION=abc`)
@@ -54,9 +52,9 @@ FROM build as build-rust
 WORKDIR /src
 
 # Dummy build to cache dep builds -- only rebuilds when Cargo.toml changes
-RUN USER=root cargo new --lib frontend
-ADD ./frontend/Cargo.toml ./frontend/Makefile ./frontend/
-RUN cd ./frontend && make build
+# RUN USER=root cargo new --lib frontend
+# ADD ./frontend/Cargo.toml ./frontend/Makefile ./frontend/
+# RUN cd ./frontend && make build
 
 # Copy all app files over and build, using cache from the previous step
 ADD ./frontend ./frontend/
@@ -77,6 +75,7 @@ RUN wget -q -O libtokenizers-linux.zip https://github.com/hasktorch/tokenizers/r
 
 # Copy over all haskell app files
 # TODO: Move haskell files into a dir that is a sibling to the rust dir (./frontend) so this can be done in 1 command
+COPY ./frontend ./frontend
 COPY ./cli ./cli
 COPY ./crawler ./crawler
 COPY ./deps ./deps
@@ -87,7 +86,7 @@ COPY ./stack.yaml ./Setup.hs ./package.json ./openmemex.cabal ./README.md ./LICE
 
 # Run stack build; this seems to download and install and compile ghc every time
 # TODO: figure out how to move ghc setup into the 'base' layer
-RUN stack build cli && stack build openmemex:server --ghc-options="-O2"
+RUN stack setup && stack build openmemex:server --ghc-options="-O2"
 
 #
 # Package together the outputs from both the rust and haskell stages
