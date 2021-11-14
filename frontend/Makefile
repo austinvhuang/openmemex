@@ -1,5 +1,5 @@
 build:
-	wasm-pack build --target web --out-name wasm --out-dir ./static
+	wasm-pack build --target web --out-name wasm --release --out-dir ./static
 
 watch-dev:
 	rg -t rust -t toml --files | entr -s "wasm-pack build --target web --out-name wasm --dev --out-dir ./static"
