@@ -1,6 +1,6 @@
 #
 # This Dockerfile builds OpenMemex to run in a docker container.
-# 
+#
 # The container will serve http on container port 3000, and stores user data in a volume at /data.
 #
 # Dockerfile ARGs enable customizing aspects of the resulting image directly from the cli `docker build ...` step:
@@ -28,7 +28,7 @@ RUN wget -q -O libtorch.deb -q https://github.com/hasktorch/libtorch-binary-for-
 
 #
 # Install and setup build & dev dependencies
-# 
+#
 FROM base as build
 
 # Install haskell
@@ -82,7 +82,7 @@ COPY ./deps ./deps
 COPY ./experimental ./experimental
 COPY ./server ./server
 COPY ./shared ./shared
-COPY ./stack.yaml ./Setup.hs ./package.json ./openmemex.cabal ./README.md ./LICENSE .
+COPY ./stack.yaml ./Setup.hs ./package.json ./openmemex.cabal ./README.md ./LICENSE ./
 
 # Run stack build; this seems to download and install and compile ghc every time
 # TODO: figure out how to move ghc setup into the 'base' layer
@@ -91,8 +91,8 @@ RUN stack setup && stack build openmemex:server --ghc-options="-O2"
 #
 # Package together the outputs from both the rust and haskell stages
 #
-# Having the previous stages start from the 'build' stage indpendently means that either part of the projct that has 
-# been built before will build instantly, by resolving directly from the docker cache which is keyed on on the hash 
+# Having the previous stages start from the 'build' stage indpendently means that either part of the projct that has
+# been built before will build instantly, by resolving directly from the docker cache which is keyed on on the hash
 # of all the input files.
 #
 # TODO: Create the final / output stage from the 'base' stage, omitting dev dependencies. This should be possible
@@ -112,4 +112,3 @@ EXPOSE 3000
 VOLUME /data
 
 CMD ["/app/startup.sh"]
-
