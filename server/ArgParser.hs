@@ -10,6 +10,7 @@ import GHC.Generics(Generic)
 
 data Configuration = Configuration
   { showTagThresh :: Int,
+    resultsPerPage :: Int,
     port :: Int,
     dbFilename :: String
   } deriving (Show, Generic)
@@ -27,6 +28,14 @@ commandLine =
           <> value 1
           <> metavar "INT"
       )
+    <*> option auto
+      ( long "results_per_page"
+          <> help "Maximum number of results to show on a page."
+          <> showDefault
+          <> value 150
+          <> metavar "INT"
+      )
+
     <*> option auto
       ( long "port"
           <> help "Server port."

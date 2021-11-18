@@ -62,6 +62,19 @@ pub struct CompletedPayload {
     pub state: bool,
 }
 
+// configuration
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Config {
+    #[serde(rename(serialize = "showTagThresh", deserialize = "showTagThresh"))]
+    pub show_tag_thresh: i32,
+    #[serde(rename(serialize = "resultsPerPage ", deserialize = "resultsPerPage"))]
+    pub results_per_page: i32,
+    #[serde(rename(serialize = "port", deserialize = "port"))]
+    pub port: i32,
+    #[serde(rename(serialize = "dbFilename", deserialize = "dbFilename"))]
+    pub db_filename: String,
+}
+
 pub struct CompletedResponse {
     pub code: i64,
 }
