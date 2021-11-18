@@ -8,6 +8,7 @@ use crate::queue::*;
 use crate::settings::*;
 use crate::timeline::*;
 use crate::tags::*;
+use std::{thread, time::Duration};
 use std::collections::HashSet;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{
@@ -22,14 +23,11 @@ use chrono::*;
 pub type Link = RouterAnchor<AppRoute>;
 
 #[derive(Debug)]
-pub struct Config {
-    tag_threshold: i32,
-}
-
-#[derive(Debug)]
 pub struct App {
     cache_task: Option<FetchTask>,
     tag_task: Option<FetchTask>,
+    config_task: Option<FetchTask>,
+    config_loaded: bool,
     entries: Option<Vec<Cache>>,
     selected_entry: Option<Cache>,
     tags: Option<Vec<String>>,
@@ -45,6 +43,7 @@ pub struct App {
 #[derive(Debug)]
 pub enum AppMsg {
     GetEntries,
+    ReceiveConfig(Result<Vec<Config>, anyhow::Error>),
     ReceiveEntries(Result<Vec<Cache>, anyhow::Error>),
     ReceiveTags(Result<Vec<String>, anyhow::Error>),
     KeyDown,
@@ -115,12 +114,16 @@ impl Component for App {
         log::info!("Creating component");
         let cb = link.callback_once(|_: String| AppMsg::GetEntries);
         cb.emit("".to_string()); // TODO - what's the right way to handle a message without parameters
+
         log::info!("sent message");
+        let default_results_per_page: i32 = 150;
         // let kb_cb = link.callback(Msg::KeyDown);
-        let default_query = format!("http://{}/all/cache?limit=150", server).to_string();
+        let default_query = format!("http://{}/all/cache?limit={}", server, default_results_per_page).to_string();
         Self {
             cache_task: None,
             tag_task: None,
+            config_task: None,
+            config_loaded: false,
             entries: None,
             tags: None,
             selected_entry: None,
@@ -130,7 +133,7 @@ impl Component for App {
             default_query: default_query.clone(),
             query: default_query.clone(),
             search_query: String::from(""),
-            config: Config { tag_threshold: 10 },
+            config: Config { show_tag_thresh: 1, results_per_page: default_results_per_page, port: 3000, db_filename: "openmemex.db".to_string() },
         }
     }
 
@@ -143,36 +146,21 @@ impl Component for App {
         log::info!("host is {:?}", server);
         match msg {
             AppMsg::GetEntries => {
-                // define request
-                log::info!("submitting cache request: {:?}", self.query);
-                let request = Request::get(&self.query)
+
+
+                // Get configuration
+                let request = Request::get(format!("http://{}/config", server))
                     .body(Nothing)
                     .expect("Could not build request.");
-                // define callback
-                let callback = self.link.callback_once(
-                    |response: Response<Json<Result<Vec<Cache>, anyhow::Error>>>| {
+                let config_callback = self.link.callback_once(
+                    |response: Response<Json<Result<Vec<Config>, anyhow::Error>>>| {
                         let Json(data) = response.into_body();
-                        AppMsg::ReceiveEntries(data)
+                        AppMsg::ReceiveConfig(data) // todo make this safe
                     },
                 );
-                // task
-                let task = FetchService::fetch(request, callback).expect("failed to start request");
-                self.cache_task = Some(task);
-                // define request
-                log::info!("submitting tag request");
-                let request = Request::get(format!("http://{}/all/tags?min={}", server, self.config.tag_threshold))
-                    .body(Nothing)
-                    .expect("Could not build request.");
-                // define callback
-                let callback = self.link.callback_once(
-                    |response: Response<Json<Result<Vec<String>, anyhow::Error>>>| {
-                        let Json(data) = response.into_body();
-                        AppMsg::ReceiveTags(data)
-                    },
-                );
-                // task
-                let task = FetchService::fetch(request, callback).expect("failed to start request");
-                self.tag_task = Some(task);
+                let task = FetchService::fetch(request, config_callback).expect("failed to start request");
+                self.config_task = Some(task);
+
                 true // redraw page
             }
             AppMsg::ReceiveEntries(response) => {
@@ -203,6 +191,61 @@ impl Component for App {
                 self.tag_task = None;
                 true
             }
+            AppMsg::ReceiveConfig(response) => {
+                match response {
+                    Ok(result) => {
+                        log::info!("config received: {:?}", &result);
+                        self.config = result[0].clone(); // TODO - make this safer
+
+
+                        // Get entries
+                        log::info!("submitting request: {:?}", self.query);
+                        let request = Request::get(&self.query)
+                            .body(Nothing)
+                            .expect("Could not build request.");
+                        let callback = self.link.callback_once(
+                            |response: Response<Json<Result<Vec<Cache>, anyhow::Error>>>| {
+                                let Json(data) = response.into_body();
+                                AppMsg::ReceiveEntries(data)
+                            },
+                        );
+                        let task = FetchService::fetch(request, callback).expect("failed to start request");
+                        self.cache_task = Some(task);
+                        log::info!("submitting tag request");
+
+                        // Get tags
+                        let request = Request::get(format!("http://{}/all/tags?min={}", server, self.config.show_tag_thresh))
+                            .body(Nothing)
+                            .expect("Could not build request.");
+                        let callback = self.link.callback_once(
+                            |response: Response<Json<Result<Vec<String>, anyhow::Error>>>| {
+                                let Json(data) = response.into_body();
+                                AppMsg::ReceiveTags(data)
+                            },
+                        );
+                        let task = FetchService::fetch(request, callback).expect("failed to start request");
+                        self.tag_task = Some(task);
+
+                    }
+                    Err(error) => {
+                        log::info!("config receive error, error is:");
+                        log::info!("{}", &error.to_string());
+                        self.error = Some(error.to_string());
+                    }
+                }
+                self.config_task = None;
+
+                if (! self.config_loaded) {
+                    if (self.tag_task.is_none() && self.cache_task.is_none()) {
+                        // thread::sleep(Duration::from_millis(100));
+                        self.config_loaded = true;
+                        self.link.send_message(AppMsg::GetEntries);
+                    }
+                }
+
+                true
+            }
+
             AppMsg::KeyDown => {
                 log::info!("keydown event");
                 false
@@ -217,9 +260,9 @@ impl Component for App {
                 log::info!("{:?}", tag);
                 self.query = match tag {
                     Some(tag_name) => {
-                        format!("http://{}/all/cache?sort=time&tag={}&limit=150", server, tag_name)
+                        format!("http://{}/all/cache?sort=time&tag={}&limit={}", server, tag_name, self.config.results_per_page)
                     }
-                    None => format!("http://{}/all/cache?sort=time&limit=150", server),
+                    None => format!("http://{}/all/cache?sort=time&limit={}", server, self.config.results_per_page),
                 };
                 log::info!("Query is: {:?}", &self.query);
                 // self.query = query.clone(); // TODO - make queryparams compose
@@ -230,11 +273,12 @@ impl Component for App {
                 log::info!("Timeline event");
                 self.query = match evt {
                     Some((dt_min, dt_max)) => {
-                        format!("http://{}/all/cache?sort=time&startDate={}&endDate={}&limit=150&sortDir=fwd", server, // TODO : sortDir doesn't work
+                        format!("http://{}/all/cache?sort=time&startDate={}&endDate={}&limit={}&sortDir=fwd", server, // TODO : sortDir doesn't work
                             dt_min.format("%Y-%m-%d").to_string(), 
-                            dt_max.format("%Y-%m-%d").to_string())
+                            dt_max.format("%Y-%m-%d").to_string(),
+                            self.config.results_per_page)
                     }
-                    None => format!("http://{}/all/cache?sort=time&limit=150", server),
+                    None => format!("http://{}/all/cache?sort=time&limit={}", server, self.config.results_per_page),
                 };
                 log::info!("Query is: {:?}", &self.query);
                 self.link.send_message(AppMsg::GetEntries);
@@ -242,13 +286,13 @@ impl Component for App {
             }
             AppMsg::SortByDate => {
                 log::info!("sort date");
-                self.query = format!("http://{}/all/cache?sort=time&limit=150", server).to_string();
+                self.query = format!("http://{}/all/cache?sort=time&limit={}", server, self.config.results_per_page).to_string();
                 self.link.send_message(AppMsg::GetEntries);
                 true
             }
             AppMsg::SortByUrl => {
                 log::info!("sort url");
-                self.query = format!("http://{}/all/cache?sort=url&limit=150", server).to_string();
+                self.query = format!("http://{}/all/cache?sort=url&limit={}", server, self.config.results_per_page).to_string();
                 self.link.send_message(AppMsg::GetEntries);
                 true
             }

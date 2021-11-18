@@ -6,6 +6,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
+import Control.Monad.IO.Class (liftIO)
 import Control.Monad (when)
 import Data.Int (Int64)
 import Data.Time ( Day(..), TimeOfDay(..), UTCTime(..))
@@ -125,9 +126,10 @@ server config =
     :<|> linkEntryTagsH
     :<|> helloTorchH
     :<|> helloHuggingfaceH
-    :<|> configH
+    :<|> (configH config)
 
-configH = undefined
+configH :: Configuration -> Handler [Configuration]
+configH config = liftIO $ pure [config]
 
 instance FromHttpApiData SortBy where
   parseUrlPiece value = case value of
