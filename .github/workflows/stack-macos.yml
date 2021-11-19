@@ -35,7 +35,7 @@ jobs:
       - name: build
         run: |
           stack build
-          stack install openmemex:exe:omx
+          stack install openmemex:exe:server
       - name: run
         run: |
-          stack run omx --help
+          stack run server --help
