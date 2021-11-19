@@ -39,7 +39,7 @@ There are currently 3 main components.
 
 - `frontend/` - this is the frontend user interface implementation. The frontend is implemented in rust + yew and compiles to wasm.
 - `server/` - this is the backend implementation. It interacts with the sqlite database and in the future runs various automation tasks and (in the future) machine learning models.
-- `shared/` - shared backend operations - more or less reused modules between `server` and the two (now mostly-deprecated) command line tools (`cli/` and `crawler/`)
+- `shared/` - shared backend operations - more or less reused modules between `server` and (now mostly-deprecated) command line tools.
 
 There's also placeholder directories (consisting of a single `.gitkeep` file) where artifacts are intended to be stored:
 
