@@ -29,7 +29,6 @@ import Text.Pretty.Simple
 import ArgParser
 import DB
 import Torch
-import Tokenizers
 import CrawlTools
 import Date
 import API
@@ -82,12 +81,6 @@ type HelloTorchAPI =
     :> Capture "value" Float
     :> Get '[JSON] [TestTorch]
 
-type HelloHuggingfaceAPI =
-  "test"
-    :> "huggingface"
-    :> Capture "value" String
-    :> Get '[JSON] [TestHuggingface]
-
 type ConfigAPI =
   "config"
     :> Get '[JSON] [Configuration]
@@ -105,7 +98,6 @@ type CombinedAPI =
     :<|> FrontendAPI
     :<|> LinkEntryTagsAPI
     :<|> HelloTorchAPI
-    :<|> HelloHuggingfaceAPI
     :<|> ConfigAPI
 
 combinedApi :: Proxy CombinedAPI
@@ -125,7 +117,6 @@ server config =
     :<|> frontendH
     :<|> linkEntryTagsH
     :<|> helloTorchH
-    :<|> helloHuggingfaceH
     :<|> (configH config)
 
 configH :: Configuration -> Handler [Configuration]

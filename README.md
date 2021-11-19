@@ -39,13 +39,7 @@ There are currently 3 main components.
 
 - `frontend/` - this is the frontend user interface implementation. The frontend is implemented in rust + yew and compiles to wasm.
 - `server/` - this is the backend implementation. It interacts with the sqlite database and in the future runs various automation tasks and (in the future) machine learning models.
-- `shared/` - shared backend operations - more or less reused modules between `server` and the two supporting command line tools below (`cli/` and `crawler/`)
-
-Additionally, there's two supporting command line tools (`omx` command line interface under `cli/` and `crawler` command line tool) which are mostly deprecated, except that the CLI is still needed on a first use to initialize the database table schemas.
-
-- `cli/` - [[mostly deprecated except for initialization]] the command line tool. this is mostly no longer needed except to initialize the table schemas of the database (`omx --reset --note ""`), but can also be used to test adding notes at the command line eg `omx --note "this is a note" --tag "some_tag" --tag "another_tag`)
-- `crawler/` - [[mostly deprecated]] for all notes consisting of urls, this crawls them, pulls html content into the database, but also takes screenshots, thumbnails, and runs ocr for a text representation of screenshots. This tool is also mostly deprecated in favor of running these operations synchronously upon adding an entry, but can be useful if the content cache needs to be refreshed or cleaned. TODO: merge this functionality into the `omx1` CLI.
-- `electron/` - experimental Electron UI (not functioning yet).
+- `shared/` - shared backend operations - more or less reused modules between `server` and the two (now mostly-deprecated) command line tools (`cli/` and `crawler/`)
 
 There's also placeholder directories (consisting of a single `.gitkeep` file) where artifacts are intended to be stored:
 
@@ -84,10 +78,6 @@ Libtorch is a shared runtime library dependency.
 For now the cpu build is probably sufficient since most operations are model inference.
 
 `make libtorch/lib/libtorch_cpu.so`
-
-Currently tokenizers has to be copied manually or symbolically linked locally.
-
-Under `deps/tokenizers/`, copy or link `libtokenizers_haskell.so` which is built from the [hasktorch fork of the huggingface tokenizers library](https://github.com/hasktorch/tokenizers). To build the tokenizers shared library, run `make` from the [haskell bindings directory](https://github.com/hasktorch/tokenizers/tree/master/bindings/haskell) which creates the shared library file. 
 
 Building shared library dependencies can be a bit tricky and simplification work is needed here, for now if you run into difficulties do [ask for help](https://discord.gg/Afm4SVQn).
 
