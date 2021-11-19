@@ -67,11 +67,11 @@ FROM build as build-haskell
 WORKDIR /app
 
 # Install libtokenizers, and remove download file in the same step
-ARG LIBTOKENIZERS_VERSION=libtokenizers-v0.1
-RUN wget -q -O libtokenizers-linux.zip https://github.com/hasktorch/tokenizers/releases/download/$LIBTOKENIZERS_VERSION/libtokenizers-linux.zip \
-	&& mkdir -p ./deps/tokenizers \
-	&& unzip -p libtokenizers-linux.zip libtokenizers/lib/libtokenizers_haskell.so >./deps/tokenizers/libtokenizers_haskell.so \
-	&& rm libtokenizers-linux.zip
+# ARG LIBTOKENIZERS_VERSION=libtokenizers-v0.1
+# RUN wget -q -O libtokenizers-linux.zip https://github.com/hasktorch/tokenizers/releases/download/$LIBTOKENIZERS_VERSION/libtokenizers-linux.zip \
+#	&& mkdir -p ./deps/tokenizers \
+#	&& unzip -p libtokenizers-linux.zip libtokenizers/lib/libtokenizers_haskell.so >./deps/tokenizers/libtokenizers_haskell.so \
+#	&& rm libtokenizers-linux.zip
 
 # Copy over all haskell app files
 # TODO: Move haskell files into a dir that is a sibling to the rust dir (./frontend) so this can be done in 1 command
