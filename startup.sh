@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+# This script is intended to be run from inside the docker container
+
 set -x # enable xtrace
 cd /app
 

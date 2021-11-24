@@ -23,12 +23,13 @@ import Data.Time.LocalTime (timeOfDayToTime)
 import Database.SQLite.Simple
 import GHC.Generics (Generic)
 import GHC.Int (Int64)
-import OCR
-import SQL
 import System.Directory (copyFile, removeFile, doesFileExist)
 import System.IO (hPutStrLn, stderr)
-import Date
 import Text.Printf (printf)
+
+import Files
+import SQL
+import Date
 
 -- Note entries
 

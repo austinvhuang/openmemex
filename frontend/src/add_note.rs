@@ -162,6 +162,9 @@ impl Component for AddNote {
                     onsubmit={ self.link.callback(move |e: FocusEvent| AddNoteMsg::SubmitNote) }>
                 </textarea>
                 <p/>
+                // <input type="file" accept="audio/*" capture="true" id="recorder" />
+                // <audio id="player" controls=true ></audio>
+                <p/>
                 <input type="submit" value="Add Item" class="add-note-submit shadow-sm p-3 mb-5 bg-white rounded" 
                     onclick = { self.link.callback(move |e: MouseEvent| AddNoteMsg::SubmitNote) } />
             </div>

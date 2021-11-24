@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module OCR where
+module Files where
 
 import System.FilePath.Posix (takeBaseName)
 import Text.Printf (printf)

@@ -32,15 +32,12 @@ download-libtorch-linux: libtorch/lib/libtorch_cpu.so
 
 # Builds ##################################################
 
-cli-watcher:
-	~/.local/bin/ghcid -c "stack ghci openmemex:exe:omx" -Tmain
-
 frontend-rs/static/wasm_bg.wasm: $(wildcard frontend-rs/src/*.rs)
 	cd frontend-rs; $(MAKE) build
 
 # run `source setenv` before invoking this
 watch-server: frontend-rs/static/wasm_bg.wasm libtorch/lib/libtorch_cpu.so
-	~/.local/bin/ghcid -c "stack ghci openmemex:exe:server" -Tmain 
+	~/.local/bin/ghcid -c "stack ghci openmemex:exe:omx" -Tmain 
 	
 watch-crawler:
 	~/.local/bin/ghcid -c "stack ghci openmemex:exe:crawler" -Tmain
@@ -48,10 +45,14 @@ watch-crawler:
 watch-crawler-build:
 	~/.local/bin/ghcid -c "stack ghci openmemex:exe:crawler"
 
+
+watch-migration:
+	~/.local/bin/ghcid -c "stack ghci openmemex:exe:migrate"
+
 server-release:
 	stack clean
-	stack build openmemex:server --ghc-options="-O2"
-	stack run server
+	stack build openmemex:omx --ghc-options="-O2"
+	stack run omx
 
 thumbnails:
 	crawler/Thumbnails.hs
