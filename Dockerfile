@@ -76,7 +76,6 @@ WORKDIR /app
 # Copy over all haskell app files
 # TODO: Move haskell files into a dir that is a sibling to the rust dir (./frontend) so this can be done in 1 command
 COPY ./frontend ./frontend
-COPY ./cli ./cli
 COPY ./crawler ./crawler
 COPY ./deps ./deps
 COPY ./experimental ./experimental
