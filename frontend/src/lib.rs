@@ -1,6 +1,9 @@
 #![recursion_limit = "1024"]
 // https://github.com/yewstack/yew/issues/513
+//
+use wasm_bindgen::prelude::*;
 
+mod ace;
 mod add_note;
 mod api;
 mod app;
@@ -13,8 +16,6 @@ mod settings;
 mod space;
 mod tags;
 mod timeline;
-
-use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(start)]
 pub fn run_app() {

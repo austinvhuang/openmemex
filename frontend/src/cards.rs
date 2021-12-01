@@ -1,5 +1,4 @@
 use crate::api::*;
-use std::collections::HashMap;
 use url::*;
 use yew::prelude::*;
 use crate::app_router::*;

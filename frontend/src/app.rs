@@ -1,3 +1,4 @@
+use crate::ace::*;
 use crate::add_note::*;
 use crate::api::*;
 use crate::app_router::*;
@@ -110,6 +111,7 @@ impl Component for App {
     type Properties = ();
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
+
         let server = host().unwrap();
         log::info!("Creating component");
         let cb = link.callback_once(|_: String| AppMsg::GetEntries);
@@ -235,7 +237,7 @@ impl Component for App {
                 }
                 self.config_task = None;
 
-                if (! self.config_loaded) {
+                if !self.config_loaded {
                     if (self.tag_task.is_none() && self.cache_task.is_none()) {
                         // thread::sleep(Duration::from_millis(100));
                         self.config_loaded = true;
