@@ -29,6 +29,9 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" type="text/javascript" charset="utf-8"></script>
 
         <link rel="stylesheet" href="style.css">
+
+        <script src="./ace_bindings.js">
+
         <script>
 
           $(document).ready(function(){
@@ -48,6 +51,11 @@
           function ace_add_callback(editor, fn) {
             editor.session.on('change', fn);
           }
+
+          function test_ffi() {
+            console.log("test ffi");
+          }
+
         </script>
 
         <script type="module">

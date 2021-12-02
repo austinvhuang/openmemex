@@ -11,6 +11,8 @@ use yew::Properties;
 use wasm_bindgen::prelude::*;
 use crate::external::*;
 // use wasm_bindgen::JsCast;
+use crate::ace::*;
+
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct CompletedResponse {
@@ -203,7 +205,9 @@ impl Component for Detail {
     fn rendered(&mut self, first_render: bool) {
         log::info!("calling init_ace");
         // self.ace_editor = Some(init_ace());
-        init_ace();
+        //
+        // init_ace();
+        // ace_manual_init();
         log::info!("called init_ace");
     }
 
@@ -235,9 +239,7 @@ impl Component for Detail {
                                 src=src_mapped style=iframe_style/>
                     </div>
                     <div style="height:85vh" class="shadow p-3 mb-5 bg-body rounded">
-                        <div id="editor" style="height:90%;">
-                            { note_content } 
-                        </div>
+                        // <Ace init_content=note_content.clone() id="ace_editor" />
                         <p/>
                         <center>
                         { completed_checkbox(self) }
