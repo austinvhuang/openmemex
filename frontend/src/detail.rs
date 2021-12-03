@@ -239,7 +239,7 @@ impl Component for Detail {
                                 src=src_mapped style=iframe_style/>
                     </div>
                     <div style="height:85vh" class="shadow p-3 mb-5 bg-body rounded">
-                        // <Ace init_content=note_content.clone() id="ace_editor" />
+                        <Ace init_content=note_content.clone() id="ace_editor" />
                         <p/>
                         <center>
                         { completed_checkbox(self) }
