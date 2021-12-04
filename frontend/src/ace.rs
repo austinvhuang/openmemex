@@ -22,26 +22,35 @@ pub extern {
     pub fn ace_set_show_gutter(editor: JsValue, show_status: bool);
 }
 
-
-pub fn ace_check() {
-    test_ffi();
-}
-
 pub struct Ace {
     pub ace_object: Option<JsValue>,
     pub config: AceProperties,
     pub content: String,
     pub cb_handle: Option<Closure<dyn FnMut()>>,
     pub link: ComponentLink<Self>,
+    defaults: Defaults,
+    pub props: AceProperties,
+
 }
 
 #[derive(Properties, Clone)]
 pub struct AceProperties {
     pub id: String,
-    pub style: Option<String>,
+    pub height: String,
     pub theme: Option<String>,
+    pub mode: Option<String>,
     pub init_content: Option<String>,
+    // pub change_callback: Callback<Option<String>>,
 }
+
+#[derive(Properties, Clone)]
+struct Defaults {
+    pub theme: String,
+    pub mode: String,
+    pub init_content: String,
+    // pub change_callback: Callback<Option<String>>,
+}
+
 
 #[derive(Debug)]
 pub enum AceMsg {
@@ -53,7 +62,12 @@ impl Component for Ace {
     type Properties = AceProperties;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        log::info!("ace create");
+        let defaults = Defaults {
+            theme: "ace/theme/monokai".to_string(),
+            mode: "ace/mode/markdown".to_string(),
+            init_content: "".to_string(),
+        };
+
         Self {
             ace_object: None,
             // ace_object: Some(ace_edit(&props.id.clone())),
@@ -61,6 +75,9 @@ impl Component for Ace {
             config: props.clone(),
             cb_handle: None,
             link: link,
+            defaults: defaults,
+            props: props,
+            // change_callback: props.change_callback,
         }
     }
 
@@ -69,8 +86,10 @@ impl Component for Ace {
         if first_render {
             let ace = ace_edit(&self.config.id);
             self.ace_object = Some(ace.clone());
-            ace_set_theme(ace.clone(), "ace/theme/monokai");
-            ace_set_mode(ace.clone(), "ace/mode/markdown");
+            ace_set_theme(ace.clone(),
+                &self.props.theme.clone().unwrap_or(self.defaults.theme.clone()));
+            ace_set_mode(ace.clone(),
+                &self.props.mode.clone().unwrap_or(self.defaults.mode.clone()));
             ace_set_font_size(ace.clone(), "20px");
             ace_set_keyboard_handler(ace.clone(), "ace/keyboard/vim");
             ace_set_show_gutter(ace.clone(), false);
@@ -84,10 +103,7 @@ impl Component for Ace {
             let closure = Closure::wrap(cb);
             ace_add_callback(ace.clone(), &closure);
             self.cb_handle = Some(closure);
-            log::info!("callback stuff ready");
         }
-        let ace = self.ace_object.clone().unwrap(); // TODO: exceptions
-        log::info!("{}", ace_get_line(ace, 0));
     }
 
     fn update(&mut self, msg: Self::Message) -> bool {
@@ -114,9 +130,10 @@ impl Component for Ace {
 
     fn view(&self) -> Html {
         html! {
-            <div id=self.config.id.clone() style="height:90%"> // TODO make height a parameter
+            <div id=self.config.id.clone() style=format!("height:{}", &self.props.height)>
                 { self.content.clone() }
             </div>
         }
     }
 }
+
