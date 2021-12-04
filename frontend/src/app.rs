@@ -145,7 +145,7 @@ impl Component for App {
 
     fn update(&mut self, msg: Self::Message) -> bool {
         let server = host().unwrap();
-        log::info!("host is {:?}", server);
+        // log::info!("host is {:?}", server);
         match msg {
             AppMsg::GetEntries => {
 
@@ -238,7 +238,7 @@ impl Component for App {
                 self.config_task = None;
 
                 if !self.config_loaded {
-                    if (self.tag_task.is_none() && self.cache_task.is_none()) {
+                    if self.tag_task.is_none() && self.cache_task.is_none() {
                         // thread::sleep(Duration::from_millis(100));
                         self.config_loaded = true;
                         self.link.send_message(AppMsg::GetEntries);

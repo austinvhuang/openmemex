@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize};
 use serde_json::json;
 use wasm_bindgen::prelude::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};

@@ -26,7 +26,7 @@ function ace_set_mode(editor, mode) {
 }
 
 function ace_set_keyboard_handler(editor, handler) {
-  editor.setKeyboardHandler(mode)
+  editor.setKeyboardHandler(handler)
 }
 
 function ace_test() {
@@ -34,16 +34,30 @@ function ace_test() {
 }
 
 function ace_get_document(editor) {
-  return editor.session.getDocument()
+  return editor.session.getDocument();
 }
 
 function ace_get_all_lines(editor) {
-  return editor.session.getDocument().getAllLines()
+  return editor.session.getDocument().getAllLines();
 }
 
 function ace_get_line(editor, row) {
-  return editor.session.getDocument().getLine(row)
+  return editor.session.getDocument().getLine(row);
 }
+
+
+function ace_add_callback(editor, fn) {
+  editor.session.on('change', fn);
+}
+
+function ace_get_length(editor) {
+  return editor.session.getDocument().getLength();
+}
+
+function ace_set_show_gutter(editor, show_status) {
+  editor.renderer.setShowGutter(show_status);
+}
+
 
 function ace_manual_init() {
   var editor = ace.edit("editor");

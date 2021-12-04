@@ -81,7 +81,7 @@ impl Component for Timeline {
         }
     }
 
-    fn change(&mut self, props: Self::Properties) -> bool {
+    fn change(&mut self, _props: Self::Properties) -> bool {
         false
     }
 
