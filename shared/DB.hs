@@ -25,6 +25,7 @@ import GHC.Generics (Generic)
 import GHC.Int (Int64)
 import OCR
 import SQL
+import Files
 import System.Directory (copyFile, removeFile, doesFileExist)
 import System.IO (hPutStrLn, stderr)
 import Date
@@ -44,6 +45,17 @@ instance FromRow Entry where
   fromRow = Entry <$> field <*> field <*> field <*> field
 
 instance ToJSON Entry
+
+data Link = Link
+  { linkEntryID :: Int,
+    linkURL :: String
+  }
+  deriving (Eq, Show, Generic)
+
+instance FromRow Link where
+  fromRow = Link <$> field <*> field 
+
+instance ToJSON Link
 
 -- Used for DB writes, note entryID is inferred by the database
 -- so isn't part of the ADT
@@ -112,13 +124,13 @@ data SortDir = SortFwd | SortRev deriving (Show, Generic)
 
 data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL deriving (Eq, Show)
 
-data CacheContentType = CachePage | CacheGenericContent deriving (Show, Generic)
+-- data CacheContentType = CachePage | CacheGenericContent deriving (Show, Generic)
 
 -- API Service View
 data CacheView = CacheView
   { cvForeignID :: Int, -- entryID
     cvUrl :: Maybe String,
-    cvContentType :: Maybe String, -- CacheContentType,
+    -- cvContentType :: Maybe String, -- CacheContentType,
     cvContent :: Maybe String, -- TODO - should this be cvCacheTitle or cvTitle to be consistent with the query?
     cvDate :: String,
     cvTime :: String,
@@ -128,7 +140,7 @@ data CacheView = CacheView
   deriving (Show, Generic)
 
 instance FromRow CacheView where
-  fromRow = CacheView <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = CacheView <$> field <*> field <*> field <*> field <*> field <*> field <*> field 
 
 instance ToJSON CacheView
 
@@ -136,29 +148,17 @@ instance ToJSON CacheView
 data CacheEntry = CacheEntry
   { cacheForeignID :: Int, -- entryID
     cacheUrl :: String,
-    cacheContentType :: String, -- CacheContentType,
     cacheTitle :: String,
     cacheBody :: String,
     cacheScreenshotFile :: String,
-    cacheThumbnailFile :: String,
-    cacheOCRFile :: String
+    cacheThumbnailFile :: String
   }
   deriving (Show, Generic)
 
 instance FromRow CacheEntry where
-  fromRow = CacheEntry <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = CacheEntry <$> field <*> field <*> field <*> field <*> field <*> field 
 
 instance ToJSON CacheEntry
-
-data OCREntry = OCREntry
-  { ocrForeignID :: Int, -- entryID
-    ocrFile :: String,
-    ocrContent :: String
-  }
-  deriving (Generic)
-
-instance FromRow OCREntry where
-  fromRow = OCREntry <$> field <*> field <*> field
 
 data PostNote = PostNote
   { pnContent :: String,
@@ -228,6 +228,13 @@ getEntry entryID = do
   close conn
   pure r -- list should be of length 1
 
+getLink :: Int -> IO [Link]
+getLink entryID = do
+  conn <- open dbFile
+  r <- queryNamed conn "SELECT * FROM link WHERE entry_id = :entryID" [":entryID" := entryID] :: IO [Link]
+  close conn
+  pure r -- list should be of length 1 or 0
+
 -- handlers
 
 allCache 
@@ -254,7 +261,7 @@ allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
   let conditions = tagCond ++ dateStartCond  ++ dateEndCond
   let query =
         defaultQuery
-          { sqlSelect = SqlCol <$> ["cache.entry_id", "cache_url", "cache_content_type", "cache_title", "date", "time", "cache_screenshot_file", "cache_thumbnail_file"],
+          { sqlSelect = SqlCol <$> ["cache.entry_id", "cache_url", "cache_title", "date", "time", "cache_screenshot_file", "cache_thumbnail_file"],
             sqlFrom = if null filterTags
                       then SqlFrom "cache"
                       else SqlFrom $ "tags LEFT JOIN cache ON cache.entry_id=tags.entry_id",
@@ -289,57 +296,26 @@ linkEntryTags filterTags = do
   where
     filterList = "(" ++ intercalate "," filterTags ++ ")"
 
-crawlerOutput2cache :: [(Entry, String, Maybe WebPage)] -> [CacheEntry]
+crawlerOutput2cache :: [(Link, String, Maybe WebPage)] -> [CacheEntry]
 crawlerOutput2cache out =
   catMaybes $ convert <$> out
   where
     convert (_, _, Nothing) = Nothing
-    convert (Entry {..}, url, Just (WebPage title body)) =
+    convert (Link {..}, url, Just (WebPage title body)) =
       Just
         CacheEntry
-          { cacheForeignID = entryID,
+          { cacheForeignID = linkEntryID,
             cacheUrl = url,
-            cacheContentType = show CachePage, -- TODO - cleanup
             cacheTitle = title,
             cacheBody = body,
-            cacheScreenshotFile = mkScreenshotFilename entryID,
-            cacheThumbnailFile = mkThumbnailFilename entryID,
-            cacheOCRFile = mkOCRFilename entryID
+            cacheScreenshotFile = mkScreenshotFilename linkEntryID,
+            cacheThumbnailFile = mkThumbnailFilename linkEntryID
           }
 
 backupDB = do
   now <- getZonedTime
   let timeStamp = formatTime defaultTimeLocale "%Y%m%d_%H%M%S" now
   copyFile dbFile (dbFile ++ ".backup." ++ timeStamp ++ ".db")
-
-writeOCR :: [OCREntry] -> IO ()
-writeOCR ocrEntries = do
-  conn <- open dbFile
-  bracketExecute' "DROP TABLE IF EXISTS ocr"
-  executeNamed
-    conn
-    ( Query . pack $
-        "CREATE TABLE ocr"
-          ++ "(ocr_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
-          ++ "ocr_file TEXT, ocr_content TEXT);"
-    )
-    []
-  mapM_
-    ( \OCREntry {..} ->
-        executeNamed
-          conn
-          ( Query . pack $
-              "INSERT INTO OCR"
-                ++ "       (entry_id, ocr_file, ocr_content) "
-                ++ "VALUES (:entryID, :ocrFile, :ocrContent)"
-          )
-          [ ":entryID" := ocrForeignID,
-            ":ocrFile" := ocrFile,
-            ":ocrContent" := ocrContent
-          ]
-    )
-    ocrEntries
-  close conn
 
 data CurrTable = CurrTable
   { 
@@ -368,7 +344,7 @@ appendCache cacheEntries = do
             "CREATE TABLE " ++ tableName -- :cacheTable "
               ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
               ++ "cache_url TEXT, "
-              ++ "cache_content_type TEXT, cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT, cache_ocr_file TEXT);"
+              ++ "cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT);"
         )
         []
 
@@ -381,9 +357,9 @@ appendCache cacheEntries = do
         [":tableName" := tableName, ":date" := dt, ":time" := tm]
       bracketExecute' "DROP VIEW IF EXISTS cache"
       bracketExecute' $
-        "CREATE VIEW IF NOT EXISTS cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "
+        "CREATE VIEW IF NOT EXISTS cache(cache_entry_id, entry_id, cache_url, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content) "
           ++ "as select cache_entry_id, "
-          ++ "entries.entry_id as entry_id, cache_url, cache_content_type, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content "
+          ++ "entries.entry_id as entry_id, cache_url, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content "
           ++ "from entries"
           ++ " left join "
           ++ tableName
@@ -403,18 +379,16 @@ appendCache cacheEntries = do
           conn
           ( Query . pack $
               "INSERT INTO " ++ tableName -- :cacheTable "
-                ++ "       (entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file) "
-                ++ "VALUES (:entryID, :cacheUrl, :cacheContentType, :cacheTitle, :cacheBody, :cacheScreenshotFile, :cacheThumbnailFile, :cacheOCRFile)"
+                ++ "       (entry_id, cache_url, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file) "
+                ++ "VALUES (:entryID, :cacheUrl, :cacheTitle, :cacheBody, :cacheScreenshotFile, :cacheThumbnailFile)"
           )
           -- [ ":cacheTable" := tableName,
           [ ":entryID" := cacheForeignID,
             ":cacheUrl" := cacheUrl,
-            ":cacheContentType" := cacheContentType,
             ":cacheTitle" := cacheTitle,
             ":cacheBody" := cacheBody,
             ":cacheScreenshotFile" := cacheScreenshotFile,
-            ":cacheThumbnailFile" := cacheThumbnailFile,
-            ":cacheOCRFile" := cacheOCRFile
+            ":cacheThumbnailFile" := cacheThumbnailFile
           ]
     )
     cacheEntries
@@ -444,7 +418,7 @@ writeCache cacheEntries = do
         "CREATE TABLE " ++ tableName -- :cacheTable "
           ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
           ++ "cache_url TEXT, "
-          ++ "cache_content_type TEXT, cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT, cache_ocr_file TEXT);"
+          ++ "cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT);"
     )
     []
 
@@ -456,18 +430,16 @@ writeCache cacheEntries = do
           conn
           ( Query . pack $
               "INSERT INTO " ++ tableName -- :cacheTable "
-                ++ "       (entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file) "
-                ++ "VALUES (:entryID, :cacheUrl, :cacheContentType, :cacheTitle, :cacheBody, :cacheScreenshotFile, :cacheThumbnailFile, :cacheOCRFile)"
+                ++ "       (entry_id, cache_url, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file) "
+                ++ "VALUES (:entryID, :cacheUrl, :cacheTitle, :cacheBody, :cacheScreenshotFile, :cacheThumbnailFile)"
           )
           -- [ ":cacheTable" := tableName,
           [ ":entryID" := cacheForeignID,
             ":cacheUrl" := cacheUrl,
-            ":cacheContentType" := cacheContentType,
             ":cacheTitle" := cacheTitle,
             ":cacheBody" := cacheBody,
             ":cacheScreenshotFile" := cacheScreenshotFile,
-            ":cacheThumbnailFile" := cacheThumbnailFile,
-            ":cacheOCRFile" := cacheOCRFile
+            ":cacheThumbnailFile" := cacheThumbnailFile
           ]
     )
     cacheEntries
@@ -475,9 +447,9 @@ writeCache cacheEntries = do
   bracketExecute' $ "CREATE UNIQUE INDEX idx_cache_entry_id ON " ++ tableName ++ "(entry_id);"
   bracketExecute' "DROP VIEW IF EXISTS cache"
   bracketExecute' $
-    "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "
+    "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content) "
       ++ "as select cache_entry_id, "
-      ++ "entries.entry_id as entry_id, cache_url, cache_content_type, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content "
+      ++ "entries.entry_id as entry_id, cache_url, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content "
       ++ "from entries"
       ++ " left join "
       ++ tableName
@@ -579,7 +551,7 @@ search query = do
   putStrLn $ "Searching for " ++ query
   conn <- open dbFile
   let queryString = Query $ pack (
-                    "SELECT DISTINCT cache.entry_id, cache_url, cache_content_type, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file " ++
+                    "SELECT DISTINCT cache.entry_id, cache_url, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file " ++
                     "FROM cache " ++
                     "LEFT JOIN tags ON cache.entry_id=tags.entry_id " ++ 
                     "WHERE cache_url LIKE '%" ++ query ++ "%' OR cache_title LIKE '%" ++ query ++ "%' OR tags.tag LIKE '%" ++ query ++ "%' " ++
@@ -606,20 +578,62 @@ initDB = do
       when (not fileExists) $ do
         writeFile dbFile ""
       conn <- open dbFile
-      dropTables' ["entries", "tags", "cache_meta", "annotations"]
-      bracketExecute' "CREATE TABLE entries (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT, content TEXT);"
+
+      -- Schema version
+      bracketExecute' "PRAGMA user_version = 1;"
+
+      -- CREATE TABLES
+      
+      dropTables' ["event", "type", "tags", "content",
+                  "annotation",
+                  "text", "link", "artifact",
+                  "cache_meta"]
+
+      -- Tables: universal data - event, type, tags, content
+      bracketExecute' "CREATE TABLE event (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT);"
+      bracketExecute' "CREATE TABLE type (entry_id INTEGER, type TEXT CHECK (type IN ('TEXT', 'TEXT_UPDATE', 'IMAGE', 'AUDIO', 'ANNOTATION', 'ANNOTATION_UPDATE', 'LINK', 'OTHER')), UNIQUE(entry_id, type) );"
       bracketExecute' "CREATE TABLE tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
-      bracketExecute' "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
+      bracketExecute' "CREATE TABLE content (entry_id INTEGER, content_id INTEGER, UNIQUE(entry_id, content_id));" 
+
+      -- Tables: annotation
       bracketExecute' "CREATE TABLE annotations(annotation_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, annotation_date TEXT, annotation_time TEXT, annotation_content TEXT);"
-      createIndices' [Index "idx_tags_entry_id" "tags" "entry_id" False,
-                     Index "idx_entries_time" "entries" "time" False,
-                     Index "idx_entries_date" "entries" "date" False,
+
+      -- Tables: type-specific data - text, link, artifact
+      bracketExecute' "CREATE TABLE text (entry_id INTEGER UNIQUE, content TEXT);"
+      bracketExecute' "CREATE TABLE link (enry_id INTEGER UNIQUE, url TEXT);"
+      bracketExecute' "CREATE TABLE artifact (entry_id INTEGER UNIQUE, artifact BLOB);"
+
+      -- Tables: caching
+      bracketExecute' "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
+
+      -- CREATE INDICES
+
+      createIndices' [
+                     Index "idx_event_entry_id" "event" "entry_id" True,
+                     Index "idx_event_time" "event" "time" False,
+                     Index "idx_event_date" "event" "date" False,
+
+                     Index "idx_type_event_id" "type" "entry_id" False,
+                     Index "idx_type_tag" "type" "type" False,
+
+                     Index "idx_tags_event_id" "tags" "entry_id" False,
                      Index "idx_tags_tag" "tags" "tag" False,
-                     Index "idx_entries_entry_id" "entries" "entry_id" True,
-                     Index "idx_annotations_date" "annotations" "annotation_date" False,
-                     Index "idx_annotations_time" "annotations" "annotation_time" False,
-                     Index "idx_annotations_entry_id" "annotations" "entry_id" False
+
+                     Index "idx_content_event_id" "content" "entry_id" False,
+                     Index "idx_content_content_id" "content" "content_id" False,
+
+                     Index "idx_annotation_entry_id" "annotation" "entry_id" False,
+                     Index "idx_annotation_annotation" "annotation" "annotation" False,
+
+                     Index "idx_text_entry_id" "text" "entry_id" True,
+                     Index "idx_text_content" "text" "content" False,
+
+                     Index "idx_link_entry_id" "link" "entry_id" False,
+                     Index "idx_link_url" "link" "url" False,
+
+                     Index "idx_artifact_entry_id" "artifact" "entry_id" False
                      ]
+
       now <- getZonedTime
       let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
           tm = formatTime defaultTimeLocale "%H:%M:%S" now
@@ -628,13 +642,15 @@ initDB = do
       bracketExecute' $ "CREATE TABLE " ++ tableName
                   ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
                   ++ "cache_url TEXT, "
-                  ++ "cache_content_type TEXT, cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT, cache_ocr_file TEXT);"
+                  ++ "cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT);"
       bracketExecute' $ "DROP TABLE IF EXISTS " ++ tableName ++ ";"
       bracketExecute' "DROP VIEW IF EXISTS cache;"
+
+      -- TODO: replace entries
       bracketExecute' $
-            "CREATE VIEW IF NOT EXISTS cache(cache_entry_id, entry_id, cache_url, cache_content_type, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content) "
+            "CREATE VIEW IF NOT EXISTS cache(cache_entry_id, entry_id, cache_url, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content) "
               ++ "as select cache_entry_id, "
-              ++ "entries.entry_id as entry_id, cache_url, cache_content_type, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, cache_ocr_file, date, time, content "
+              ++ "entries.entry_id as entry_id, cache_url, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content "
               ++ "from entries"
               ++ " left join "
               ++ tableName

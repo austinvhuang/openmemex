@@ -81,9 +81,9 @@ postNote note = do
   putStrLn "Adding note"
   print note
   entryID <- addEntryInferDate (pnContent note) (pnTags note)
-  entry <- getEntry (fromIntegral entryID)
-  print entry
-  crawlEntries entry
+  -- entry <- getEntry (fromIntegral entryID)
+  link <- getLink (fromIntegral entryID)
+  crawlLinks link
   pure entryID
 
 -- | Retrieve content completion (for detail checkbox) flag state
