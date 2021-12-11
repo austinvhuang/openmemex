@@ -18,7 +18,7 @@ CREATE TABLE type (entry_id INTEGER,
 );
 
 CREATE TABLE content (entry_id INTEGER, 
-  content_id INTEGER,
+  content_id INTEGER PRIMARY KEY AUTOINCREMENT,
   UNIQUE(entry_id, content_id));
 
 CREATE TABLE annotation (entry_id INTEGER UNIQUE, annotation TEXT);
@@ -31,6 +31,8 @@ CREATE TABLE artifact (entry_id INTEGER UNIQUE, artifact BLOB);
 
 CREATE TABLE event (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT);
 
+ALTER TABLE tags RENAME TO tag;
+
 # Populate new tables
 
 INSERT INTO link (entry_id, url) SELECT entry_id, content FROM entries WHERE content LIKE 'http%';
@@ -41,7 +43,8 @@ INSERT INTO type (entry_id, type) SELECT entry_id, 'TEXT' FROM entries WHERE con
 
 INSERT INTO type (entry_id, type) SELECT entry_id, 'LINK' FROM entries WHERE content NOT LIKE 'http%';
 
-INSERT INTO event (entry_id, date, time) SELECT entry_id, date, time FROM entries
+INSERT INTO event (entry_id, date, time) SELECT entry_id, date, time FROM entries;
 
 DROP TABLE entries; 
 
+INSERT INTO content (entry_id) SELECT entry_id FROM event;

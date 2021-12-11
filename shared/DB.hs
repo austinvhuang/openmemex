@@ -33,18 +33,19 @@ import Text.Printf (printf)
 
 -- Note entries
 
-data Entry = Entry
+
+data Event = Event
   { entryID :: Int,
     date :: String,
-    time :: String,
-    content :: String
+    time :: String
   }
   deriving (Eq, Show, Generic)
 
-instance FromRow Entry where
-  fromRow = Entry <$> field <*> field <*> field <*> field
+instance FromRow Event where
+  fromRow = Event <$> field <*> field <*> field 
 
-instance ToJSON Entry
+instance ToJSON Event
+
 
 data Link = Link
   { linkEntryID :: Int,
@@ -59,7 +60,7 @@ instance ToJSON Link
 
 -- Used for DB writes, note entryID is inferred by the database
 -- so isn't part of the ADT
-data WriteEntry = WriteEntry
+data WriteText= WriteText
   { weDate :: String,
     weTime :: String,
     weContent :: String
@@ -197,7 +198,7 @@ mkDate (day, timeOfDay) = do
 -- | Get time stamps of all entries
 allTimeStamps :: IO [DateTime]
 allTimeStamps = do
-  r <- bracketQuery' "SELECT DISTINCT date, time from entries" :: IO [(String, String)]
+  r <- bracketQuery' "SELECT DISTINCT date, time from event" :: IO [(String, String)]
   mapM mkDate (mkTime <$> r)
 
 
@@ -208,23 +209,23 @@ allTags minCount = do
   hPutStrLn stderr "allTags"
   conn <- open dbFile
   let queryString = case minCount of
-        Nothing -> Query $ pack "SELECT distinct tag from tags order by tag"
-        (Just minCount) -> Query $ pack $ "SELECT tag FROM tags GROUP BY tag HAVING count(*) > " ++ show minCount ++ " ORDER BY tag"
+        Nothing -> Query $ pack "SELECT distinct tag from tag order by tag"
+        (Just minCount) -> Query $ pack $ "SELECT tag FROM tag GROUP BY tag HAVING count(*) > " ++ show minCount ++ " ORDER BY tag"
   r <- query_ conn queryString :: IO [[String]]
   close conn
   pure $ concat r
 
-allEntries :: IO [Entry]
-allEntries = do
+allEvents :: IO [Event]
+allEvents = do
   conn <- open dbFile
-  r <- query_ conn "SELECT * from entries" :: IO [Entry]
+  r <- query_ conn "SELECT * from event" :: IO [Event]
   close conn
   pure r
 
-getEntry :: Int -> IO [Entry]
-getEntry entryID = do
+getEvent :: Int -> IO [Event]
+getEvent entryID = do
   conn <- open dbFile
-  r <- queryNamed conn "SELECT * FROM entries WHERE entry_id = :entryID" [":entryID" := entryID] :: IO [Entry]
+  r <- queryNamed conn "SELECT * FROM event WHERE entry_id = :entryID" [":entryID" := entryID] :: IO [Event]
   close conn
   pure r -- list should be of length 1
 
@@ -264,7 +265,7 @@ allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
           { sqlSelect = SqlCol <$> ["cache.entry_id", "cache_url", "cache_title", "date", "time", "cache_screenshot_file", "cache_thumbnail_file"],
             sqlFrom = if null filterTags
                       then SqlFrom "cache"
-                      else SqlFrom $ "tags LEFT JOIN cache ON cache.entry_id=tags.entry_id",
+                      else SqlFrom $ "tag LEFT JOIN cache ON cache.entry_id=tag.entry_id",
             sqlLimit = Just limit',
             sqlWhere = conditions,
             sqlOrder = case sortdir of
@@ -290,8 +291,8 @@ linkEntryTags filterTags = do
         if filterTags == []
           then -- TODO - why does this return a runtime error for the empty case
           -- ConversionFailed {errSQLType = "NULL", errHaskellType = "[Char]", errMessage = "expecting SQLText column type"}
-            "SELECT entries.entry_id, tag FROM entries LEFT JOIN tags on entries.entry_id=tags.entry_id"
-          else "SELECT entries.entry_id, tag FROM entries LEFT JOIN tags on entries.entry_id=tags.entry_id WHERE tag IN " ++ filterList
+            "SELECT event.entry_id, tag FROM event LEFT JOIN tag on event.entry_id=tag.entry_id"
+          else "SELECT event.entry_id, tag FROM event LEFT JOIN tag on event.entry_id=tag.entry_id WHERE tag IN " ++ filterList
   query_ conn (Query . pack $ query)
   where
     filterList = "(" ++ intercalate "," filterTags ++ ")"
@@ -359,13 +360,14 @@ appendCache cacheEntries = do
       bracketExecute' $
         "CREATE VIEW IF NOT EXISTS cache(cache_entry_id, entry_id, cache_url, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content) "
           ++ "as select cache_entry_id, "
-          ++ "entries.entry_id as entry_id, cache_url, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content "
-          ++ "from entries"
+          ++ "event.entry_id as entry_id, cache_url, coalesce(cache_title, text.content), cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, text.content "
+          ++ "from event"
           ++ " left join "
           ++ tableName
           ++ " on "
           ++ tableName
-          ++ ".entry_id=entries.entry_id;"
+          ++ ".entry_id=event.entry_id"
+          ++ " left join text on event.entry_id=text.entry_id" 
       pure tableName
 
     else do
@@ -448,14 +450,16 @@ writeCache cacheEntries = do
   bracketExecute' "DROP VIEW IF EXISTS cache"
   bracketExecute' $
     "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content) "
-      ++ "as select cache_entry_id, "
-      ++ "entries.entry_id as entry_id, cache_url, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content "
-      ++ "from entries"
-      ++ " left join "
+      ++ "AS select cache_entry_id, "
+      ++ "event.entry_id as entry_id, cache_url, coalesce(cache_title, text.content), cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, text.content "
+      ++ "FROM event"
+      ++ " LEFT JOIN "
       ++ tableName
-      ++ " on "
+      ++ " ON "
       ++ tableName
-      ++ ".entry_id=entries.entry_id;"
+      ++ ".entry_id=event.entry_id"
+      ++ " LEFT JOIN text ON event.entry_id=text.entry_id"
+
   close conn
 
 -- | Wipe all caches and reset the cache metadata table
@@ -488,21 +492,29 @@ getDateTime = do
   let tm = formatTime defaultTimeLocale "%H:%M:%S" now
   pure (dt, tm)
 
-addEntryInferDate :: String -> [String] -> IO Int64
-addEntryInferDate entry tags = do
+addTextInferDate :: String -> [String] -> IO Int64
+addTextInferDate entry tags = do
   (dt, tm) <- getDateTime
-  entryID <- addEntry $ WriteEntry dt tm entry
+  entryID <- addText $ WriteText dt tm entry
   mapM_ (addTag entryID) tags
   pure entryID
 
-addEntry :: WriteEntry -> IO Int64
-addEntry WriteEntry {..} = do
+addText :: WriteText -> IO Int64
+addText WriteText {..} = do
   conn <- open dbFile
   executeNamed
     conn
-    "INSERT INTO entries (date, time, content) VALUES (:date, :time, :content)"
-    [":date" := weDate, ":time" := weTime, ":content" := weContent]
+    "INSERT INTO event (date, time) VALUES (:date, :time)"
+    [":date" := weDate, ":time" := weTime] 
   r <- lastInsertRowId conn
+  executeNamed
+    conn
+    "INSERT INTO text (entry_id, content) VALUES (:entryID, :content)"
+    [":entryID" := r, ":content" := weContent]
+  executeNamed
+    conn
+    "INSERT INTO content (entry_id) VALUES (:entryID)"
+    [":entryID" := r]
   close conn
   pure r
 
@@ -511,7 +523,7 @@ addTag entryID tag = do
   conn <- open dbFile
   executeNamed
     conn
-    "INSERT INTO tags (entry_id, tag) VALUES (:entryID, :tag)"
+    "INSERT INTO tag (entry_id, tag) VALUES (:entryID, :tag)"
     [":entryID" := entryID, ":tag" := tag]
   r <- lastInsertRowId conn
   close conn
@@ -553,17 +565,17 @@ search query = do
   let queryString = Query $ pack (
                     "SELECT DISTINCT cache.entry_id, cache_url, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file " ++
                     "FROM cache " ++
-                    "LEFT JOIN tags ON cache.entry_id=tags.entry_id " ++ 
-                    "WHERE cache_url LIKE '%" ++ query ++ "%' OR cache_title LIKE '%" ++ query ++ "%' OR tags.tag LIKE '%" ++ query ++ "%' " ++
+                    "LEFT JOIN tag ON cache.entry_id=tag.entry_id " ++ 
+                    "WHERE cache_url LIKE '%" ++ query ++ "%' OR cache_title LIKE '%" ++ query ++ "%' OR tag.tag LIKE '%" ++ query ++ "%' " ++
                     "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC")
   print queryString
   query_ conn queryString :: IO [CacheView]
 
 wipeTesting :: IO ()
 wipeTesting = do
-  putStrLn "removing entries and tags where tags==\"testing\""
-  bracketExecute' "delete from entries where entries.entry_id in (select tags.entry_id from tags where tag==\"testing\")"
-  bracketExecute' "delete from tags where tag==\"testing\""
+  putStrLn "removing events and tag where tag==\"testing\""
+  bracketExecute' "delete from event where event.entry_id in (select tag.entry_id from tag where tag==\"testing\")"
+  bracketExecute' "delete from tag where tag==\"testing\""
 
 initDB' = runReaderT initDB (Sqlite dbFile)
 
@@ -584,7 +596,7 @@ initDB = do
 
       -- CREATE TABLES
       
-      dropTables' ["event", "type", "tags", "content",
+      dropTables' ["event", "type", "tag", "content",
                   "annotation",
                   "text", "link", "artifact",
                   "cache_meta"]
@@ -592,15 +604,15 @@ initDB = do
       -- Tables: universal data - event, type, tags, content
       bracketExecute' "CREATE TABLE event (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT);"
       bracketExecute' "CREATE TABLE type (entry_id INTEGER, type TEXT CHECK (type IN ('TEXT', 'TEXT_UPDATE', 'IMAGE', 'AUDIO', 'ANNOTATION', 'ANNOTATION_UPDATE', 'LINK', 'OTHER')), UNIQUE(entry_id, type) );"
-      bracketExecute' "CREATE TABLE tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
-      bracketExecute' "CREATE TABLE content (entry_id INTEGER, content_id INTEGER, UNIQUE(entry_id, content_id));" 
+      bracketExecute' "CREATE TABLE tag (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
+      bracketExecute' "CREATE TABLE content (entry_id INTEGER, content_id INTEGER PRIMARY KEY AUTOINCREMENT, UNIQUE(entry_id, content_id));" 
 
       -- Tables: annotation
-      bracketExecute' "CREATE TABLE annotations(annotation_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, annotation_date TEXT, annotation_time TEXT, annotation_content TEXT);"
+      bracketExecute' "CREATE TABLE annotation(entry_id INTEGER UNIQUE,  annotation TEXT);"
 
       -- Tables: type-specific data - text, link, artifact
       bracketExecute' "CREATE TABLE text (entry_id INTEGER UNIQUE, content TEXT);"
-      bracketExecute' "CREATE TABLE link (enry_id INTEGER UNIQUE, url TEXT);"
+      bracketExecute' "CREATE TABLE link (entry_id INTEGER UNIQUE, url TEXT);"
       bracketExecute' "CREATE TABLE artifact (entry_id INTEGER UNIQUE, artifact BLOB);"
 
       -- Tables: caching
@@ -616,13 +628,13 @@ initDB = do
                      Index "idx_type_event_id" "type" "entry_id" False,
                      Index "idx_type_tag" "type" "type" False,
 
-                     Index "idx_tags_event_id" "tags" "entry_id" False,
-                     Index "idx_tags_tag" "tags" "tag" False,
+                     Index "idx_tag_event_id" "tag" "entry_id" False,
+                     Index "idx_tag_tag" "tag" "tag" False,
 
                      Index "idx_content_event_id" "content" "entry_id" False,
                      Index "idx_content_content_id" "content" "content_id" False,
 
-                     Index "idx_annotation_entry_id" "annotation" "entry_id" False,
+                     Index "idx_annotation_entry_id" "annotation" "entry_id" True,
                      Index "idx_annotation_annotation" "annotation" "annotation" False,
 
                      Index "idx_text_entry_id" "text" "entry_id" True,
@@ -649,15 +661,16 @@ initDB = do
       -- TODO: replace entries
       bracketExecute' $
             "CREATE VIEW IF NOT EXISTS cache(cache_entry_id, entry_id, cache_url, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content) "
-              ++ "as select cache_entry_id, "
-              ++ "entries.entry_id as entry_id, cache_url, coalesce(cache_title, entries.content), cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content "
-              ++ "from entries"
-              ++ " left join "
+              ++ "AS select cache_entry_id, "
+              ++ "event.entry_id as entry_id, cache_url, coalesce(cache_title, text.content), cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content "
+              ++ "FROM event "
+              ++ " LEFT JOIN "
               ++ tableName
-              ++ " on "
+              ++ " ON "
               ++ tableName
-              ++ ".entry_id=entries.entry_id;"
-      addEntryInferDate "Memex Created." []  -- TODO get rid of this hack
+              ++ ".entry_id=event.entry_id"
+              ++ " LEFT JOIN text ON event.entry_id=text.entry_id;"
+      addTextInferDate "Memex Created." []  -- TODO get rid of this hack
       appendCache []
       pure ()
 

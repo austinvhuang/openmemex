@@ -35,7 +35,7 @@ frontendH = serveDirectoryFileServer "./static/."
 linkEntryTagsH filterTag = liftIO $ linkEntryTags filterTag
 
 -- | Post a note 
-postNoteH note = liftIO $ postNote note
+newNoteH note = liftIO $ newNote note
 
 -- | Alter state for content being completed
 postCompletedH entryID = liftIO $ postCompleted entryID
@@ -45,8 +45,8 @@ allTagsH :: Maybe Int -> Handler [String]
 allTagsH minCount = liftIO $ allTags minCount
 
 -- | Retrieve all entries
-allEntriesH :: Handler [Entry]
-allEntriesH = liftIO allEntries
+allEventsH :: Handler [Event]
+allEventsH = liftIO allEvents
 
 allCacheH 
   :: Maybe SortBy 
@@ -76,12 +76,12 @@ searchH query = liftIO $ search query
 {- Implementations (any DB queries are in DB.hs) -}
 
 -- | Add a note
-postNote :: PostNote -> IO Int64
-postNote note = do
+newNote :: PostNote -> IO Int64
+newNote note = do
   putStrLn "Adding note"
   print note
-  entryID <- addEntryInferDate (pnContent note) (pnTags note)
-  -- entry <- getEntry (fromIntegral entryID)
+  entryID <- addTextInferDate (pnContent note) (pnTags note)
+  -- entry <- getEvent(fromIntegral entryID)
   link <- getLink (fromIntegral entryID)
   crawlLinks link
   pure entryID

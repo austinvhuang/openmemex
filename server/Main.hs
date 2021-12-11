@@ -40,7 +40,7 @@ type RootAPI = Get '[JSON] [String]
 
 type AllTagsAPI = "all" :> "tags" :> QueryParam "min" Int :> Get '[JSON] [String]
 
-type AllEntriesAPI = "all" :> "entries" :> Get '[JSON] [Entry]
+type AllEventsAPI = "all" :> "events" :> Get '[JSON] [Event]
 
 type AllTimestampsAPI = "all" :> "timestamps" :> Get '[JSON] [DateTime]
 
@@ -58,7 +58,9 @@ type AllCacheAPI =
 
 type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [CacheView]
 
-type EntryAPI = "submit" :> "note" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
+type NewNoteAPI = "submit" :> "note" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
+
+type NewLinkAPI = "submit" :> "link" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
 
 type CompletedAPI = "submit" :> "completed" :> ReqBody '[JSON] PostCompleted :> Post '[JSON] Int64
   
@@ -88,10 +90,10 @@ type ConfigAPI =
 type CombinedAPI =
   RootAPI
     :<|> AllTagsAPI
-    :<|> AllEntriesAPI
+    :<|> AllEventsAPI
     :<|> AllCacheAPI
     :<|> AllTimestampsAPI
-    :<|> EntryAPI 
+    :<|> NewNoteAPI 
     :<|> CompletedAPI 
     :<|> GetCompletedAPI 
     :<|> SearchAPI
@@ -107,10 +109,10 @@ server :: Configuration -> Server CombinedAPI
 server config =
   getRoot
     :<|> allTagsH
-    :<|> allEntriesH
+    :<|> allEventsH
     :<|> allCacheH
     :<|> allTimestampsH
-    :<|> postNoteH
+    :<|> newNoteH
     :<|> postCompletedH
     :<|> getCompletedH
     :<|> searchH
