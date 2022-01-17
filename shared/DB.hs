@@ -137,18 +137,19 @@ data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL deriving (Eq, Show)
 -- API Service View
 data CacheView = CacheView
   { cvForeignID :: Int, -- entryID
-    cvUrl :: Maybe String,
-    -- cvContentType :: Maybe String, -- CacheContentType,
-    cvContent :: Maybe String, -- TODO - should this be cvCacheTitle or cvTitle to be consistent with the query?
     cvDate :: String,
     cvTime :: String,
-    cvScreenshotFile :: Maybe String,
-    cvThumbnailFile :: Maybe String
+    cvContent :: Maybe String, -- TODO - should this be cvCacheTitle or cvTitle to be consistent with the query?
+    cvUrl :: Maybe String,
+    cvDisplay :: String,
+    cvTitle :: Maybe String,
+    cvThumbnailFile :: Maybe String,
+    cvScreenshotFile :: Maybe String
   }
   deriving (Show, Generic)
 
 instance FromRow CacheView where
-  fromRow = CacheView <$> field <*> field <*> field <*> field <*> field <*> field <*> field 
+  fromRow = CacheView <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 instance ToJSON CacheView
 
@@ -269,7 +270,7 @@ allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
   let conditions = tagCond ++ dateStartCond  ++ dateEndCond
   let query =
         defaultQuery
-          { sqlSelect = SqlCol <$> ["cache.entry_id", "cache_url", "cache_title", "date", "time", "cache_screenshot_file", "cache_thumbnail_file"],
+          { sqlSelect = SqlCol <$> ["cache.entry_id", "date", "time", "content", "url", "display", "title", "thumbnail_file", "screenshot_file"],
             sqlFrom = if null filterTags
                       then SqlFrom "cache"
                       else SqlFrom $ "tag LEFT JOIN cache ON cache.entry_id=tag.entry_id",
@@ -364,17 +365,9 @@ appendCache cacheEntries = do
         )
         [":tableName" := tableName, ":date" := dt, ":time" := tm]
       bracketExecute' "DROP VIEW IF EXISTS cache"
-      bracketExecute' $
-        "CREATE VIEW IF NOT EXISTS cache(cache_entry_id, entry_id, cache_url, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content) "
-          ++ "as select cache_entry_id, "
-          ++ "event.entry_id as entry_id, cache_url, coalesce(cache_title, text.content), cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, text.content "
-          ++ "from event"
-          ++ " left join "
-          ++ tableName
-          ++ " on "
-          ++ tableName
-          ++ ".entry_id=event.entry_id"
-          ++ " left join text on event.entry_id=text.entry_id" 
+
+      createCacheView tableName
+
       pure tableName
 
     else do
@@ -455,18 +448,7 @@ writeCache cacheEntries = do
   bracketExecute' "DROP INDEX IF EXISTS idx_cache_entry_id;"
   bracketExecute' $ "CREATE UNIQUE INDEX idx_cache_entry_id ON " ++ tableName ++ "(entry_id);"
   bracketExecute' "DROP VIEW IF EXISTS cache"
-  bracketExecute' $
-    "CREATE VIEW cache(cache_entry_id, entry_id, cache_url, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content) "
-      ++ "AS select cache_entry_id, "
-      ++ "event.entry_id as entry_id, cache_url, coalesce(cache_title, text.content), cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, text.content "
-      ++ "FROM event"
-      ++ " LEFT JOIN "
-      ++ tableName
-      ++ " ON "
-      ++ tableName
-      ++ ".entry_id=event.entry_id"
-      ++ " LEFT JOIN text ON event.entry_id=text.entry_id"
-
+  createCacheView tableName
   close conn
 
 -- | Wipe all caches and reset the cache metadata table
@@ -531,7 +513,7 @@ addText WriteText {..} = do
     [":entryID" := r]
   executeNamed
     conn
-    "INSERT INTO type (entry_id) VALUES (:entryID, :type)"
+    "INSERT INTO type (entry_id, type) VALUES (:entryID, :type)"
     [":entryID" := r, ":type" := ("TEXT" :: String)]
   close conn
   pure r
@@ -554,7 +536,7 @@ addLink WriteLink {..} = do
     [":entryID" := r]
   executeNamed
     conn
-    "INSERT INTO type (entry_id) VALUES (:entryID, :type)"
+    "INSERT INTO type (entry_id, type) VALUES (:entryID, :type)"
     [":entryID" := r, ":type" := ("LINK" :: String)]
   close conn
   pure r
@@ -619,6 +601,22 @@ wipeTesting = do
   bracketExecute' "delete from tag where tag==\"testing\""
 
 initDB' = runReaderT initDB (Sqlite dbFile)
+
+createCacheView tableName = do
+      let createView = 
+            "CREATE VIEW IF NOT EXISTS cache(entry_id, date, time, " -- event
+            ++ "content, url, display, " -- text, link, coalesced(text+link)
+            ++ "title, screenshot_file, thumbnail_file) " -- cache_*
+            ++ "AS SELECT event.entry_id, date, time, content, url, "
+            ++ "COALESCE((SELECT content FROM text WHERE url IS NULL AND text.entry_id=event.entry_id), "
+            ++ "         (SELECT cache_title FROM " ++ tableName ++ " WHERE content IS NULL AND " ++ tableName ++ ".entry_id=event.entry_id), \"\") AS display, " 
+            ++ "cache_title, cache_screenshot_file, cache_thumbnail_file "
+            ++ " FROM event LEFT JOIN " ++ tableName ++ " ON " ++ tableName ++ ".entry_id=event.entry_id"
+            ++ " LEFT JOIN text on event.entry_id=text.entry_id"
+            ++ " LEFT JOIN link on event.entry_id=link.entry_id"
+      putStrLn $ "Creating cache view:\n" ++ show createView
+      bracketExecute' createView
+
 
 initDB :: ReaderT Sqlite IO ()
 initDB = do
@@ -699,18 +697,8 @@ initDB = do
       bracketExecute' $ "DROP TABLE IF EXISTS " ++ tableName ++ ";"
       bracketExecute' "DROP VIEW IF EXISTS cache;"
 
-      -- TODO: replace entries
-      bracketExecute' $
-            "CREATE VIEW IF NOT EXISTS cache(cache_entry_id, entry_id, cache_url, cache_title, cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content) "
-              ++ "AS select cache_entry_id, "
-              ++ "event.entry_id as entry_id, cache_url, coalesce(cache_title, text.content), cache_body, cache_screenshot_file, cache_thumbnail_file, date, time, content "
-              ++ "FROM event "
-              ++ " LEFT JOIN "
-              ++ tableName
-              ++ " ON "
-              ++ tableName
-              ++ ".entry_id=event.entry_id"
-              ++ " LEFT JOIN text ON event.entry_id=text.entry_id;"
+      createCacheView tableName
+
       addTextInferDate "Memex Created." []  -- TODO get rid of this hack
       appendCache []
       pure ()

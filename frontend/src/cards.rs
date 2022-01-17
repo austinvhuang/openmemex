@@ -78,7 +78,8 @@ impl Cards {
                 .callback(move |m| CardsMsg::CardClick(m, entry_id, item_clone.clone()))
         };
         // log::info!("thumbnail file is {:?}", &thumbnail_file);
-        let mut content = item.content.clone().unwrap_or("".to_owned());
+        // let mut content = item.content.clone().unwrap_or("".to_owned());
+        let mut content = item.display.clone().unwrap_or("".to_owned());
         let max_length = 70;
         if content.len() > max_length {
             content = content.chars().take(max_length).collect::<String>();

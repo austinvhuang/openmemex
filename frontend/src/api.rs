@@ -14,18 +14,24 @@ pub struct Event{
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Cache {
-    #[serde(rename(deserialize = "cvTime"))]
-    pub time: String,
     #[serde(rename(deserialize = "cvForeignID"))]
     pub entry_id: i32,
-    #[serde(rename(deserialize = "cvContent"))]
-    pub content: Option<String>,
     #[serde(rename(deserialize = "cvDate"))]
     pub date: String,
+    #[serde(rename(deserialize = "cvTime"))]
+    pub time: String,
+    #[serde(rename(deserialize = "cvContent"))]
+    pub content: Option<String>,
     #[serde(rename(deserialize = "cvUrl"))]
     pub url: Option<String>,
+    #[serde(rename(deserialize = "cvDisplay"))]
+    pub display: Option<String>, // TODO - should this be option or string?
+    #[serde(rename(deserialize = "cvTitle"))]
+    pub title: Option<String>,
     #[serde(rename(deserialize = "cvThumbnailFile"))]
     pub thumbnail_file: Option<String>,
+    #[serde(rename(deserialize = "cvScreenshotFile"))]
+    pub screenshot_file: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
