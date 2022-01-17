@@ -67,6 +67,13 @@ data WriteText= WriteText
   }
   deriving (Eq, Show, Generic)
 
+data WriteLink = WriteLink
+  { wlDate :: String,
+    wlTime :: String,
+    wlUrl:: String
+  }
+  deriving (Eq, Show, Generic)
+
 -- tag entries
 
 data Tag = Tag
@@ -499,6 +506,13 @@ addTextInferDate entry tags = do
   mapM_ (addTag entryID) tags
   pure entryID
 
+addLinkInferDate :: String -> [String] -> IO Int64
+addLinkInferDate entry tags = do
+  (dt, tm) <- getDateTime
+  entryID <- addLink $ WriteLink dt tm entry
+  mapM_ (addTag entryID) tags
+  pure entryID
+
 addText :: WriteText -> IO Int64
 addText WriteText {..} = do
   conn <- open dbFile
@@ -515,6 +529,33 @@ addText WriteText {..} = do
     conn
     "INSERT INTO content (entry_id) VALUES (:entryID)"
     [":entryID" := r]
+  executeNamed
+    conn
+    "INSERT INTO type (entry_id) VALUES (:entryID, :type)"
+    [":entryID" := r, ":type" := ("TEXT" :: String)]
+  close conn
+  pure r
+
+addLink :: WriteLink -> IO Int64
+addLink WriteLink {..} = do
+  conn <- open dbFile
+  executeNamed
+    conn
+    "INSERT INTO event (date, time) VALUES (:date, :time)"
+    [":date" := wlDate, ":time" := wlTime] 
+  r <- lastInsertRowId conn
+  executeNamed
+    conn
+    "INSERT INTO link (entry_id, url) VALUES (:entryID, :url)"
+    [":entryID" := r, ":url" := wlUrl]
+  executeNamed
+    conn
+    "INSERT INTO content (entry_id) VALUES (:entryID)"
+    [":entryID" := r]
+  executeNamed
+    conn
+    "INSERT INTO type (entry_id) VALUES (:entryID, :type)"
+    [":entryID" := r, ":type" := ("LINK" :: String)]
   close conn
   pure r
 

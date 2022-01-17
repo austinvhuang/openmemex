@@ -37,6 +37,9 @@ linkEntryTagsH filterTag = liftIO $ linkEntryTags filterTag
 -- | Post a note 
 newNoteH note = liftIO $ newNote note
 
+-- | Post a link
+newLinkH note = liftIO $ newLink note
+
 -- | Alter state for content being completed
 postCompletedH entryID = liftIO $ postCompleted entryID
 
@@ -81,6 +84,18 @@ newNote note = do
   putStrLn "Adding note"
   print note
   entryID <- addTextInferDate (pnContent note) (pnTags note)
+  -- entry <- getEvent(fromIntegral entryID)
+  -- link <- getLink (fromIntegral entryID)
+  -- crawlLinks link
+  pure entryID
+
+
+-- | Add a note
+newLink:: PostNote -> IO Int64
+newLink note = do
+  putStrLn "Adding link"
+  print note
+  entryID <- addLinkInferDate (pnContent note) (pnTags note)
   -- entry <- getEvent(fromIntegral entryID)
   link <- getLink (fromIntegral entryID)
   crawlLinks link

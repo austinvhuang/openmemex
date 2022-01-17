@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
+use url::*;
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct Entry {
+pub struct Event{
     pub time: String,
     #[serde(rename(deserialize = "entryID"))]
     pub entry_id: i32,
-    content: String,
+    // content: String,
     pub date: String,
 }
 
@@ -77,4 +78,12 @@ pub struct Config {
 
 pub struct CompletedResponse {
     pub code: i64,
+}
+
+pub fn is_url(txt: &str) -> bool {
+    let result = Url::parse(txt);
+    match &result {
+        Ok(_) => true,
+        Err(_) => false,
+    }
 }

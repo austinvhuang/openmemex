@@ -94,6 +94,7 @@ type CombinedAPI =
     :<|> AllCacheAPI
     :<|> AllTimestampsAPI
     :<|> NewNoteAPI 
+    :<|> NewLinkAPI
     :<|> CompletedAPI 
     :<|> GetCompletedAPI 
     :<|> SearchAPI
@@ -113,6 +114,7 @@ server config =
     :<|> allCacheH
     :<|> allTimestampsH
     :<|> newNoteH
+    :<|> newLinkH
     :<|> postCompletedH
     :<|> getCompletedH
     :<|> searchH

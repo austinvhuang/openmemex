@@ -199,6 +199,7 @@ crawlAll = do
 
 crawlLinks :: [Link] -> IO ()
 crawlLinks entries = do
+  putStrLn $ "Crawling " ++ show entries
   screenshotLinks False (Timeout 30) entries -- False to reconstruct screenshots directory
   thumbnails entries
   appendEntries entries
