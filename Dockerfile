@@ -98,6 +98,7 @@ RUN stack setup && stack build openmemex:server --ghc-options="-O2"
 # since everything is statically compiled.
 FROM build-haskell as final
 
+ADD ./frontend/static /app/static 
 COPY --from=build-rust /src/frontend/static /app/static
 ADD startup.sh /app
 RUN chmod +x /app/startup.sh
