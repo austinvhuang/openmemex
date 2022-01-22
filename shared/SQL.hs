@@ -87,6 +87,8 @@ dropTables tables = do
   mapM_ (\table -> bracketExecute $ "DROP TABLE IF EXISTS " ++ table ++ ";") tables 
   pure ()
 
+data Unique = Unique | NonUnique
+
 data Index = Index {
   indexName :: String,
   indexTable :: String,

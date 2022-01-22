@@ -515,6 +515,10 @@ addText WriteText {..} = do
     conn
     "INSERT INTO type (entry_id, type) VALUES (:entryID, :type)"
     [":entryID" := r, ":type" := ("TEXT" :: String)]
+  executeNamed
+    conn
+    "INSERT INTO queue (entry_id, status, score) VALUES (:entryID, \"QUEUE\", 0.0)"
+    [":entryID" := r]
   close conn
   pure r
 
@@ -538,6 +542,10 @@ addLink WriteLink {..} = do
     conn
     "INSERT INTO type (entry_id, type) VALUES (:entryID, :type)"
     [":entryID" := r, ":type" := ("LINK" :: String)]
+  executeNamed
+    conn
+    "INSERT INTO queue (entry_id, status, score) VALUES (:entryID, \"QUEUE\", 0.0)"
+    [":entryID" := r]
   close conn
   pure r
 
@@ -558,8 +566,8 @@ addCompleted entryID = do
   conn <- open dbFile
   executeNamed
     conn
-    "INSERT INTO completed (entry_id, completed_date, completed_time) VALUES (:entryID, :date, :time)"
-    [":entryID" := entryID, ":date" := dt, ":time" := tm]
+    "UPDATE queue SET status = \"DONE\" WHERE entry_id = :entryID"
+    [":entryID" := entryID]
   r <- lastInsertRowId conn
   close conn
   pure r
@@ -569,7 +577,7 @@ removeCompleted entryID = do
   conn <- open dbFile
   executeNamed
     conn
-    "DELETE FROM completed WHERE entry_id = :entryID"
+    "UPDATE queue SET status = \"QUEUE\" WHERE entry_id = :entryID"
     [":entryID" := entryID]
   close conn
   pure 0
@@ -577,9 +585,11 @@ removeCompleted entryID = do
 checkCompleted :: Int -> IO Bool
 checkCompleted entryID = do
   conn <- open dbFile
-  r <- query_ conn (Query . pack $ "SELECT completed_date FROM completed WHERE entry_id == " ++ show entryID) :: IO [[String]]
+  r <- query_ conn (Query . pack $ "SELECT status FROM queue WHERE entry_id == " ++ show entryID) :: IO [[String]]
   close conn
-  pure $ if null r then False else (not $ null (r !! 0))
+  print r
+  -- TODO - make this safe
+  pure $ (r !! 0) !! 0 == "DONE"
 
 search :: String -> IO [CacheView]
 search query = do
@@ -637,23 +647,24 @@ initDB = do
       conn <- open dbFile
 
       -- Schema version
-      bracketExecute' "PRAGMA user_version = 1;"
+      bracketExecute' "PRAGMA user_version = 2;"
 
       -- CREATE TABLES
-      
-      dropTables' ["event", "type", "tag", "content",
-                  "annotation",
-                  "text", "link", "artifact",
+      dropTables' ["event", "type", "content", 
+                  "tag", "annotation", "queue", 
+                  "text", "link", "artifact", 
                   "cache_meta"]
 
       -- Tables: universal data - event, type, tags, content
       bracketExecute' "CREATE TABLE event (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT);"
-      bracketExecute' "CREATE TABLE type (entry_id INTEGER, type TEXT CHECK (type IN ('TEXT', 'TEXT_UPDATE', 'IMAGE', 'AUDIO', 'ANNOTATION', 'ANNOTATION_UPDATE', 'LINK', 'OTHER')), UNIQUE(entry_id, type) );"
-      bracketExecute' "CREATE TABLE tag (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
+      bracketExecute' "CREATE TABLE type (entry_id INTEGER, type TEXT CHECK (type IN ('TEXT', 'TEXT_UPDATE', 'IMAGE', 'AUDIO', 'LINK', 'ANNOTATION', 'ANNOTATION_UPDATE', 'QUEUE_UPDATE', 'OTHER')), UNIQUE(entry_id, type) );"
+
       bracketExecute' "CREATE TABLE content (entry_id INTEGER, content_id INTEGER PRIMARY KEY AUTOINCREMENT, UNIQUE(entry_id, content_id));" 
 
-      -- Tables: annotation
+      -- Tables: annotation TODO - should these be linked to content_id?
+      bracketExecute' "CREATE TABLE tag (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
       bracketExecute' "CREATE TABLE annotation(entry_id INTEGER UNIQUE,  annotation TEXT);"
+      bracketExecute' "CREATE TABLE queue(entry_id INTEGER, status TEXT CHECK (status IN ('QUEUE', 'IN_PROGRESS', 'DONE')), score REAL);"
 
       -- Tables: type-specific data - text, link, artifact
       bracketExecute' "CREATE TABLE text (entry_id INTEGER UNIQUE, content TEXT);"
@@ -681,6 +692,8 @@ initDB = do
 
                      Index "idx_annotation_entry_id" "annotation" "entry_id" True,
                      Index "idx_annotation_annotation" "annotation" "annotation" False,
+
+                     Index "idx_queue_entry_id" "queue" "entry_id" False,
 
                      Index "idx_text_entry_id" "text" "entry_id" True,
                      Index "idx_text_content" "text" "content" False,
