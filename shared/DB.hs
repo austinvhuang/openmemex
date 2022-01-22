@@ -218,7 +218,7 @@ allTags minCount = do
   conn <- open dbFile
   let queryString = case minCount of
         Nothing -> Query $ pack "SELECT distinct tag from tag order by tag"
-        (Just minCount) -> Query $ pack $ "SELECT tag FROM tag GROUP BY tag HAVING count(*) > " ++ show minCount ++ " ORDER BY tag"
+        (Just minCount) -> Query $ pack $ "SELECT tag FROM tag GROUP BY tag HAVING count(*) >= " ++ show minCount ++ " ORDER BY tag"
   r <- query_ conn queryString :: IO [[String]]
   close conn
   pure $ concat r
@@ -585,14 +585,20 @@ search :: String -> IO [CacheView]
 search query = do
   putStrLn $ "Searching for " ++ query
   conn <- open dbFile
-  let queryString = Query $ pack (
-                    "SELECT DISTINCT cache.entry_id, cache_url, cache_title, date, time, cache_screenshot_file, cache_thumbnail_file " ++
-                    "FROM cache " ++
-                    "LEFT JOIN tag ON cache.entry_id=tag.entry_id " ++ 
-                    "WHERE cache_url LIKE '%" ++ query ++ "%' OR cache_title LIKE '%" ++ query ++ "%' OR tag.tag LIKE '%" ++ query ++ "%' " ++
-                    "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC")
+  let queryString = if (query == "") then emptyQuery else stdQuery
   print queryString
   query_ conn queryString :: IO [CacheView]
+  where
+    stdQuery = 
+          Query $ pack ("SELECT DISTINCT cache.entry_id, date, time, content, url, display, title, thumbnail_file, screenshot_file " ++
+                            "FROM cache " ++
+                            "LEFT JOIN tag ON cache.entry_id=tag.entry_id " ++ 
+                            "WHERE url LIKE '%" ++ query ++ "%' OR title LIKE '%" ++ query ++ "%' OR tag.tag LIKE '%" ++ query ++ "%' " ++
+                            "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC")
+    emptyQuery = 
+          Query $ pack ("SELECT DISTINCT cache.entry_id, date, time, content, url, display, title, thumbnail_file, screenshot_file " ++
+                            "FROM cache " ++
+                            "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC")
 
 wipeTesting :: IO ()
 wipeTesting = do

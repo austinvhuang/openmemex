@@ -84,9 +84,6 @@ newNote note = do
   putStrLn "Adding note"
   print note
   entryID <- addTextInferDate (pnContent note) (pnTags note)
-  -- entry <- getEvent(fromIntegral entryID)
-  -- link <- getLink (fromIntegral entryID)
-  -- crawlLinks link
   pure entryID
 
 
@@ -96,7 +93,6 @@ newLink note = do
   putStrLn "Adding link"
   print note
   entryID <- addLinkInferDate (pnContent note) (pnTags note)
-  -- entry <- getEvent(fromIntegral entryID)
   link <- getLink (fromIntegral entryID)
   crawlLinks link
   pure entryID
