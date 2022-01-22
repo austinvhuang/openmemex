@@ -583,7 +583,7 @@ checkCompleted entryID = do
 
 search :: String -> IO [CacheView]
 search query = do
-  putStrLn $ "Searching for " ++ query
+  putStrLn $ "Searching for '" ++ query ++ "'"
   conn <- open dbFile
   let queryString = if (query == "") then emptyQuery else stdQuery
   print queryString

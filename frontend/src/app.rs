@@ -310,7 +310,7 @@ impl Component for App {
                 false
             }
             AppMsg::SearchSubmit => {
-                self.query = format!("http://{}/search/{}", server, encode(self.search_query.trim()).to_string());
+                self.query = format!("http://{}/search/{}/", server, encode(self.search_query.trim()).to_string());
                 log::info!("Query: {}", &self.query);
                 self.link.send_message(AppMsg::GetEntries);
                 false
