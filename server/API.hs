@@ -4,19 +4,48 @@ module API where
 
 import Control.Monad.IO.Class (liftIO)
 import CrawlTools
-import Data.Int (Int64)
-import Date
-import Data.Time ( Day(..), TimeOfDay(..), UTCTime(..))
 import DB
-import Servant
-import Data.Text (Text, pack, unpack)
 import Data.Aeson (FromJSON, ToJSON)
+import Data.Int (Int64)
+import Data.Text (Text, pack, unpack)
+import Data.Time (Day (..), TimeOfDay (..), UTCTime (..))
+import Date
 import GHC.Generics (Generic)
+import Servant
 
-data PostSearch =
-  PostSearch { psQuery :: String } deriving (Show, Generic)
+data PostSearch = PostSearch {psQuery :: String}
+  deriving (Show, Generic)
+
 instance ToJSON PostSearch
+
 instance FromJSON PostSearch
+
+data PostNote = PostNote
+  { pnContent :: String,
+    pnTags :: [String]
+  }
+  deriving (Show, Generic)
+
+instance ToJSON PostNote
+
+instance FromJSON PostNote
+
+data PostAnnotation = PostAnnotation
+  { contentID :: Int,
+    paAnnotation :: String
+  }
+  deriving (Show, Generic)
+
+instance ToJSON PostAnnotation
+
+instance FromJSON PostAnnotation
+
+-- TODO change to content ID
+data PostCompleted = PostCompleted {pcEntryID :: Int, pcState :: Bool} deriving (Generic)
+
+instance ToJSON PostCompleted
+
+instance FromJSON PostCompleted
 
 {- Handlers -}
 
@@ -30,11 +59,12 @@ allTimestampsH = liftIO allTimeStamps
 
 -- | Static file serving endpoint
 frontendH = serveDirectoryFileServer "./static/."
+
 -- frontendH = serveDirectoryWebApp "./static/"
- 
+
 linkEntryTagsH filterTag = liftIO $ linkEntryTags filterTag
 
--- | Post a note 
+-- | Post a note
 newNoteH note = liftIO $ newNote note
 
 -- | Post a link
@@ -51,25 +81,27 @@ allTagsH minCount = liftIO $ allTags minCount
 allEventsH :: Handler [Event]
 allEventsH = liftIO allEvents
 
-allCacheH 
-  :: Maybe SortBy 
-  -> Maybe SortDir 
-  -> [Text] -- ^ filterTags
-  -> Maybe Int -- ^ limit
-  -> Maybe Bool 
-  -> Maybe Day 
-  -> Maybe Day 
-  -> Handler [CacheView]
-allCacheH 
-  sortby 
-  sortdir 
-  filterTags 
-  limit 
-  hideCompleted 
+allCacheH ::
+  Maybe SortBy ->
+  Maybe SortDir ->
+  -- | filterTags
+  [Text] ->
+  -- | limit
+  Maybe Int ->
+  Maybe Bool ->
+  Maybe Day ->
+  Maybe Day ->
+  Handler [CacheView]
+allCacheH
+  sortby
+  sortdir
+  filterTags
+  limit
+  hideCompleted
   startDate
-  endDate
-  = liftIO (allCache sortby sortdir filterTags limit hideCompleted startDate endDate)
-    
+  endDate =
+    liftIO (allCache sortby sortdir filterTags limit hideCompleted startDate endDate)
+
 -- | Retrieve state for content being completed
 getCompletedH entryID = liftIO $ getCompleted entryID
 
@@ -86,9 +118,8 @@ newNote note = do
   entryID <- addTextInferDate (pnContent note) (pnTags note)
   pure entryID
 
-
 -- | Add a note
-newLink:: PostNote -> IO Int64
+newLink :: PostNote -> IO Int64
 newLink note = do
   putStrLn "Adding link"
   print note
@@ -96,6 +127,13 @@ newLink note = do
   link <- getLink (fromIntegral entryID)
   crawlLinks link
   pure entryID
+
+annotation :: PostAnnotation -> IO Int64
+annotation anData = do
+  putStrLn "Updating annotation"
+  print anData
+  -- TODO
+  pure 0
 
 -- | Retrieve content completion (for detail checkbox) flag state
 getCompleted :: Int -> IO [Bool]
@@ -113,5 +151,5 @@ postCompleted (PostCompleted entryID state) = do
   case state of
     True -> addCompleted entryID
     False -> removeCompleted entryID
-  
+
   pure 0

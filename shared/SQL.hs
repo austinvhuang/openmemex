@@ -4,22 +4,26 @@
 module SQL where
 
 import Control.Monad.Reader
-import GHC.Generics (Generic)
 import Data.List (intercalate)
 import Data.Text (Text, pack, unpack)
 import Database.SQLite.Simple
 import Date
+import GHC.Generics (Generic)
 
 -- Tiny String Builder
-newtype SqlCol = SqlCol {sqlCol :: String} deriving Show
-newtype SqlCond = SqlCond {sqlCond :: String} deriving Show
-newtype SqlFrom = SqlFrom {sqlFromTable :: String} deriving Show -- TODO: expand this representation
--- data SqlOrder = SqlAscending SqlCol | SqlDescending SqlCol | SqlDirFunction String deriving Show
-data SqlOrder = SqlOrder {sqlOrd :: String} deriving Show
+newtype SqlCol = SqlCol {sqlCol :: String} deriving (Show)
 
-data Sqlite = Sqlite {
-  sqliteFile :: String
-} deriving Show
+newtype SqlCond = SqlCond {sqlCond :: String} deriving (Show)
+
+newtype SqlFrom = SqlFrom {sqlFromTable :: String} deriving (Show) -- TODO: expand this representation
+-- data SqlOrder = SqlAscending SqlCol | SqlDescending SqlCol | SqlDirFunction String deriving Show
+
+data SqlOrder = SqlOrder {sqlOrd :: String} deriving (Show)
+
+data Sqlite = Sqlite
+  { sqliteFile :: String
+  }
+  deriving (Show)
 
 newtype Transaction = Transaction String
 
@@ -30,16 +34,18 @@ data SqlQuery = SqlQuery
     sqlWhere :: [SqlCond],
     sqlOrder :: [SqlOrder],
     sqlLimit :: Maybe Int
-  } deriving (Show)
+  }
+  deriving (Show)
 
-defaultQuery = SqlQuery {
-  sqlSelect = [],
-  sqlDistinct = False,
-  sqlFrom = SqlFrom "",
-  sqlWhere = [],
-  sqlOrder = [],
-  sqlLimit = Nothing
-}
+defaultQuery =
+  SqlQuery
+    { sqlSelect = [],
+      sqlDistinct = False,
+      sqlFrom = SqlFrom "",
+      sqlWhere = [],
+      sqlOrder = [],
+      sqlLimit = Nothing
+    }
 
 sql2string :: SqlQuery -> String
 sql2string SqlQuery {..} =
@@ -56,9 +62,9 @@ sql2string SqlQuery {..} =
       lst -> " WHERE " ++ (intercalate " AND " (sqlCond <$> lst)) ++ " "
     orderClause = case sqlOrder of
       [] -> ""
-      (SqlOrder x:_) -> " ORDER BY " ++ x 
-      -- ((SqlAscending (SqlCol colName)) -> " ORDER BY " ++ colName
-      -- Just (SqlDescending (SqlCol colName)) -> " ORDER BY " ++ colName ++ " DESC"
+      (SqlOrder x : _) -> " ORDER BY " ++ x
+    -- ((SqlAscending (SqlCol colName)) -> " ORDER BY " ++ colName
+    -- Just (SqlDescending (SqlCol colName)) -> " ORDER BY " ++ colName ++ " DESC"
     limitClause = case sqlLimit of
       Nothing -> ""
       Just n -> " LIMIT " ++ show n
@@ -84,25 +90,25 @@ bracketExecute queryString = do
 -- | Given a list of table names, drop them
 dropTables :: [String] -> ReaderT Sqlite IO ()
 dropTables tables = do
-  mapM_ (\table -> bracketExecute $ "DROP TABLE IF EXISTS " ++ table ++ ";") tables 
+  mapM_ (\table -> bracketExecute $ "DROP TABLE IF EXISTS " ++ table ++ ";") tables
   pure ()
 
 data Unique = Unique | NonUnique
 
-data Index = Index {
-  indexName :: String,
-  indexTable :: String,
-  indexField :: String,
-  indexUnique :: Bool
-} deriving Show
+data Index = Index
+  { indexName :: String,
+    indexTable :: String,
+    indexField :: String,
+    indexUnique :: Bool
+  }
+  deriving (Show)
 
 -- | Create an index
 createIndex :: Index -> ReaderT Sqlite IO ()
-createIndex Index{..} = do
-  if indexUnique then
-    bracketExecute $ "CREATE UNIQUE INDEX " ++ indexName ++ " on " ++ indexTable ++ "(" ++ indexField ++ ");"
-  else
-    bracketExecute $ "CREATE INDEX " ++ indexName ++ " on " ++ indexTable ++ "(" ++ indexField ++ ");"
+createIndex Index {..} = do
+  if indexUnique
+    then bracketExecute $ "CREATE UNIQUE INDEX " ++ indexName ++ " on " ++ indexTable ++ "(" ++ indexField ++ ");"
+    else bracketExecute $ "CREATE INDEX " ++ indexName ++ " on " ++ indexTable ++ "(" ++ indexField ++ ");"
 
 -- | Create indices
 createIndices :: [Index] -> ReaderT Sqlite IO ()

@@ -101,3 +101,10 @@ appimg-deps:
 	pip3 install appimage-builder
 	pip3 install ruamel_yaml
 	
+
+ormolu:
+	ormolu -m inplace server/*.hs
+	ormolu -m inplace shared/*.hs
+	ormolu -m inplace crawler/*.hs
+
+

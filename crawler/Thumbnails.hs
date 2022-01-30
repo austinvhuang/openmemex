@@ -9,15 +9,17 @@ import System.Process
 
 thumbnails = do
   files <- listDirectory "screenshots"
-  mapM_ ( \file -> do
-    let outFile = (takeBaseName file) ++ "_tn.png"
-    createDirectoryIfMissing True "thumbnails"
-    let args = ["-resize", "30%", "screenshots/" ++ file, "thumbnails/" ++ outFile]
-    putStrLn file
-    putStrLn outFile
-    (code, stdout, stderr) <- readProcessWithExitCode "convert" args ""
-    pure ()
-    ) files
+  mapM_
+    ( \file -> do
+        let outFile = (takeBaseName file) ++ "_tn.png"
+        createDirectoryIfMissing True "thumbnails"
+        let args = ["-resize", "30%", "screenshots/" ++ file, "thumbnails/" ++ outFile]
+        putStrLn file
+        putStrLn outFile
+        (code, stdout, stderr) <- readProcessWithExitCode "convert" args ""
+        pure ()
+    )
+    files
 
 main = do
   thumbnails

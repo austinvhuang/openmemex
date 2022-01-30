@@ -2,15 +2,15 @@
 
 module CrawlTools where
 
-
-import qualified Data.ByteString.Char8 as Str
 import Control.Concurrent (threadDelay)
 import Control.Exception (SomeException, catch)
 import DB
-import Files
+import qualified Data.ByteString.Char8 as Str
 import Data.List (sort)
 import Data.Maybe (catMaybes)
 import Data.Text (isInfixOf, isSuffixOf, pack, replace, unpack)
+import Database.SQLite.Simple
+import Files
 import Network.URI (URI, isURI, parseURI)
 import System.Directory
 import System.FilePath.Posix (takeBaseName)
@@ -19,8 +19,6 @@ import Text.HTML.Scalpel (Scraper, chroots, scrapeURL, text)
 import Text.Pretty.Simple (pPrint)
 import Text.Printf
 import Text.Read (readMaybe)
-
-import Database.SQLite.Simple
 
 -- TODO - user arxiv API
 arxivTransform :: String -> String
@@ -32,26 +30,29 @@ urlTransformations = arxivTransform
 
 newtype Timeout = Timeout Int
 
-data Config = Config {
-  windowSize :: (Int, Int),
-  timeBudget :: Int,
-  dirScreenshots :: String,
-  dirThumbnails :: String
-} deriving Show
-
-configDefault = Config {
-  windowSize = (600, 800),
-  timeBudget = 30000,
-  dirScreenshots = "screenshots",
-  dirThumbnails = "thumbnails"
+data Config = Config
+  { windowSize :: (Int, Int),
+    timeBudget :: Int,
+    dirScreenshots :: String,
+    dirThumbnails :: String
   }
+  deriving (Show)
 
-configBig = Config {
-  windowSize = (1024, 2048),
-  timeBudget = 30000,
-  dirScreenshots = "screenshots_lrg",
-  dirThumbnails = "thumbnails_lrg"
-  }
+configDefault =
+  Config
+    { windowSize = (600, 800),
+      timeBudget = 30000,
+      dirScreenshots = "screenshots",
+      dirThumbnails = "thumbnails"
+    }
+
+configBig =
+  Config
+    { windowSize = (1024, 2048),
+      timeBudget = 30000,
+      dirScreenshots = "screenshots_lrg",
+      dirThumbnails = "thumbnails_lrg"
+    }
 
 -- TODO - use a configuration
 
@@ -112,7 +113,6 @@ screenshot (Timeout timeout) url fileID = do
   print code
   print $ "Writing to: " ++ outFile
 
-
 cacheEntries :: [Link] -> IO ()
 cacheEntries entries = do
   let linkEntries = filter (isURI . linkURL) entries
@@ -171,19 +171,21 @@ screenshotLinks deltaOnly timeout entries = do
 
 thumbnails entries = do
   -- files <- listDirectory "screenshots"
-  let files = (\x -> x ++ ".png") <$> takeBaseName <$> mkScreenshotFilename <$> linkEntryID<$> entries
-  mapM_ ( \file -> do
-    let outFile = (takeBaseName file) ++ "_tn.png"
-    createDirectoryIfMissing True "thumbnails"
-    let args = ["-resize", "30%", "-crop", "180x180+0+0", "screenshots/" ++ file, "thumbnails/" ++ outFile]
-    putStrLn file
-    putStrLn outFile
-    (code, stdout, stderr) <- readProcessWithExitCode "convert" args ""
-    putStrLn $ show code
-    putStrLn stdout
-    putStrLn stderr
-    pure ()
-    ) files
+  let files = (\x -> x ++ ".png") <$> takeBaseName <$> mkScreenshotFilename <$> linkEntryID <$> entries
+  mapM_
+    ( \file -> do
+        let outFile = (takeBaseName file) ++ "_tn.png"
+        createDirectoryIfMissing True "thumbnails"
+        let args = ["-resize", "30%", "-crop", "180x180+0+0", "screenshots/" ++ file, "thumbnails/" ++ outFile]
+        putStrLn file
+        putStrLn outFile
+        (code, stdout, stderr) <- readProcessWithExitCode "convert" args ""
+        putStrLn $ show code
+        putStrLn stdout
+        putStrLn stderr
+        pure ()
+    )
+    files
 
 allLinks :: IO [Link]
 allLinks = do

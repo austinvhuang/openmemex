@@ -9,30 +9,29 @@
 
 module DB where
 
-import Control.Monad.Reader
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Reader
 import Data.Aeson (FromJSON, ToJSON)
 import Data.List (intercalate)
 import Data.Maybe (catMaybes)
 import Data.Text (Text, pack, unpack)
-import Data.Time (defaultTimeLocale, formatTime, getZonedTime, Day(..), TimeOfDay(..), UTCTime(..), diffDays, nominalDiffTimeToSeconds)
+import Data.Time (Day (..), TimeOfDay (..), UTCTime (..), defaultTimeLocale, diffDays, formatTime, getZonedTime, nominalDiffTimeToSeconds)
+import Data.Time.Calendar (toGregorian)
 import Data.Time.Clock.POSIX
 import Data.Time.Format (parseTimeM)
-import Data.Time.Calendar (toGregorian)
 import Data.Time.LocalTime (timeOfDayToTime)
 import Database.SQLite.Simple
+import Date
+import Files
 import GHC.Generics (Generic)
 import GHC.Int (Int64)
 import OCR
 import SQL
-import Files
-import System.Directory (copyFile, removeFile, doesFileExist)
+import System.Directory (copyFile, doesFileExist, removeFile)
 import System.IO (hPutStrLn, stderr)
-import Date
 import Text.Printf (printf)
 
 -- Note entries
-
 
 data Event = Event
   { entryID :: Int,
@@ -42,10 +41,9 @@ data Event = Event
   deriving (Eq, Show, Generic)
 
 instance FromRow Event where
-  fromRow = Event <$> field <*> field <*> field 
+  fromRow = Event <$> field <*> field <*> field
 
 instance ToJSON Event
-
 
 data Link = Link
   { linkEntryID :: Int,
@@ -54,13 +52,13 @@ data Link = Link
   deriving (Eq, Show, Generic)
 
 instance FromRow Link where
-  fromRow = Link <$> field <*> field 
+  fromRow = Link <$> field <*> field
 
 instance ToJSON Link
 
 -- Used for DB writes, note entryID is inferred by the database
 -- so isn't part of the ADT
-data WriteText= WriteText
+data WriteText = WriteText
   { weDate :: String,
     weTime :: String,
     weContent :: String
@@ -70,7 +68,15 @@ data WriteText= WriteText
 data WriteLink = WriteLink
   { wlDate :: String,
     wlTime :: String,
-    wlUrl:: String
+    wlUrl :: String
+  }
+  deriving (Eq, Show, Generic)
+
+data WriteAnnotation = WriteAnnotation
+  { waDate :: String,
+    waTime :: String,
+    waContentID :: Int, -- mapping from content table
+    waAnnotation :: String
   }
   deriving (Eq, Show, Generic)
 
@@ -103,17 +109,18 @@ instance ToJSON EntryTag
 
 -- Simple integer date specifier for uri
 
-data URIDate = URIDate {
-  uridYear :: Int,
-  uridMonth :: Int,
-  uridDay :: Int
-  } deriving (Show, Generic)
+data URIDate = URIDate
+  { uridYear :: Int,
+    uridMonth :: Int,
+    uridDay :: Int
+  }
+  deriving (Show, Generic)
 
 {-
 instance FromHttpApiData URIDate where
   parseUrlPiece txt = case day of
     Just d -> Right d
-    Nothing -> Left "Error parsing date" 
+    Nothing -> Left "Error parsing date"
     where
       day = parseTimeM True defaultTimeLocale "%Y-%m-%d" txt :: Maybe Day
 -}
@@ -137,6 +144,7 @@ data URLType = ArxivURL | TwitterURL | PdfURL | GenericURL deriving (Eq, Show)
 -- API Service View
 data CacheView = CacheView
   { cvForeignID :: Int, -- entryID
+    cvContentID :: Int,
     cvDate :: String,
     cvTime :: String,
     cvContent :: Maybe String, -- TODO - should this be cvCacheTitle or cvTitle to be consistent with the query?
@@ -149,7 +157,7 @@ data CacheView = CacheView
   deriving (Show, Generic)
 
 instance FromRow CacheView where
-  fromRow = CacheView <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = CacheView <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 instance ToJSON CacheView
 
@@ -165,21 +173,9 @@ data CacheEntry = CacheEntry
   deriving (Show, Generic)
 
 instance FromRow CacheEntry where
-  fromRow = CacheEntry <$> field <*> field <*> field <*> field <*> field <*> field 
+  fromRow = CacheEntry <$> field <*> field <*> field <*> field <*> field <*> field
 
 instance ToJSON CacheEntry
-
-data PostNote = PostNote
-  { pnContent :: String,
-    pnTags :: [String]
-  }
-  deriving (Show, Generic)
-instance ToJSON PostNote
-instance FromJSON PostNote
-
-data PostCompleted = PostCompleted { pcEntryID :: Int, pcState :: Bool} deriving Generic
-instance ToJSON PostCompleted
-instance FromJSON PostCompleted
 
 dbFile = "openmemex.db"
 
@@ -187,7 +183,7 @@ dbFile = "openmemex.db"
 
 -- Handlers
 
-mkTime :: (String, String) -> (Day, TimeOfDay) 
+mkTime :: (String, String) -> (Day, TimeOfDay)
 mkTime (d, tod) = (day, timeOfDay)
   where
     -- warning - no exception checking
@@ -208,7 +204,6 @@ allTimeStamps :: IO [DateTime]
 allTimeStamps = do
   r <- bracketQuery' "SELECT DISTINCT date, time from event" :: IO [(String, String)]
   mapM mkDate (mkTime <$> r)
-
 
 -- | Returns a unique list of all tags
 -- See https://stackoverflow.com/questions/32098328/no-instance-for-database-sqlite-simple-fromfield-fromfield-char
@@ -246,40 +241,41 @@ getLink entryID = do
 
 -- handlers
 
-allCache 
-  :: Maybe SortBy 
-  -> Maybe SortDir 
-  -> [Text] 
-  -> Maybe Int 
-  -> Maybe Bool 
-  -> Maybe Day 
-  -> Maybe Day 
-  -> IO [CacheView]
+allCache ::
+  Maybe SortBy ->
+  Maybe SortDir ->
+  [Text] ->
+  Maybe Int ->
+  Maybe Bool ->
+  Maybe Day ->
+  Maybe Day ->
+  IO [CacheView]
 allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
   -- TODO: support hideCompleted
   conn <- open dbFile
   let tagCond = case filterTags of
-                [] -> []
-                _ -> [SqlCond ("tag IN ('" ++ (intercalate "','" $ unpack <$> filterTags) ++ "')")]
-  let dateStartCond = case startDay of 
-                      Nothing -> []
-                      Just t -> let (y, m, d) = toGregorian t in [SqlCond $ printf "date >= \"%.4d-%.2d-%.2d\"" y m d]
-  let dateEndCond = case endDay of 
-                      Nothing -> []
-                      Just t -> let (y, m, d) = toGregorian t in [SqlCond $ printf "date <= \"%.4d-%.2d-%.2d\"" y m d]
-  let conditions = tagCond ++ dateStartCond  ++ dateEndCond
+        [] -> []
+        _ -> [SqlCond ("tag IN ('" ++ (intercalate "','" $ unpack <$> filterTags) ++ "')")]
+  let dateStartCond = case startDay of
+        Nothing -> []
+        Just t -> let (y, m, d) = toGregorian t in [SqlCond $ printf "date >= \"%.4d-%.2d-%.2d\"" y m d]
+  let dateEndCond = case endDay of
+        Nothing -> []
+        Just t -> let (y, m, d) = toGregorian t in [SqlCond $ printf "date <= \"%.4d-%.2d-%.2d\"" y m d]
+  let conditions = tagCond ++ dateStartCond ++ dateEndCond
   let query =
         defaultQuery
-          { sqlSelect = SqlCol <$> ["cache.entry_id", "date", "time", "content", "url", "display", "title", "thumbnail_file", "screenshot_file"],
-            sqlFrom = if null filterTags
-                      then SqlFrom "cache"
-                      else SqlFrom $ "tag LEFT JOIN cache ON cache.entry_id=tag.entry_id",
+          { sqlSelect = SqlCol <$> ["cache.entry_id", "cache.content_id", "date", "time", "content", "url", "display", "title", "thumbnail_file", "screenshot_file"],
+            sqlFrom =
+              if null filterTags
+                then SqlFrom "cache"
+                else SqlFrom $ "tag LEFT JOIN cache ON cache.entry_id=tag.entry_id",
             sqlLimit = Just limit',
             sqlWhere = conditions,
             sqlOrder = case sortdir of
-                        Just SortRev -> [SqlOrder "date DESC, time DESC"] -- TODO represent individual termws instead of using a string blob
-                        Just SortFwd -> [SqlOrder "date, time"]
-                        Nothing -> [SqlOrder "date DESC, time DESC"] -- TODO represent individual termws instead of using a string blob
+              Just SortRev -> [SqlOrder "date DESC, time DESC"] -- TODO represent individual termws instead of using a string blob
+              Just SortFwd -> [SqlOrder "date, time"]
+              Nothing -> [SqlOrder "date DESC, time DESC"] -- TODO represent individual termws instead of using a string blob
           }
   let queryString = sql2string query
   print query
@@ -327,8 +323,7 @@ backupDB = do
   copyFile dbFile (dbFile ++ ".backup." ++ timeStamp ++ ".db")
 
 data CurrTable = CurrTable
-  { 
-    currTable :: String
+  { currTable :: String
   }
   deriving (Eq, Show, Generic)
 
@@ -341,38 +336,39 @@ appendCache cacheEntries = do
   conn <- open dbFile
   -- get the most recent cache snapshot
   r <- query_ conn $ Query "SELECT table_name FROM cache_meta ORDER BY cache_date, cache_time DESC LIMIT 1;"
-  tableName <- if length r == 0 then do
-      putStrLn "creating new cache table"
-      let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
-      let tm = formatTime defaultTimeLocale "%H:%M:%S" now
-      let timeStamp = formatTime defaultTimeLocale "%Y%m%d_%H%M%S" now
-      let tableName = "cache_" ++ timeStamp
-      executeNamed
-        conn
-        ( Query . pack $
-            "CREATE TABLE " ++ tableName -- :cacheTable "
-              ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
-              ++ "cache_url TEXT, "
-              ++ "cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT);"
-        )
-        []
+  tableName <-
+    if length r == 0
+      then do
+        putStrLn "creating new cache table"
+        let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
+        let tm = formatTime defaultTimeLocale "%H:%M:%S" now
+        let timeStamp = formatTime defaultTimeLocale "%Y%m%d_%H%M%S" now
+        let tableName = "cache_" ++ timeStamp
+        executeNamed
+          conn
+          ( Query . pack $
+              "CREATE TABLE " ++ tableName -- :cacheTable "
+                ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
+                ++ "cache_url TEXT, "
+                ++ "cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT);"
+          )
+          []
 
-      executeNamed
-        conn
-        ( Query . pack $
-            "INSERT INTO cache_meta (table_name, cache_date, cache_time) "
-              ++ "VALUES (:tableName, :date, :time)"
-        )
-        [":tableName" := tableName, ":date" := dt, ":time" := tm]
-      bracketExecute' "DROP VIEW IF EXISTS cache"
+        executeNamed
+          conn
+          ( Query . pack $
+              "INSERT INTO cache_meta (table_name, cache_date, cache_time) "
+                ++ "VALUES (:tableName, :date, :time)"
+          )
+          [":tableName" := tableName, ":date" := dt, ":time" := tm]
+        bracketExecute' "DROP VIEW IF EXISTS cache"
 
-      createCacheView tableName
+        createCacheView tableName
 
-      pure tableName
-
-    else do
-      let (CurrTable tableName) = (r !! 0)
-      pure tableName
+        pure tableName
+      else do
+        let (CurrTable tableName) = (r !! 0)
+        pure tableName
 
   putStrLn $ "appending to " ++ tableName
   mapM_
@@ -413,6 +409,7 @@ writeCache cacheEntries = do
           ++ "VALUES (:tableName, :date, :time)"
     )
     [":tableName" := tableName, ":date" := dt, ":time" := tm]
+
   -- create new table
   executeNamed
     conn
@@ -424,7 +421,6 @@ writeCache cacheEntries = do
     )
     []
 
-  --    [":cacheTable" := tableName]
   -- insert data into new table
   mapM_
     ( \CacheEntry {..} ->
@@ -501,7 +497,7 @@ addText WriteText {..} = do
   executeNamed
     conn
     "INSERT INTO event (date, time) VALUES (:date, :time)"
-    [":date" := weDate, ":time" := weTime] 
+    [":date" := weDate, ":time" := weTime]
   r <- lastInsertRowId conn
   executeNamed
     conn
@@ -528,7 +524,7 @@ addLink WriteLink {..} = do
   executeNamed
     conn
     "INSERT INTO event (date, time) VALUES (:date, :time)"
-    [":date" := wlDate, ":time" := wlTime] 
+    [":date" := wlDate, ":time" := wlTime]
   r <- lastInsertRowId conn
   executeNamed
     conn
@@ -548,6 +544,25 @@ addLink WriteLink {..} = do
     [":entryID" := r]
   close conn
   pure r
+
+addAnnotation :: WriteAnnotation -> IO Int64
+addAnnotation WriteAnnotation {..} = do
+  conn <- open dbFile
+  executeNamed
+    conn
+    "INSERT INTO event (date, time) VALUES (:date, :time)"
+    [":date" := waDate, ":time" := waTime]
+  r <- lastInsertRowId conn
+  executeNamed
+    conn
+    "INSERT INTO annotation (entry_id, annotation) VALUES (:entryID, :annotation)"
+    [":entryID" := r, ":url" := waAnnotation]
+  executeNamed
+    conn
+    "INSERT INTO type (entry_id, type) VALUES (:entryID, :type)"
+    [":entryID" := r, ":type" := ("ANNOTATION_UPDATE" :: String)]
+  close conn
+  pure undefined
 
 addTag :: Int64 -> String -> IO Int64
 addTag entryID tag = do
@@ -599,16 +614,28 @@ search query = do
   print queryString
   query_ conn queryString :: IO [CacheView]
   where
-    stdQuery = 
-          Query $ pack ("SELECT DISTINCT cache.entry_id, date, time, content, url, display, title, thumbnail_file, screenshot_file " ++
-                            "FROM cache " ++
-                            "LEFT JOIN tag ON cache.entry_id=tag.entry_id " ++ 
-                            "WHERE url LIKE '%" ++ query ++ "%' OR title LIKE '%" ++ query ++ "%' OR tag.tag LIKE '%" ++ query ++ "%' " ++
-                            "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC")
-    emptyQuery = 
-          Query $ pack ("SELECT DISTINCT cache.entry_id, date, time, content, url, display, title, thumbnail_file, screenshot_file " ++
-                            "FROM cache " ++
-                            "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC")
+    stdQuery =
+      Query $
+        pack
+          ( "SELECT DISTINCT cache.entry_id, date, time, content, url, display, title, thumbnail_file, screenshot_file "
+              ++ "FROM cache "
+              ++ "LEFT JOIN tag ON cache.entry_id=tag.entry_id "
+              ++ "WHERE url LIKE '%"
+              ++ query
+              ++ "%' OR title LIKE '%"
+              ++ query
+              ++ "%' OR tag.tag LIKE '%"
+              ++ query
+              ++ "%' "
+              ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC"
+          )
+    emptyQuery =
+      Query $
+        pack
+          ( "SELECT DISTINCT cache.entry_id, date, time, content, url, display, title, thumbnail_file, screenshot_file "
+              ++ "FROM cache "
+              ++ "ORDER BY coalesce(datetime(\"date\"), datetime(\"time\")) DESC"
+          )
 
 wipeTesting :: IO ()
 wipeTesting = do
@@ -618,115 +645,125 @@ wipeTesting = do
 
 initDB' = runReaderT initDB (Sqlite dbFile)
 
+createCacheView :: String -> IO ()
 createCacheView tableName = do
-      let createView = 
-            "CREATE VIEW IF NOT EXISTS cache(entry_id, date, time, " -- event
-            ++ "content, url, display, " -- text, link, coalesced(text+link)
-            ++ "title, screenshot_file, thumbnail_file) " -- cache_*
-            ++ "AS SELECT event.entry_id, date, time, content, url, "
-            ++ "COALESCE((SELECT content FROM text WHERE url IS NULL AND text.entry_id=event.entry_id), "
-            ++ "         (SELECT cache_title FROM " ++ tableName ++ " WHERE content IS NULL AND " ++ tableName ++ ".entry_id=event.entry_id), \"\") AS display, " 
-            ++ "cache_title, cache_screenshot_file, cache_thumbnail_file "
-            ++ " FROM event LEFT JOIN " ++ tableName ++ " ON " ++ tableName ++ ".entry_id=event.entry_id"
-            ++ " LEFT JOIN text on event.entry_id=text.entry_id"
-            ++ " LEFT JOIN link on event.entry_id=link.entry_id"
-      putStrLn $ "Creating cache view:\n" ++ show createView
-      bracketExecute' createView
-
+  let createView =
+        "CREATE VIEW IF NOT EXISTS cache(entry_id, content_id, date, time, " -- event
+          ++ "content, url, display, " -- text, link, coalesced(text+link)
+          ++ "title, screenshot_file, thumbnail_file) " -- cache_*
+          ++ "AS SELECT event.entry_id, content.content_id, date, time, content, url, "
+          ++ "COALESCE((SELECT content FROM text WHERE url IS NULL AND text.entry_id=event.entry_id), "
+          ++ "         (SELECT cache_title FROM "
+          ++ tableName
+          ++ " WHERE content IS NULL AND "
+          ++ tableName
+          ++ ".entry_id=event.entry_id), \"\") AS display, "
+          ++ "cache_title, cache_screenshot_file, cache_thumbnail_file "
+          ++ " FROM content LEFT JOIN event ON event.entry_id=content.entry_id "
+          ++ "LEFT JOIN "
+          ++ tableName
+          ++ " ON "
+          ++ tableName
+          ++ ".entry_id=event.entry_id"
+          ++ " LEFT JOIN text on event.entry_id=text.entry_id"
+          ++ " LEFT JOIN link on event.entry_id=link.entry_id"
+  putStrLn $ "Creating cache view:\n" ++ show createView
+  bracketExecute' createView
 
 initDB :: ReaderT Sqlite IO ()
 initDB = do
   dbFile <- asks sqliteFile
   liftIO $ do
-      fileExists <- doesFileExist dbFile
-      when fileExists $ do
-        copyFile dbFile (dbFile ++ ".backup")
-        removeFile dbFile
-      when (not fileExists) $ do
-        writeFile dbFile ""
-      conn <- open dbFile
+    fileExists <- doesFileExist dbFile
+    when fileExists $ do
+      copyFile dbFile (dbFile ++ ".backup")
+      removeFile dbFile
+    when (not fileExists) $ do
+      writeFile dbFile ""
+    conn <- open dbFile
 
-      -- Schema version
-      bracketExecute' "PRAGMA user_version = 2;"
+    -- Schema version
+    bracketExecute' "PRAGMA user_version = 2;"
 
-      -- CREATE TABLES
-      dropTables' ["event", "type", "content", 
-                  "tag", "annotation", "queue", 
-                  "text", "link", "artifact", 
-                  "cache_meta"]
+    -- CREATE TABLES
+    dropTables'
+      [ "event",
+        "type",
+        "content",
+        "tag",
+        "annotation",
+        "queue",
+        "text",
+        "link",
+        "artifact",
+        "cache_meta"
+      ]
 
-      -- Tables: universal data - event, type, tags, content
-      bracketExecute' "CREATE TABLE event (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT);"
-      bracketExecute' "CREATE TABLE type (entry_id INTEGER, type TEXT CHECK (type IN ('TEXT', 'TEXT_UPDATE', 'IMAGE', 'AUDIO', 'LINK', 'ANNOTATION', 'ANNOTATION_UPDATE', 'QUEUE_UPDATE', 'OTHER')), UNIQUE(entry_id, type) );"
+    -- Tables: universal data - event, type, tags, content
+    bracketExecute' "CREATE TABLE event (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT);"
+    bracketExecute' "CREATE TABLE type (entry_id INTEGER, type TEXT CHECK (type IN ('TEXT', 'TEXT_UPDATE', 'IMAGE', 'AUDIO', 'LINK', 'ANNOTATION_UPDATE',  'QUEUE_UPDATE', 'OTHER')), UNIQUE(entry_id, type) );"
 
-      bracketExecute' "CREATE TABLE content (entry_id INTEGER, content_id INTEGER PRIMARY KEY AUTOINCREMENT, UNIQUE(entry_id, content_id));" 
+    bracketExecute' "CREATE TABLE content (entry_id INTEGER, content_id INTEGER PRIMARY KEY AUTOINCREMENT, UNIQUE(entry_id, content_id));"
 
-      -- Tables: annotation TODO - should these be linked to content_id?
-      bracketExecute' "CREATE TABLE tag (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
-      bracketExecute' "CREATE TABLE annotation(entry_id INTEGER UNIQUE,  annotation TEXT);"
-      bracketExecute' "CREATE TABLE queue(entry_id INTEGER, status TEXT CHECK (status IN ('QUEUE', 'IN_PROGRESS', 'DONE')), score REAL);"
+    -- Tables: annotation TODO - should these be linked to content_id?
+    bracketExecute' "CREATE TABLE tag (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
+    bracketExecute' "CREATE TABLE annotation(entry_id INTEGER UNIQUE,  annotation TEXT);"
+    bracketExecute' "CREATE TABLE queue(entry_id INTEGER, status TEXT CHECK (status IN ('QUEUE', 'IN_PROGRESS', 'DONE')), score REAL);"
 
-      -- Tables: type-specific data - text, link, artifact
-      bracketExecute' "CREATE TABLE text (entry_id INTEGER UNIQUE, content TEXT);"
-      bracketExecute' "CREATE TABLE link (entry_id INTEGER UNIQUE, url TEXT);"
-      bracketExecute' "CREATE TABLE artifact (entry_id INTEGER UNIQUE, artifact BLOB);"
+    -- Tables: type-specific data - text, link, artifact
+    bracketExecute' "CREATE TABLE text (entry_id INTEGER UNIQUE, content TEXT);"
+    bracketExecute' "CREATE TABLE link (entry_id INTEGER UNIQUE, url TEXT);"
+    bracketExecute' "CREATE TABLE artifact (entry_id INTEGER UNIQUE, artifact BLOB);"
 
-      -- Tables: caching
-      bracketExecute' "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
+    -- Tables: caching
+    bracketExecute' "CREATE TABLE cache_meta (cache_table_id INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, cache_date TEXT, cache_time TEXT);"
 
-      -- CREATE INDICES
+    -- CREATE INDICES
 
-      createIndices' [
-                     Index "idx_event_entry_id" "event" "entry_id" True,
-                     Index "idx_event_time" "event" "time" False,
-                     Index "idx_event_date" "event" "date" False,
+    createIndices'
+      [ Index "idx_event_entry_id" "event" "entry_id" True,
+        Index "idx_event_time" "event" "time" False,
+        Index "idx_event_date" "event" "date" False,
+        Index "idx_type_event_id" "type" "entry_id" False,
+        Index "idx_type_tag" "type" "type" False,
+        Index "idx_tag_event_id" "tag" "entry_id" False,
+        Index "idx_tag_tag" "tag" "tag" False,
+        Index "idx_content_event_id" "content" "entry_id" False,
+        Index "idx_content_content_id" "content" "content_id" False,
+        Index "idx_annotation_entry_id" "annotation" "entry_id" True,
+        Index "idx_annotation_annotation" "annotation" "annotation" False,
+        Index "idx_queue_entry_id" "queue" "entry_id" False,
+        Index "idx_text_entry_id" "text" "entry_id" True,
+        Index "idx_text_content" "text" "content" False,
+        Index "idx_link_entry_id" "link" "entry_id" False,
+        Index "idx_link_url" "link" "url" False,
+        Index "idx_artifact_entry_id" "artifact" "entry_id" False
+      ]
 
-                     Index "idx_type_event_id" "type" "entry_id" False,
-                     Index "idx_type_tag" "type" "type" False,
+    now <- getZonedTime
+    let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
+        tm = formatTime defaultTimeLocale "%H:%M:%S" now
+        timeStamp = formatTime defaultTimeLocale "%Y%m%d_%H%M%S" now
+        tableName = "cache_" ++ timeStamp
+    bracketExecute' $
+      "CREATE TABLE " ++ tableName
+        ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
+        ++ "cache_url TEXT, "
+        ++ "cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT);"
+    bracketExecute' $ "DROP TABLE IF EXISTS " ++ tableName ++ ";"
+    bracketExecute' "DROP VIEW IF EXISTS cache;"
 
-                     Index "idx_tag_event_id" "tag" "entry_id" False,
-                     Index "idx_tag_tag" "tag" "tag" False,
+    createCacheView tableName
 
-                     Index "idx_content_event_id" "content" "entry_id" False,
-                     Index "idx_content_content_id" "content" "content_id" False,
-
-                     Index "idx_annotation_entry_id" "annotation" "entry_id" True,
-                     Index "idx_annotation_annotation" "annotation" "annotation" False,
-
-                     Index "idx_queue_entry_id" "queue" "entry_id" False,
-
-                     Index "idx_text_entry_id" "text" "entry_id" True,
-                     Index "idx_text_content" "text" "content" False,
-
-                     Index "idx_link_entry_id" "link" "entry_id" False,
-                     Index "idx_link_url" "link" "url" False,
-
-                     Index "idx_artifact_entry_id" "artifact" "entry_id" False
-                     ]
-
-      now <- getZonedTime
-      let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
-          tm = formatTime defaultTimeLocale "%H:%M:%S" now
-          timeStamp = formatTime defaultTimeLocale "%Y%m%d_%H%M%S" now
-          tableName = "cache_" ++ timeStamp
-      bracketExecute' $ "CREATE TABLE " ++ tableName
-                  ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
-                  ++ "cache_url TEXT, "
-                  ++ "cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT);"
-      bracketExecute' $ "DROP TABLE IF EXISTS " ++ tableName ++ ";"
-      bracketExecute' "DROP VIEW IF EXISTS cache;"
-
-      createCacheView tableName
-
-      addTextInferDate "Memex Created." []  -- TODO get rid of this hack
-      appendCache []
-      pure ()
+    addTextInferDate "Memex Created." [] -- TODO get rid of this hack
+    appendCache []
+    pure ()
 
 bracketExecute' :: String -> IO ()
 bracketExecute' q = runReaderT (bracketExecute q) (Sqlite dbFile)
 
 bracketQuery' :: FromRow r => String -> IO [r]
-bracketQuery' q = runReaderT (bracketQuery q)  (Sqlite dbFile)
+bracketQuery' q = runReaderT (bracketQuery q) (Sqlite dbFile)
 
 dropTables' :: [String] -> IO ()
 dropTables' tables = runReaderT (dropTables tables) (Sqlite dbFile)

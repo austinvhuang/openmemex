@@ -16,6 +16,8 @@ pub struct Event{
 pub struct Cache {
     #[serde(rename(deserialize = "cvForeignID"))]
     pub entry_id: i32,
+    #[serde(rename(deserialize = "cvContentID"))]
+    pub content_id: i32,
     #[serde(rename(deserialize = "cvDate"))]
     pub date: String,
     #[serde(rename(deserialize = "cvTime"))]

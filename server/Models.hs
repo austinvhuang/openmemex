@@ -6,10 +6,13 @@ import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, ToJSON)
 import GHC.Generics (Generic)
 import Torch
+
 -- import Tokenizers
 
 data TestTorch = TestTorch {msg :: String, value :: [Float]} deriving (Show, Generic)
+
 instance ToJSON TestTorch
+
 instance FromJSON TestTorch
 
 {-
