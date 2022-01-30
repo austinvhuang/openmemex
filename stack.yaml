@@ -19,10 +19,6 @@ extra-deps:
       - hasktorch
       - libtorch-ffi
       - libtorch-ffi-helper
-  - git: https://github.com/hasktorch/tokenizers
-    commit: e4208275b6e7d5e265d454819eec5ec626d4077b
-    subdirs:
-      - bindings/haskell/tokenizers-haskell  
 # servant swagger ui
 #  - servant-swagger-ui-jensoleg-0.3.3@sha256:e2b59a65f0d4f8aa7e43881e0f5447c496908aff7b80dd9a3a9e1e825eb007a6,3541
 
@@ -39,4 +35,3 @@ extra-lib-dirs:
 
 packages:
   - .
-  - experimental

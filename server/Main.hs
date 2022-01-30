@@ -6,11 +6,19 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
-import Control.Monad.IO.Class (liftIO)
+-- import Network.Wai.Middleware.Cors (simpleCors)
+
+import API
+import ArgParser
 import Control.Monad (when)
+import Control.Monad.IO.Class (liftIO)
+import CrawlTools
+import DB
 import Data.Int (Int64)
-import Data.Time ( Day(..), TimeOfDay(..), UTCTime(..))
 import Data.Text (Text)
+import Data.Time (Day (..), TimeOfDay (..), UTCTime (..))
+import Date
+import Models
 import Network.Wai.Handler.Warp
   ( defaultSettings,
     runSettings,
@@ -19,20 +27,12 @@ import Network.Wai.Handler.Warp
     setPort,
   )
 import Network.Wai.Logger (withStdoutLogger)
--- import Network.Wai.Middleware.Cors (simpleCors)
 import Options.Applicative (execParser)
 import Servant
-import System.IO (hPutStrLn, stderr)
 import System.Directory (doesFileExist)
+import System.IO (hPutStrLn, stderr)
 import Text.Pretty.Simple
-
-import ArgParser
-import DB
 import Torch
-import CrawlTools
-import Date
-import API
-import Models
 
 -- API Types
 
@@ -40,7 +40,7 @@ type RootAPI = Get '[JSON] [String]
 
 type AllTagsAPI = "all" :> "tags" :> QueryParam "min" Int :> Get '[JSON] [String]
 
-type AllEntriesAPI = "all" :> "entries" :> Get '[JSON] [Entry]
+type AllEventsAPI = "all" :> "events" :> Get '[JSON] [Event]
 
 type AllTimestampsAPI = "all" :> "timestamps" :> Get '[JSON] [DateTime]
 
@@ -58,12 +58,16 @@ type AllCacheAPI =
 
 type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [CacheView]
 
-type EntryAPI = "submit" :> "note" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
+type WriteNoteAPI = "submit" :> "note" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
 
-type CompletedAPI = "submit" :> "completed" :> ReqBody '[JSON] PostCompleted :> Post '[JSON] Int64
-  
+type WriteLinkAPI = "submit" :> "link" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
+
+type WriteAnnotationAPI = "submit" :> "annotation" :> ReqBody '[JSON] PostAnnotation :> Capture "content_id" Int :> Post '[JSON] Int64
+
+type WriteCompletedAPI = "submit" :> "completed" :> ReqBody '[JSON] PostCompleted :> Post '[JSON] Int64
+
 type GetCompletedAPI = "get" :> "completed" :> Capture "entry_id" Int :> Get '[JSON] [Bool]
-  
+
 type SearchAPI = "search" :> Capture "query" String :> Get '[JSON] [CacheView]
 
 type FrontendAPI = "frontend" :> Raw
@@ -88,12 +92,13 @@ type ConfigAPI =
 type CombinedAPI =
   RootAPI
     :<|> AllTagsAPI
-    :<|> AllEntriesAPI
+    :<|> AllEventsAPI
     :<|> AllCacheAPI
     :<|> AllTimestampsAPI
-    :<|> EntryAPI 
-    :<|> CompletedAPI 
-    :<|> GetCompletedAPI 
+    :<|> WriteNoteAPI
+    :<|> WriteLinkAPI
+    :<|> WriteCompletedAPI
+    :<|> GetCompletedAPI
     :<|> SearchAPI
     :<|> FrontendAPI
     :<|> LinkEntryTagsAPI
@@ -107,10 +112,11 @@ server :: Configuration -> Server CombinedAPI
 server config =
   getRoot
     :<|> allTagsH
-    :<|> allEntriesH
+    :<|> allEventsH
     :<|> allCacheH
     :<|> allTimestampsH
-    :<|> postNoteH
+    :<|> newNoteH
+    :<|> newLinkH
     :<|> postCompletedH
     :<|> getCompletedH
     :<|> searchH
@@ -148,12 +154,12 @@ runServer = do
     initDB'
   let prt = port options
   let logger = \aplogger -> do
-              let settings =
-                    setPort prt $
-                      setLogger aplogger $
-                        setBeforeMainLoop (hPutStrLn stderr ("OpenMemex server running on port " ++ show prt)) $
-                          defaultSettings
-              runSettings settings =<< (mkApp options)
+        let settings =
+              setPort prt $
+                setLogger aplogger $
+                  setBeforeMainLoop (hPutStrLn stderr ("OpenMemex server running on port " ++ show prt)) $
+                    defaultSettings
+        runSettings settings =<< (mkApp options)
   withStdoutLogger logger
 
 main :: IO ()

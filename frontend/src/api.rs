@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
+use url::*;
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct Entry {
+pub struct Event{
     pub time: String,
     #[serde(rename(deserialize = "entryID"))]
     pub entry_id: i32,
-    content: String,
+    // content: String,
     pub date: String,
 }
 
@@ -13,18 +14,26 @@ pub struct Entry {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Cache {
-    #[serde(rename(deserialize = "cvTime"))]
-    pub time: String,
     #[serde(rename(deserialize = "cvForeignID"))]
     pub entry_id: i32,
-    #[serde(rename(deserialize = "cvContent"))]
-    pub content: Option<String>,
+    #[serde(rename(deserialize = "cvContentID"))]
+    pub content_id: i32,
     #[serde(rename(deserialize = "cvDate"))]
     pub date: String,
+    #[serde(rename(deserialize = "cvTime"))]
+    pub time: String,
+    #[serde(rename(deserialize = "cvContent"))]
+    pub content: Option<String>,
     #[serde(rename(deserialize = "cvUrl"))]
     pub url: Option<String>,
+    #[serde(rename(deserialize = "cvDisplay"))]
+    pub display: Option<String>, // TODO - should this be option or string?
+    #[serde(rename(deserialize = "cvTitle"))]
+    pub title: Option<String>,
     #[serde(rename(deserialize = "cvThumbnailFile"))]
     pub thumbnail_file: Option<String>,
+    #[serde(rename(deserialize = "cvScreenshotFile"))]
+    pub screenshot_file: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -77,4 +86,12 @@ pub struct Config {
 
 pub struct CompletedResponse {
     pub code: i64,
+}
+
+pub fn is_url(txt: &str) -> bool {
+    let result = Url::parse(txt);
+    match &result {
+        Ok(_) => true,
+        Err(_) => false,
+    }
 }

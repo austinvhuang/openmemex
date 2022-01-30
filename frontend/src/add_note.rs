@@ -91,7 +91,15 @@ impl Component for AddNote {
 
             AddNoteMsg::SubmitNote => {
                 log::info!("self.content {:?}", self.content);
-                let query = format!("http://{}/submit/note", server);
+                // TODO - use is_url
+                
+                let query = 
+                    if is_url(&self.content) {
+                        format!("http://{}/submit/link", server)
+                    } else {
+                        format!("http://{}/submit/note", server)
+                    };
+
                 let payload = AddNotePayload {
                     note_content: self.content.clone(),
                     tags: self.tags.clone(),

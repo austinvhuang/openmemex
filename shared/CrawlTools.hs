@@ -2,16 +2,16 @@
 
 module CrawlTools where
 
-
-import qualified Data.ByteString.Char8 as Str
 import Control.Concurrent (threadDelay)
 import Control.Exception (SomeException, catch)
 import DB
+import qualified Data.ByteString.Char8 as Str
 import Data.List (sort)
 import Data.Maybe (catMaybes)
 import Data.Text (isInfixOf, isSuffixOf, pack, replace, unpack)
+import Database.SQLite.Simple
+import Files
 import Network.URI (URI, isURI, parseURI)
-import OCR
 import System.Directory
 import System.FilePath.Posix (takeBaseName)
 import System.Process
@@ -30,29 +30,29 @@ urlTransformations = arxivTransform
 
 newtype Timeout = Timeout Int
 
-data Config = Config {
-  windowSize :: (Int, Int),
-  timeBudget :: Int,
-  dirScreenshots :: String,
-  dirThumbnails :: String,
-  dirOCR :: String
-} deriving Show
-
-configDefault = Config {
-  windowSize = (600, 800),
-  timeBudget = 30000,
-  dirScreenshots = "screenshots",
-  dirThumbnails = "thumbnails",
-  dirOCR = "ocr"
+data Config = Config
+  { windowSize :: (Int, Int),
+    timeBudget :: Int,
+    dirScreenshots :: String,
+    dirThumbnails :: String
   }
+  deriving (Show)
 
-configBig = Config {
-  windowSize = (1024, 2048),
-  timeBudget = 30000,
-  dirScreenshots = "screenshots_lrg",
-  dirThumbnails = "thumbnails_lrg",
-  dirOCR = "ocr_lrg"
-  }
+configDefault =
+  Config
+    { windowSize = (600, 800),
+      timeBudget = 30000,
+      dirScreenshots = "screenshots",
+      dirThumbnails = "thumbnails"
+    }
+
+configBig =
+  Config
+    { windowSize = (1024, 2048),
+      timeBudget = 30000,
+      dirScreenshots = "screenshots_lrg",
+      dirThumbnails = "thumbnails_lrg"
+    }
 
 -- TODO - use a configuration
 
@@ -113,11 +113,10 @@ screenshot (Timeout timeout) url fileID = do
   print code
   print $ "Writing to: " ++ outFile
 
-
-cacheEntries :: [Entry] -> IO ()
+cacheEntries :: [Link] -> IO ()
 cacheEntries entries = do
-  let linkEntries = filter (isURI . content) entries
-      links = urlTransformations . content <$> linkEntries
+  let linkEntries = filter (isURI . linkURL) entries
+      links = urlTransformations . linkURL <$> linkEntries
   pages <-
     mapM
       ( \url -> do
@@ -131,10 +130,10 @@ cacheEntries entries = do
   let cacheEntries = crawlerOutput2cache $ zip3 (filt linkEntries) (filt links) (filt pages)
   writeCache cacheEntries
 
-appendEntries :: [Entry] -> IO ()
+appendEntries :: [Link] -> IO ()
 appendEntries entries = do
-  let linkEntries = filter (isURI . content) entries
-      links = urlTransformations . content <$> linkEntries
+  let linkEntries = filter (isURI . linkURL) entries
+      links = urlTransformations . linkURL <$> linkEntries
   pages <-
     mapM
       ( \url -> do
@@ -150,10 +149,10 @@ appendEntries entries = do
 
 filt = id
 
-screenshotEntries :: Bool -> Timeout -> [Entry] -> IO ()
-screenshotEntries deltaOnly timeout entries = do
-  let linkEntries = filter (isURI . content) entries
-  let links = zip (urlTransformations . content <$> linkEntries) (entryID <$> linkEntries)
+screenshotLinks :: Bool -> Timeout -> [Link] -> IO ()
+screenshotLinks deltaOnly timeout entries = do
+  let linkEntries = filter (isURI . linkURL) entries
+  let links = zip (urlTransformations . linkURL <$> linkEntries) (linkEntryID <$> linkEntries)
   mapM_
     ( \(url, entryid) -> do
         let filename = mkScreenshotFilename entryid
@@ -170,71 +169,39 @@ screenshotEntries deltaOnly timeout entries = do
     )
     (filt links)
 
-ocrShots :: [Entry] -> IO ()
-ocrShots entries = do
-  -- make ocr output files from screenshots
-  createDirectoryIfMissing True "ocr"
-  -- files <- sort <$> listDirectory "screenshots"
-  let files = sort ((\x -> x ++ ".png") <$> takeBaseName <$> mkScreenshotFilename <$> entryID <$> entries)
-  mapM_
-    ( \file -> do
-        exists <- doesFileExist (ss2ocrFilename file)
-        if not exists
-          then do
-            putStrLn $ "Running OCR for: " ++ file
-            let args =
-                  [ "10s",
-                    "tesseract",
-                    "screenshots/" ++ file,
-                    ss2ocrPrefix file
-                  ]
-            readProcessWithExitCode "timeout" args ""
-            pure ()
-          else putStrLn $ "OCR already exists for file: " ++ ss2ocrFilename file
-    )
-    files
-  -- read ocr content from file
-  ocrFiles <- sort <$> listDirectory "ocr"
-  ocrEntries <-
-    mapM
-      ( \file -> do
-          content <- Str.readFile $ "ocr/" ++ file
-          let entryid = readMaybe (takeBaseName file) :: Maybe Int
-          case entryid of
-            Just entryid -> pure $ Just (OCREntry entryid (ocr2ssFilename file) (Str.unpack content))
-            Nothing -> pure Nothing
-      )
-      ocrFiles
-  -- write entries to database
-  writeOCR (catMaybes ocrEntries)
-
 thumbnails entries = do
   -- files <- listDirectory "screenshots"
-  let files = (\x -> x ++ ".png") <$> takeBaseName <$> mkScreenshotFilename <$> entryID <$> entries
-  mapM_ ( \file -> do
-    let outFile = (takeBaseName file) ++ "_tn.png"
-    createDirectoryIfMissing True "thumbnails"
-    let args = ["-resize", "30%", "-crop", "180x180+0+0", "screenshots/" ++ file, "thumbnails/" ++ outFile]
-    putStrLn file
-    putStrLn outFile
-    (code, stdout, stderr) <- readProcessWithExitCode "convert" args ""
-    putStrLn $ show code
-    putStrLn stdout
-    putStrLn stderr
-    pure ()
-    ) files
+  let files = (\x -> x ++ ".png") <$> takeBaseName <$> mkScreenshotFilename <$> linkEntryID <$> entries
+  mapM_
+    ( \file -> do
+        let outFile = (takeBaseName file) ++ "_tn.png"
+        createDirectoryIfMissing True "thumbnails"
+        let args = ["-resize", "30%", "-crop", "180x180+0+0", "screenshots/" ++ file, "thumbnails/" ++ outFile]
+        putStrLn file
+        putStrLn outFile
+        (code, stdout, stderr) <- readProcessWithExitCode "convert" args ""
+        putStrLn $ show code
+        putStrLn stdout
+        putStrLn stderr
+        pure ()
+    )
+    files
+
+allLinks :: IO [Link]
+allLinks = do
+  conn <- open dbFile
+  r <- query_ conn "SELECT * from link" :: IO [Link]
+  close conn
+  pure r
 
 crawlAll :: IO ()
 crawlAll = do
-  entries <- allEntries
-  screenshotEntries False (Timeout 30) entries -- False to reconstruct screenshots directory
-  thumbnails entries
-  -- ocrShots entries
-  cacheEntries entries
+  links <- allLinks
+  crawlLinks links
 
-crawlEntries :: [Entry] -> IO ()
-crawlEntries entries = do
-  screenshotEntries False (Timeout 30) entries -- False to reconstruct screenshots directory
+crawlLinks :: [Link] -> IO ()
+crawlLinks entries = do
+  putStrLn $ "Crawling " ++ show entries
+  screenshotLinks False (Timeout 30) entries -- False to reconstruct screenshots directory
   thumbnails entries
-  -- ocrShots entries
   appendEntries entries

@@ -4,6 +4,7 @@ module Main where
 
 import Control.Concurrent (threadDelay)
 import Control.Exception (SomeException, catch)
+import CrawlTools
 import DB
 import Data.List (sort)
 import Data.Maybe (catMaybes)
@@ -17,7 +18,5 @@ import Text.HTML.Scalpel (Scraper, chroots, scrapeURL, text)
 import Text.Pretty.Simple (pPrint)
 import Text.Printf
 import Text.Read (readMaybe)
-
-import CrawlTools
 
 main = crawlAll
