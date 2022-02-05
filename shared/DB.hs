@@ -598,18 +598,34 @@ addCompleted contentID = do
     [":entryID" := r, ":contentID" := contentID]
   executeNamed
     conn
+    "INSERT INTO type (entry_id, type) VALUES (:entryID, \"QUEUE_UPDATE\")"
+    [":entryID" := r]
+  executeNamed
+    conn
     "INSERT queue (entry_id, status, score) VALUES (:entryID, \"DONE\", 0.0)"
     [":entryID" := r]
   close conn
   pure r
 
 removeCompleted :: Int -> IO Int64
-removeCompleted entryID = do
+removeCompleted contentID = do
+  (dt, tm) <- getDateTime
   conn <- open dbFile
+  executeNamed
+    conn
+    "INSERT INTO event (date, time) VALUES (:date, :time)"
+    [":date" := dt, ":time" := tm]
+  r <- lastInsertRowId conn
+  executeNamed
+    conn
+    "INSERT queue(entry_id, status, score) VALUES (:entryID, \"QUEUE\", 0.0)"
+    [":entryID" := r]
+    {-
   executeNamed
     conn
     "UPDATE queue SET status = \"QUEUE\" WHERE entry_id = :entryID"
     [":entryID" := entryID]
+    -}
   close conn
   pure 0
 
@@ -725,6 +741,15 @@ initDB = do
     bracketExecute' "CREATE TABLE tag (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
     bracketExecute' "CREATE TABLE annotation(entry_id INTEGER UNIQUE,  annotation TEXT);"
     bracketExecute' "CREATE TABLE queue(entry_id INTEGER, status TEXT CHECK (status IN ('QUEUE', 'IN_PROGRESS', 'DONE')), score REAL);"
+
+    -- TODO group by content_ids, get most recent (ie current) queue value 
+    bracketExecute' "DROP VIEW IF EXISTS queue_status;"
+    {-
+    bracketExecute' ("CREATE VIEW IF NOT EXISTS queue_state(content_id, status, score) " ++
+                     "AS SELECT content.content_id, content.status, content.score FROM " ++
+                     "content LEFT JOIN queue ON content.entry_id=queue.entry_id " ++ 
+                     "GROUP BY content.content_id"
+    -}
 
     -- Tables: type-specific data - text, link, artifact
     bracketExecute' "CREATE TABLE text (entry_id INTEGER UNIQUE, content TEXT);"
