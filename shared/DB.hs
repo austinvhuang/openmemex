@@ -471,6 +471,7 @@ replaceTag fromTag toTag = do
   pure ()
 
 -- | Get current date and time
+getDateTime :: IO (String, String)
 getDateTime = do
   now <- getZonedTime
   let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
@@ -505,7 +506,8 @@ addText WriteText {..} = do
     [":entryID" := r, ":content" := weContent]
   executeNamed
     conn
-    "INSERT INTO content (entry_id) VALUES (:entryID)"
+    (Query . pack $ "INSERT INTO content (entry_id, content_id, is_original) " ++ 
+    "VALUES (:entryID, (SELECT IFNULL(MAX(content_id), 0) FROM content), 1)")
     [":entryID" := r]
   executeNamed
     conn
@@ -532,7 +534,8 @@ addLink WriteLink {..} = do
     [":entryID" := r, ":url" := wlUrl]
   executeNamed
     conn
-    "INSERT INTO content (entry_id) VALUES (:entryID)"
+    (Query . pack $ "INSERT INTO content (entry_id, content_id, is_original) " ++
+    "VALUES (:entryID, (SELECT IFNULL(MAX(content_id), 0) FROM content), 1)")
     [":entryID" := r]
   executeNamed
     conn
@@ -547,16 +550,21 @@ addLink WriteLink {..} = do
 
 addAnnotation :: WriteAnnotation -> IO Int64
 addAnnotation WriteAnnotation {..} = do
+  (dt, tm) <- getDateTime
   conn <- open dbFile
   executeNamed
     conn
     "INSERT INTO event (date, time) VALUES (:date, :time)"
-    [":date" := waDate, ":time" := waTime]
+    [":date" := dt, ":time" := tm]
   r <- lastInsertRowId conn
   executeNamed
     conn
     "INSERT INTO annotation (entry_id, annotation) VALUES (:entryID, :annotation)"
     [":entryID" := r, ":url" := waAnnotation]
+  executeNamed
+    conn
+    "INSERT INTO content (entry_id, content_id, is_original) VALUES (:entryID, :contentID, 0)"
+    [":entryID" := r, ":contentID" := waContentID]
   executeNamed
     conn
     "INSERT INTO type (entry_id, type) VALUES (:entryID, :type)"
@@ -576,14 +584,22 @@ addTag entryID tag = do
   pure r
 
 addCompleted :: Int -> IO Int64
-addCompleted entryID = do
+addCompleted contentID = do
   (dt, tm) <- getDateTime
   conn <- open dbFile
   executeNamed
     conn
-    "UPDATE queue SET status = \"DONE\" WHERE entry_id = :entryID"
-    [":entryID" := entryID]
+    "INSERT INTO event (date, time) VALUES (:date, :time)"
+    [":date" := dt, ":time" := tm]
   r <- lastInsertRowId conn
+  executeNamed
+    conn
+    "INSERT INTO content (entry_id, content_id, is_original) VALUES (:entryID, :contentID, 0)"
+    [":entryID" := r, ":contentID" := contentID]
+  executeNamed
+    conn
+    "INSERT queue (entry_id, status, score) VALUES (:entryID, \"DONE\", 0.0)"
+    [":entryID" := r]
   close conn
   pure r
 
@@ -703,7 +719,7 @@ initDB = do
     bracketExecute' "CREATE TABLE event (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT);"
     bracketExecute' "CREATE TABLE type (entry_id INTEGER, type TEXT CHECK (type IN ('TEXT', 'TEXT_UPDATE', 'IMAGE', 'AUDIO', 'LINK', 'ANNOTATION_UPDATE',  'QUEUE_UPDATE', 'OTHER')), UNIQUE(entry_id, type) );"
 
-    bracketExecute' "CREATE TABLE content (entry_id INTEGER, content_id INTEGER PRIMARY KEY AUTOINCREMENT, UNIQUE(entry_id, content_id));"
+    bracketExecute' "CREATE TABLE content (entry_id INTEGER PRIMARY KEY UNIQUE, content_id INTEGER, is_original INTEGER);"
 
     -- Tables: annotation TODO - should these be linked to content_id?
     bracketExecute' "CREATE TABLE tag (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"

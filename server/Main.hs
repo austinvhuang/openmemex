@@ -66,7 +66,7 @@ type WriteAnnotationAPI = "submit" :> "annotation" :> ReqBody '[JSON] PostAnnota
 
 type WriteCompletedAPI = "submit" :> "completed" :> ReqBody '[JSON] PostCompleted :> Post '[JSON] Int64
 
-type GetCompletedAPI = "get" :> "completed" :> Capture "entry_id" Int :> Get '[JSON] [Bool]
+type GetCompletedAPI = "get" :> "completed" :> Capture "content_id" Int :> Get '[JSON] [Bool]
 
 type SearchAPI = "search" :> Capture "query" String :> Get '[JSON] [CacheView]
 
