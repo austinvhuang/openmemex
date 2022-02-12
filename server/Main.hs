@@ -39,7 +39,9 @@ import Torch
 type RootAPI = Get '[JSON] [String]
 
 type AllTagsAPI = "all" :> "tags" :> QueryParam "min" Int :> Get '[JSON] [String]
+
 type AllEventsAPI = "all" :> "events" :> Get '[JSON] [Event]
+
 type AllTimestampsAPI = "all" :> "timestamps" :> Get '[JSON] [DateTime]
 
 type AllCacheAPI =
@@ -115,7 +117,7 @@ server config =
     :<|> allTagsH
     :<|> allEventsH
     :<|> allCacheH
-    :<|> event2ContentH 
+    :<|> event2ContentH
     :<|> allTimestampsH
     :<|> newNoteH
     :<|> newLinkH
