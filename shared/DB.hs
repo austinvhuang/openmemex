@@ -523,7 +523,7 @@ addText WriteText {..} = do
   executeNamed
     conn
     (Query . pack $ "INSERT INTO content (entry_id, content_id, is_original) " ++ 
-    "VALUES (:entryID, (SELECT IFNULL(MAX(content_id), 0) FROM content), 1)")
+    "VALUES (:entryID, (SELECT IFNULL(MAX(content_id) + 1, 0) FROM content), 1)")
     [":entryID" := r]
   executeNamed
     conn
@@ -551,7 +551,7 @@ addLink WriteLink {..} = do
   executeNamed
     conn
     (Query . pack $ "INSERT INTO content (entry_id, content_id, is_original) " ++
-    "VALUES (:entryID, (SELECT IFNULL(MAX(content_id), 0) FROM content), 1)")
+    "VALUES (:entryID, (SELECT IFNULL(MAX(content_id) + 1, 0) FROM content), 1)")
     [":entryID" := r]
   executeNamed
     conn
@@ -618,7 +618,7 @@ addCompleted contentID = do
     [":entryID" := r]
   executeNamed
     conn
-    "INSERT queue (entry_id, status, score) VALUES (:entryID, \"DONE\", 0.0)"
+    "INSERT INTO queue (entry_id, status, score) VALUES (:entryID, \"DONE\", 0.0)"
     [":entryID" := r]
   close conn
   pure r
@@ -642,15 +642,15 @@ removeCompleted contentID = do
     [":entryID" := r]
   executeNamed
     conn
-    "INSERT queue (entry_id, status, score) VALUES (:entryID, \"QUEUE\", 0.0)"
+    "INSERT INTO queue (entry_id, status, score) VALUES (:entryID, \"QUEUE\", 0.0)"
     [":entryID" := r]
   close conn
   pure 0
 
 checkCompleted :: Int -> IO Bool
-checkCompleted entryID = do
+checkCompleted contentID = do
   conn <- open dbFile
-  r <- query_ conn (Query . pack $ "SELECT status FROM queue WHERE entry_id == " ++ show entryID) :: IO [[String]]
+  r <- query_ conn (Query . pack $ "SELECT status FROM queue_state WHERE content_id = " ++ show contentID) :: IO [[String]]
   close conn
   print r
   -- TODO - make this safe
@@ -701,7 +701,7 @@ createCacheView tableName = do
         "CREATE VIEW IF NOT EXISTS cache(entry_id, content_id, date, time, " -- event
           ++ "content, url, display, " -- text, link, coalesced(text+link)
           ++ "title, screenshot_file, thumbnail_file) " -- cache_*
-          ++ "AS SELECT event.entry_id, content.content_id, date, time, content, url, "
+          ++ "AS SELECT event.entry_id, content_original.content_id, date, time, content, url, "
           ++ "COALESCE((SELECT content FROM text WHERE url IS NULL AND text.entry_id=event.entry_id), "
           ++ "         (SELECT cache_title FROM "
           ++ tableName
@@ -709,7 +709,7 @@ createCacheView tableName = do
           ++ tableName
           ++ ".entry_id=event.entry_id), \"\") AS display, "
           ++ "cache_title, cache_screenshot_file, cache_thumbnail_file "
-          ++ " FROM content LEFT JOIN event ON event.entry_id=content.entry_id "
+          ++ " FROM content_original LEFT JOIN event ON event.entry_id=content_original.entry_id "
           ++ "LEFT JOIN "
           ++ tableName
           ++ " ON "
@@ -762,16 +762,21 @@ initDB = do
 
     -- TODO group by content_ids, get most recent (ie current) queue value 
     bracketExecute' "DROP VIEW IF EXISTS queue_status;"
-    {-
-    bracketExecute' ("CREATE VIEW IF NOT EXISTS queue_state(content_id, status, score) " ++
-                     "AS SELECT content.content_id, content.status, content.score FROM " ++
-                     "content LEFT JOIN queue ON content.entry_id=queue.entry_id " ++ 
-                     "GROUP BY content.content_id"
-    -}
 
     bracketExecute' "DROP VIEW IF EXISTS content_original;"
-    bracketExecute' $ "CREATE VIEW content_original(entry_id, content_id) AS SELECT content.entry_id, content.content_id "
-                    ++ "WHERE content.is_original=1;"
+    bracketExecute' $ "CREATE VIEW content_original(entry_id, content_id) "
+                    ++ "AS SELECT content.entry_id, content.content_id "
+                    ++ "FROM content WHERE content.is_original=1;"
+
+    bracketExecute' "DROP VIEW IF EXISTS queue_content;"
+    bracketExecute' $ "CREATE VIEW queue_content(entry_id, content_id, status, score) AS SELECT queue.entry_id, content.content_id, queue.status, queue.score FROM content LEFT JOIN queue ON content.entry_id=queue.entry_id;"
+
+    bracketExecute' "DROP VIEW IF EXISTS queue_state;"
+
+    bracketExecute' $ "CREATE VIEW queue_state(content_id, status, score) "
+                    ++ "AS SELECT tmp.content_id, tmp.status, tmp.score "
+                    ++ "FROM queue_content tmp "
+                    ++ "INNER JOIN (SELECT MAX(entry_id) entry_id, content_id, status, score FROM queue_content GROUP BY content_id) tmp2 ON tmp.entry_id=tmp2.entry_id"
 
     -- Tables: type-specific data - text, link, artifact
     bracketExecute' "CREATE TABLE text (entry_id INTEGER UNIQUE, content TEXT);"

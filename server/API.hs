@@ -41,7 +41,7 @@ instance ToJSON PostAnnotation
 instance FromJSON PostAnnotation
 
 -- TODO change to content ID
-data PostCompleted = PostCompleted {pcEntryID :: Int, pcState :: Bool} deriving (Generic)
+data PostCompleted = PostCompleted {pcContentID :: Int, pcState :: Bool} deriving (Generic)
 
 instance ToJSON PostCompleted
 

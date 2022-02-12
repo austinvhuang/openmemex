@@ -65,8 +65,8 @@ pub struct AddNotePayload {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CompletedPayload {
-    #[serde(rename(serialize = "pcEntryID", deserialize = "pcEntryID"))]
-    pub entry_id: i32,
+    #[serde(rename(serialize = "pcContentID", deserialize = "pcContentID"))]
+    pub content_id: i32,
     #[serde(rename(serialize = "pcState", deserialize = "pcState"))]
     pub state: bool,
 }
