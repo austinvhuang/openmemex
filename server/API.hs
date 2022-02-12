@@ -41,7 +41,7 @@ instance ToJSON PostAnnotation
 instance FromJSON PostAnnotation
 
 -- TODO change to content ID
-data PostCompleted = PostCompleted {pcEntryID :: Int, pcState :: Bool} deriving (Generic)
+data PostCompleted = PostCompleted {pcContentID :: Int, pcState :: Bool} deriving (Generic)
 
 instance ToJSON PostCompleted
 
@@ -101,6 +101,9 @@ allCacheH
   startDate
   endDate =
     liftIO (allCache sortby sortdir filterTags limit hideCompleted startDate endDate)
+
+-- | Retrieve contentID for event ID
+event2ContentH entryID = liftIO $ event2Content entryID
 
 -- | Retrieve state for content being completed
 getCompletedH entryID = liftIO $ getCompleted entryID

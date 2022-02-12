@@ -124,15 +124,16 @@ impl Component for Detail {
                                 }
                                 Some(e) => {
                                     log::info!("completed checbox : entry_id: {:?}", e.entry_id);
+                                    log::info!("completed checbox : content_id: {:?}", e.content_id);
                                     let server = host().unwrap();
                                     let query = format!("http://{}/submit/completed", server);
                                     let payload = CompletedPayload {
-                                        entry_id: e.entry_id,
+                                        content_id: e.content_id,
                                         state: self.completed,
                                     };
                                     // TODO can we use payload to deserialize here instead?
                                     // currently payload value isn't used
-                                    let body = json!({"pcEntryID": payload.entry_id,
+                                    let body = json!({"pcContentID": payload.content_id,
                                                       "pcState": payload.state});
                                     let request = Request::post(query)
                                         .header("Content-Type", "application/json")
@@ -146,7 +147,6 @@ impl Component for Detail {
                                     );
                                     let task = FetchService::fetch(request, callback).expect("failed to start request");
                                     self.submit_task = Some(task);
-                                    // e.entry_id ;
                                     false
                                 }
                             }
@@ -166,7 +166,7 @@ impl Component for Detail {
                     None => { log::info!("no entry value"); }
                     Some(e) => {
                         let server = host().unwrap();
-                        let query = format!("http://{}/get/completed/{:?}", server,e.entry_id).to_string();
+                        let query = format!("http://{}/get/completed/{:?}", server,e.content_id).to_string();
                         log::info!("submitting get completed : {:?}", query);
                         let request = Request::get(&query)
                             .body(Nothing)

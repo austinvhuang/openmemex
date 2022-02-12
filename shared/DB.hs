@@ -45,6 +45,13 @@ instance FromRow Event where
 
 instance ToJSON Event
 
+newtype ContentID = ContentID Int deriving (Show, Generic)
+
+instance FromRow ContentID where
+  fromRow = ContentID <$> field
+
+instance ToJSON ContentID
+
 data Link = Link
   { linkEntryID :: Int,
     linkURL :: String
@@ -288,6 +295,15 @@ allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
       Nothing -> 50
       Just l -> l
 
+-- |Given an event ID return a content ID
+event2Content :: Int -> IO (Maybe ContentID)
+event2Content entryID = do
+  conn <- open dbFile
+  r <- queryNamed conn "SELECT content_id FROM content WHERE entry_id = :entryID" [":entryID" := entryID]
+  print r
+  if (length r == 1) then pure (Just $ r !! 0) else pure Nothing
+
+
 linkEntryTags :: [String] -> IO [EntryTag]
 linkEntryTags filterTags = do
   conn <- open dbFile
@@ -471,6 +487,7 @@ replaceTag fromTag toTag = do
   pure ()
 
 -- | Get current date and time
+getDateTime :: IO (String, String)
 getDateTime = do
   now <- getZonedTime
   let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
@@ -481,14 +498,14 @@ addTextInferDate :: String -> [String] -> IO Int64
 addTextInferDate entry tags = do
   (dt, tm) <- getDateTime
   entryID <- addText $ WriteText dt tm entry
-  mapM_ (addTag entryID) tags
+  mapM_ (initTag entryID) tags
   pure entryID
 
 addLinkInferDate :: String -> [String] -> IO Int64
 addLinkInferDate entry tags = do
   (dt, tm) <- getDateTime
   entryID <- addLink $ WriteLink dt tm entry
-  mapM_ (addTag entryID) tags
+  mapM_ (initTag entryID) tags
   pure entryID
 
 addText :: WriteText -> IO Int64
@@ -505,7 +522,8 @@ addText WriteText {..} = do
     [":entryID" := r, ":content" := weContent]
   executeNamed
     conn
-    "INSERT INTO content (entry_id) VALUES (:entryID)"
+    (Query . pack $ "INSERT INTO content (entry_id, content_id, is_original) " ++ 
+    "VALUES (:entryID, (SELECT IFNULL(MAX(content_id) + 1, 0) FROM content), 1)")
     [":entryID" := r]
   executeNamed
     conn
@@ -532,7 +550,8 @@ addLink WriteLink {..} = do
     [":entryID" := r, ":url" := wlUrl]
   executeNamed
     conn
-    "INSERT INTO content (entry_id) VALUES (:entryID)"
+    (Query . pack $ "INSERT INTO content (entry_id, content_id, is_original) " ++
+    "VALUES (:entryID, (SELECT IFNULL(MAX(content_id) + 1, 0) FROM content), 1)")
     [":entryID" := r]
   executeNamed
     conn
@@ -547,11 +566,12 @@ addLink WriteLink {..} = do
 
 addAnnotation :: WriteAnnotation -> IO Int64
 addAnnotation WriteAnnotation {..} = do
+  (dt, tm) <- getDateTime
   conn <- open dbFile
   executeNamed
     conn
     "INSERT INTO event (date, time) VALUES (:date, :time)"
-    [":date" := waDate, ":time" := waTime]
+    [":date" := dt, ":time" := tm]
   r <- lastInsertRowId conn
   executeNamed
     conn
@@ -559,13 +579,17 @@ addAnnotation WriteAnnotation {..} = do
     [":entryID" := r, ":url" := waAnnotation]
   executeNamed
     conn
+    "INSERT INTO content (entry_id, content_id, is_original) VALUES (:entryID, :contentID, 0)"
+    [":entryID" := r, ":contentID" := waContentID]
+  executeNamed
+    conn
     "INSERT INTO type (entry_id, type) VALUES (:entryID, :type)"
     [":entryID" := r, ":type" := ("ANNOTATION_UPDATE" :: String)]
   close conn
   pure undefined
 
-addTag :: Int64 -> String -> IO Int64
-addTag entryID tag = do
+initTag :: Int64 -> String -> IO Int64
+initTag entryID tag = do
   conn <- open dbFile
   executeNamed
     conn
@@ -576,31 +600,57 @@ addTag entryID tag = do
   pure r
 
 addCompleted :: Int -> IO Int64
-addCompleted entryID = do
+addCompleted contentID = do
   (dt, tm) <- getDateTime
   conn <- open dbFile
   executeNamed
     conn
-    "UPDATE queue SET status = \"DONE\" WHERE entry_id = :entryID"
-    [":entryID" := entryID]
+    "INSERT INTO event (date, time) VALUES (:date, :time)"
+    [":date" := dt, ":time" := tm]
   r <- lastInsertRowId conn
+  executeNamed
+    conn
+    "INSERT INTO content (entry_id, content_id, is_original) VALUES (:entryID, :contentID, 0)"
+    [":entryID" := r, ":contentID" := contentID]
+  executeNamed
+    conn
+    "INSERT INTO type (entry_id, type) VALUES (:entryID, \"QUEUE_UPDATE\")"
+    [":entryID" := r]
+  executeNamed
+    conn
+    "INSERT INTO queue (entry_id, status, score) VALUES (:entryID, \"DONE\", 0.0)"
+    [":entryID" := r]
   close conn
   pure r
 
 removeCompleted :: Int -> IO Int64
-removeCompleted entryID = do
+removeCompleted contentID = do
+  (dt, tm) <- getDateTime
   conn <- open dbFile
   executeNamed
     conn
-    "UPDATE queue SET status = \"QUEUE\" WHERE entry_id = :entryID"
-    [":entryID" := entryID]
+    "INSERT INTO event (date, time) VALUES (:date, :time)"
+    [":date" := dt, ":time" := tm]
+  r <- lastInsertRowId conn
+  executeNamed
+    conn
+    "INSERT INTO content (entry_id, content_id, is_original) VALUES (:entryID, :contentID, 0)"
+    [":entryID" := r, ":contentID" := contentID]
+  executeNamed
+    conn
+    "INSERT INTO type (entry_id, type) VALUES (:entryID, \"QUEUE_UPDATE\")"
+    [":entryID" := r]
+  executeNamed
+    conn
+    "INSERT INTO queue (entry_id, status, score) VALUES (:entryID, \"QUEUE\", 0.0)"
+    [":entryID" := r]
   close conn
   pure 0
 
 checkCompleted :: Int -> IO Bool
-checkCompleted entryID = do
+checkCompleted contentID = do
   conn <- open dbFile
-  r <- query_ conn (Query . pack $ "SELECT status FROM queue WHERE entry_id == " ++ show entryID) :: IO [[String]]
+  r <- query_ conn (Query . pack $ "SELECT status FROM queue_state WHERE content_id = " ++ show contentID) :: IO [[String]]
   close conn
   print r
   -- TODO - make this safe
@@ -651,7 +701,7 @@ createCacheView tableName = do
         "CREATE VIEW IF NOT EXISTS cache(entry_id, content_id, date, time, " -- event
           ++ "content, url, display, " -- text, link, coalesced(text+link)
           ++ "title, screenshot_file, thumbnail_file) " -- cache_*
-          ++ "AS SELECT event.entry_id, content.content_id, date, time, content, url, "
+          ++ "AS SELECT event.entry_id, content_original.content_id, date, time, content, url, "
           ++ "COALESCE((SELECT content FROM text WHERE url IS NULL AND text.entry_id=event.entry_id), "
           ++ "         (SELECT cache_title FROM "
           ++ tableName
@@ -659,7 +709,7 @@ createCacheView tableName = do
           ++ tableName
           ++ ".entry_id=event.entry_id), \"\") AS display, "
           ++ "cache_title, cache_screenshot_file, cache_thumbnail_file "
-          ++ " FROM content LEFT JOIN event ON event.entry_id=content.entry_id "
+          ++ " FROM content_original LEFT JOIN event ON event.entry_id=content_original.entry_id "
           ++ "LEFT JOIN "
           ++ tableName
           ++ " ON "
@@ -703,12 +753,30 @@ initDB = do
     bracketExecute' "CREATE TABLE event (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT);"
     bracketExecute' "CREATE TABLE type (entry_id INTEGER, type TEXT CHECK (type IN ('TEXT', 'TEXT_UPDATE', 'IMAGE', 'AUDIO', 'LINK', 'ANNOTATION_UPDATE',  'QUEUE_UPDATE', 'OTHER')), UNIQUE(entry_id, type) );"
 
-    bracketExecute' "CREATE TABLE content (entry_id INTEGER, content_id INTEGER PRIMARY KEY AUTOINCREMENT, UNIQUE(entry_id, content_id));"
+    bracketExecute' "CREATE TABLE content (entry_id INTEGER PRIMARY KEY UNIQUE, content_id INTEGER, is_original INTEGER);"
 
-    -- Tables: annotation TODO - should these be linked to content_id?
+    -- Tables: annotation TODO - these should be linked in the content table by content_id
     bracketExecute' "CREATE TABLE tag (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
     bracketExecute' "CREATE TABLE annotation(entry_id INTEGER UNIQUE,  annotation TEXT);"
     bracketExecute' "CREATE TABLE queue(entry_id INTEGER, status TEXT CHECK (status IN ('QUEUE', 'IN_PROGRESS', 'DONE')), score REAL);"
+
+    -- TODO group by content_ids, get most recent (ie current) queue value 
+    bracketExecute' "DROP VIEW IF EXISTS queue_status;"
+
+    bracketExecute' "DROP VIEW IF EXISTS content_original;"
+    bracketExecute' $ "CREATE VIEW content_original(entry_id, content_id) "
+                    ++ "AS SELECT content.entry_id, content.content_id "
+                    ++ "FROM content WHERE content.is_original=1;"
+
+    bracketExecute' "DROP VIEW IF EXISTS queue_content;"
+    bracketExecute' $ "CREATE VIEW queue_content(entry_id, content_id, status, score) AS SELECT queue.entry_id, content.content_id, queue.status, queue.score FROM content LEFT JOIN queue ON content.entry_id=queue.entry_id;"
+
+    bracketExecute' "DROP VIEW IF EXISTS queue_state;"
+
+    bracketExecute' $ "CREATE VIEW queue_state(content_id, status, score) "
+                    ++ "AS SELECT tmp.content_id, tmp.status, tmp.score "
+                    ++ "FROM queue_content tmp "
+                    ++ "INNER JOIN (SELECT MAX(entry_id) entry_id, content_id, status, score FROM queue_content GROUP BY content_id) tmp2 ON tmp.entry_id=tmp2.entry_id"
 
     -- Tables: type-specific data - text, link, artifact
     bracketExecute' "CREATE TABLE text (entry_id INTEGER UNIQUE, content TEXT);"
