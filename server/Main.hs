@@ -39,9 +39,7 @@ import Torch
 type RootAPI = Get '[JSON] [String]
 
 type AllTagsAPI = "all" :> "tags" :> QueryParam "min" Int :> Get '[JSON] [String]
-
 type AllEventsAPI = "all" :> "events" :> Get '[JSON] [Event]
-
 type AllTimestampsAPI = "all" :> "timestamps" :> Get '[JSON] [DateTime]
 
 type AllCacheAPI =
@@ -55,6 +53,8 @@ type AllCacheAPI =
     :> QueryParam "startDate" Day
     :> QueryParam "endDate" Day
     :> Get '[JSON] [CacheView]
+
+type Event2ContentAPI = "event_id" :> Capture "event_id" Int :> Get '[JSON] (Maybe ContentID)
 
 type ContentAPI = "content" :> Capture "query" String :> Get '[JSON] [CacheView]
 
@@ -94,6 +94,7 @@ type CombinedAPI =
     :<|> AllTagsAPI
     :<|> AllEventsAPI
     :<|> AllCacheAPI
+    :<|> Event2ContentAPI
     :<|> AllTimestampsAPI
     :<|> WriteNoteAPI
     :<|> WriteLinkAPI
@@ -114,6 +115,7 @@ server config =
     :<|> allTagsH
     :<|> allEventsH
     :<|> allCacheH
+    :<|> event2ContentH 
     :<|> allTimestampsH
     :<|> newNoteH
     :<|> newLinkH

@@ -45,6 +45,13 @@ instance FromRow Event where
 
 instance ToJSON Event
 
+newtype ContentID = ContentID Int deriving (Show, Generic)
+
+instance FromRow ContentID where
+  fromRow = ContentID <$> field
+
+instance ToJSON ContentID
+
 data Link = Link
   { linkEntryID :: Int,
     linkURL :: String
@@ -288,6 +295,15 @@ allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
       Nothing -> 50
       Just l -> l
 
+-- |Given an event ID return a content ID
+event2Content :: Int -> IO (Maybe ContentID)
+event2Content entryID = do
+  conn <- open dbFile
+  r <- queryNamed conn "SELECT content_id FROM content WHERE entry_id = :entryID" [":entryID" := entryID]
+  print r
+  if (length r == 1) then pure (Just $ r !! 0) else pure Nothing
+
+
 linkEntryTags :: [String] -> IO [EntryTag]
 linkEntryTags filterTags = do
   conn <- open dbFile
@@ -482,14 +498,14 @@ addTextInferDate :: String -> [String] -> IO Int64
 addTextInferDate entry tags = do
   (dt, tm) <- getDateTime
   entryID <- addText $ WriteText dt tm entry
-  mapM_ (addTag entryID) tags
+  mapM_ (initTag entryID) tags
   pure entryID
 
 addLinkInferDate :: String -> [String] -> IO Int64
 addLinkInferDate entry tags = do
   (dt, tm) <- getDateTime
   entryID <- addLink $ WriteLink dt tm entry
-  mapM_ (addTag entryID) tags
+  mapM_ (initTag entryID) tags
   pure entryID
 
 addText :: WriteText -> IO Int64
@@ -572,8 +588,8 @@ addAnnotation WriteAnnotation {..} = do
   close conn
   pure undefined
 
-addTag :: Int64 -> String -> IO Int64
-addTag entryID tag = do
+initTag :: Int64 -> String -> IO Int64
+initTag entryID tag = do
   conn <- open dbFile
   executeNamed
     conn
@@ -618,14 +634,16 @@ removeCompleted contentID = do
   r <- lastInsertRowId conn
   executeNamed
     conn
-    "INSERT queue(entry_id, status, score) VALUES (:entryID, \"QUEUE\", 0.0)"
-    [":entryID" := r]
-    {-
+    "INSERT INTO content (entry_id, content_id, is_original) VALUES (:entryID, :contentID, 0)"
+    [":entryID" := r, ":contentID" := contentID]
   executeNamed
     conn
-    "UPDATE queue SET status = \"QUEUE\" WHERE entry_id = :entryID"
-    [":entryID" := entryID]
-    -}
+    "INSERT INTO type (entry_id, type) VALUES (:entryID, \"QUEUE_UPDATE\")"
+    [":entryID" := r]
+  executeNamed
+    conn
+    "INSERT queue (entry_id, status, score) VALUES (:entryID, \"QUEUE\", 0.0)"
+    [":entryID" := r]
   close conn
   pure 0
 
@@ -737,7 +755,7 @@ initDB = do
 
     bracketExecute' "CREATE TABLE content (entry_id INTEGER PRIMARY KEY UNIQUE, content_id INTEGER, is_original INTEGER);"
 
-    -- Tables: annotation TODO - should these be linked to content_id?
+    -- Tables: annotation TODO - these should be linked in the content table by content_id
     bracketExecute' "CREATE TABLE tag (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
     bracketExecute' "CREATE TABLE annotation(entry_id INTEGER UNIQUE,  annotation TEXT);"
     bracketExecute' "CREATE TABLE queue(entry_id INTEGER, status TEXT CHECK (status IN ('QUEUE', 'IN_PROGRESS', 'DONE')), score REAL);"
@@ -750,6 +768,10 @@ initDB = do
                      "content LEFT JOIN queue ON content.entry_id=queue.entry_id " ++ 
                      "GROUP BY content.content_id"
     -}
+
+    bracketExecute' "DROP VIEW IF EXISTS content_original;"
+    bracketExecute' $ "CREATE VIEW content_original(entry_id, content_id) AS SELECT content.entry_id, content.content_id "
+                    ++ "WHERE content.is_original=1;"
 
     -- Tables: type-specific data - text, link, artifact
     bracketExecute' "CREATE TABLE text (entry_id INTEGER UNIQUE, content TEXT);"

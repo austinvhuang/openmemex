@@ -102,6 +102,9 @@ allCacheH
   endDate =
     liftIO (allCache sortby sortdir filterTags limit hideCompleted startDate endDate)
 
+-- | Retrieve contentID for event ID
+event2ContentH entryID = liftIO $ event2Content entryID
+
 -- | Retrieve state for content being completed
 getCompletedH entryID = liftIO $ getCompleted entryID
 
