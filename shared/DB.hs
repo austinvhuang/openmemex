@@ -295,14 +295,13 @@ allCache sortby sortdir filterTags limit hideCompleted startDay endDay = do
       Nothing -> 50
       Just l -> l
 
--- |Given an event ID return a content ID
+-- | Given an event ID return a content ID
 event2Content :: Int -> IO (Maybe ContentID)
 event2Content entryID = do
   conn <- open dbFile
   r <- queryNamed conn "SELECT content_id FROM content WHERE entry_id = :entryID" [":entryID" := entryID]
   print r
   if (length r == 1) then pure (Just $ r !! 0) else pure Nothing
-
 
 linkEntryTags :: [String] -> IO [EntryTag]
 linkEntryTags filterTags = do
@@ -522,8 +521,10 @@ addText WriteText {..} = do
     [":entryID" := r, ":content" := weContent]
   executeNamed
     conn
-    (Query . pack $ "INSERT INTO content (entry_id, content_id, is_original) " ++ 
-    "VALUES (:entryID, (SELECT IFNULL(MAX(content_id) + 1, 0) FROM content), 1)")
+    ( Query . pack $
+        "INSERT INTO content (entry_id, content_id, is_original) "
+          ++ "VALUES (:entryID, (SELECT IFNULL(MAX(content_id) + 1, 0) FROM content), 1)"
+    )
     [":entryID" := r]
   executeNamed
     conn
@@ -550,8 +551,10 @@ addLink WriteLink {..} = do
     [":entryID" := r, ":url" := wlUrl]
   executeNamed
     conn
-    (Query . pack $ "INSERT INTO content (entry_id, content_id, is_original) " ++
-    "VALUES (:entryID, (SELECT IFNULL(MAX(content_id) + 1, 0) FROM content), 1)")
+    ( Query . pack $
+        "INSERT INTO content (entry_id, content_id, is_original) "
+          ++ "VALUES (:entryID, (SELECT IFNULL(MAX(content_id) + 1, 0) FROM content), 1)"
+    )
     [":entryID" := r]
   executeNamed
     conn
@@ -760,23 +763,25 @@ initDB = do
     bracketExecute' "CREATE TABLE annotation(entry_id INTEGER UNIQUE,  annotation TEXT);"
     bracketExecute' "CREATE TABLE queue(entry_id INTEGER, status TEXT CHECK (status IN ('QUEUE', 'IN_PROGRESS', 'DONE')), score REAL);"
 
-    -- TODO group by content_ids, get most recent (ie current) queue value 
+    -- TODO group by content_ids, get most recent (ie current) queue value
     bracketExecute' "DROP VIEW IF EXISTS queue_status;"
 
     bracketExecute' "DROP VIEW IF EXISTS content_original;"
-    bracketExecute' $ "CREATE VIEW content_original(entry_id, content_id) "
-                    ++ "AS SELECT content.entry_id, content.content_id "
-                    ++ "FROM content WHERE content.is_original=1;"
+    bracketExecute' $
+      "CREATE VIEW content_original(entry_id, content_id) "
+        ++ "AS SELECT content.entry_id, content.content_id "
+        ++ "FROM content WHERE content.is_original=1;"
 
     bracketExecute' "DROP VIEW IF EXISTS queue_content;"
     bracketExecute' $ "CREATE VIEW queue_content(entry_id, content_id, status, score) AS SELECT queue.entry_id, content.content_id, queue.status, queue.score FROM content LEFT JOIN queue ON content.entry_id=queue.entry_id;"
 
     bracketExecute' "DROP VIEW IF EXISTS queue_state;"
 
-    bracketExecute' $ "CREATE VIEW queue_state(content_id, status, score) "
-                    ++ "AS SELECT tmp.content_id, tmp.status, tmp.score "
-                    ++ "FROM queue_content tmp "
-                    ++ "INNER JOIN (SELECT MAX(entry_id) entry_id, content_id, status, score FROM queue_content GROUP BY content_id) tmp2 ON tmp.entry_id=tmp2.entry_id"
+    bracketExecute' $
+      "CREATE VIEW queue_state(content_id, status, score) "
+        ++ "AS SELECT tmp.content_id, tmp.status, tmp.score "
+        ++ "FROM queue_content tmp "
+        ++ "INNER JOIN (SELECT MAX(entry_id) entry_id, content_id, status, score FROM queue_content GROUP BY content_id) tmp2 ON tmp.entry_id=tmp2.entry_id"
 
     -- Tables: type-specific data - text, link, artifact
     bracketExecute' "CREATE TABLE text (entry_id INTEGER UNIQUE, content TEXT);"
