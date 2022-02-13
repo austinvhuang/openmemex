@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use crate::api::*;
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
+use yew::services::timeout::{TimeoutService, TimeoutTask};
+use std::time::Duration;
 use yew::{
     format::{Json, Nothing},
     prelude::*,
@@ -24,16 +26,19 @@ pub enum DetailMsg {
     CompletedResponse(Result<Vec<CompletedResponse>, anyhow::Error>),
     GetCompleted,
     ReceiveCompleted(Result<Vec<bool>, anyhow::Error>),
+    AceChange(Option<String>),
+    SubmitAnnotation(String),
+    Timer,
 }
 
 pub struct Detail {
     pub link: ComponentLink<Self>,
     pub entry: Option<Cache>,
-    pub ace_editor: Option<JsValue>,
+    // pub ace_editor: Option<JsValue>,
+    pub annotation: String,
     pub completed: bool,
     submit_task: Option<FetchTask>,
-    // TODO: get ace callback working
-    // pub ace_callback: dyn Fn(JsValue) -> (),
+    pub timer: Option<TimeoutTask>,
 }
 
 #[derive(Properties, Clone)]
@@ -91,13 +96,16 @@ impl Component for Detail {
         let cb = link.callback_once(|_: String| DetailMsg::GetCompleted);
         cb.emit("".to_string()); // TODO - what's the right way to handle a message without parameters
         log::info!("sent GetCompleted message");
+
         Self {
             link: link,
             entry: props.entry,
-            ace_editor: None,
+            // ace_editor: None,
             completed: false,
-            submit_task: None
+            submit_task: None,
             // ace_callback: unimplemented!(),
+            annotation: "".to_string(), // TODO initialize with ace editor content
+            timer: None
         }
     }
 
@@ -198,17 +206,35 @@ impl Component for Detail {
                 }
                 true
             }
+            DetailMsg::AceChange(txt) => {
+                log::info!("ace changed: {:?}", txt);
+                match txt {
+                    Some(content) => { self.annotation = content; }
+                    None => { }
+                }
+                false
+            }
+            DetailMsg::SubmitAnnotation(txt) => {
+                log::info!("submitting annotation: {:?}", txt);
+                false
+            }
+            DetailMsg::Timer => {
+                log::info!("Timer message");
+                self.timer = Some(TimeoutService::spawn(
+                    Duration::from_secs(5),
+                    self.link.callback(|_| DetailMsg::Timer),
+                ));
+                false
+            }
         }
     }
 
     
     fn rendered(&mut self, first_render: bool) {
-        log::info!("calling init_ace");
-        // self.ace_editor = Some(init_ace());
-        //
-        // init_ace();
-        // ace_manual_init();
-        log::info!("called init_ace");
+        self.timer = Some(TimeoutService::spawn(
+            Duration::from_secs(5),
+            self.link.callback(|_| DetailMsg::Timer),
+        ));
     }
 
     fn view(&self) -> Html {
@@ -224,12 +250,18 @@ impl Component for Detail {
             None => "".to_string(),
         };
         // TODO note_content branch on is url?
+        //
+        // TODO - set component state for content string, move this to an initialization step
+        // rather than being in the view.
         let note_content = match &self.entry {
             Some(entry) => if entry.url.is_none() { title } 
                            else { ["# Notes on", &title].join(" ") },
             None => "No Entry Selected".to_string(),
         };
         log::info!("Screen {:?}", src);
+
+
+        let ace_callback = self.link.callback(move |tag| DetailMsg::AceChange(tag));
         html! {
             <div>
                 <div class="twocol-equal">
@@ -239,7 +271,7 @@ impl Component for Detail {
                                 src=src_mapped style=iframe_style/>
                     </div>
                     <div style="height:85vh" class="shadow p-3 mb-5 bg-body rounded">
-                        <Ace init_content=note_content.clone() id="ace_editor" height="90%" />
+                        <Ace init_content=note_content.clone() id="ace_editor" height="90%" change_callback=ace_callback/>
                         <p/>
                         <center>
                         { completed_checkbox(self) }

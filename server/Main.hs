@@ -64,7 +64,7 @@ type WriteNoteAPI = "submit" :> "note" :> ReqBody '[JSON] PostNote :> Post '[JSO
 
 type WriteLinkAPI = "submit" :> "link" :> ReqBody '[JSON] PostNote :> Post '[JSON] Int64
 
-type WriteAnnotationAPI = "submit" :> "annotation" :> ReqBody '[JSON] PostAnnotation :> Capture "content_id" Int :> Post '[JSON] Int64
+type WriteAnnotationAPI = "submit" :> "annotation" :> Capture "content_id" Int :> ReqBody '[JSON] String :>  Post '[JSON] Int64
 
 type WriteCompletedAPI = "submit" :> "completed" :> ReqBody '[JSON] PostCompleted :> Post '[JSON] Int64
 
@@ -100,6 +100,7 @@ type CombinedAPI =
     :<|> AllTimestampsAPI
     :<|> WriteNoteAPI
     :<|> WriteLinkAPI
+    :<|> WriteAnnotationAPI
     :<|> WriteCompletedAPI
     :<|> GetCompletedAPI
     :<|> SearchAPI
@@ -121,6 +122,7 @@ server config =
     :<|> allTimestampsH
     :<|> newNoteH
     :<|> newLinkH
+    :<|> postAnnotationH
     :<|> postCompletedH
     :<|> getCompletedH
     :<|> searchH

@@ -40,7 +40,7 @@ pub struct AceProperties {
     pub theme: Option<String>,
     pub mode: Option<String>,
     pub init_content: Option<String>,
-    // pub change_callback: Callback<Option<String>>,
+    pub change_callback: Callback<Option<String>>,
 }
 
 #[derive(Properties, Clone)]
@@ -48,7 +48,6 @@ struct Defaults {
     pub theme: String,
     pub mode: String,
     pub init_content: String,
-    // pub change_callback: Callback<Option<String>>,
 }
 
 
@@ -77,7 +76,6 @@ impl Component for Ace {
             link: link,
             defaults: defaults,
             props: props,
-            // change_callback: props.change_callback,
         }
     }
 
@@ -118,6 +116,7 @@ impl Component for Ace {
                 }
                 let content = &vec.join("\n");
                 log::info!("\nReading Content from Rust:\n{}\n----", content);
+                self.props.change_callback.emit(Some(content.clone()));
             }
 
         }

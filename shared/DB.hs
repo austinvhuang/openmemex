@@ -80,8 +80,8 @@ data WriteLink = WriteLink
   deriving (Eq, Show, Generic)
 
 data WriteAnnotation = WriteAnnotation
-  { waDate :: String,
-    waTime :: String,
+  { 
+    
     waContentID :: Int, -- mapping from content table
     waAnnotation :: String
   }

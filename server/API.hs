@@ -70,6 +70,9 @@ newNoteH note = liftIO $ newNote note
 -- | Post a link
 newLinkH note = liftIO $ newLink note
 
+-- | Write a content annotation
+postAnnotationH contentID annotation = liftIO $ postAnnotation contentID annotation
+
 -- | Alter state for content being completed
 postCompletedH entryID = liftIO $ postCompleted entryID
 
@@ -131,11 +134,10 @@ newLink note = do
   crawlLinks link
   pure entryID
 
-annotation :: PostAnnotation -> IO Int64
-annotation anData = do
+postAnnotation :: Int -> String -> IO Int64
+postAnnotation contentID annotation = do
   putStrLn "Updating annotation"
-  print anData
-  -- TODO
+  addAnnotation $ WriteAnnotation contentID annotation
   pure 0
 
 -- | Retrieve content completion (for detail checkbox) flag state
