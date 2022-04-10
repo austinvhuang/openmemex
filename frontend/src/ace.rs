@@ -5,7 +5,7 @@ use yew::{
 };
 
 #[wasm_bindgen]
-pub extern {
+extern {
     pub fn test_ffi();
     pub fn ace_test();
     pub fn ace_edit(dom_id: &str) -> JsValue;
