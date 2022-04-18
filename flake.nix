@@ -5,9 +5,6 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
 
-    npmlock2nix.url = "github:tweag/npmlock2nix";
-    npmlock2nix.flake = false;
-
     haskell-nix.url = "github:input-output-hk/haskell.nix";
     haskell-nix.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -20,10 +17,7 @@
     flake-utils.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-filter.url = "github:numtide/nix-filter";
-    libtorch-nix = {
-      url = "github:hasktorch/libtorch-nix";
-      flake = false;
-    };
+    libtorch-nix.url = "github:hasktorch/libtorch-nix";
   };
 
   outputs = {
@@ -54,6 +48,7 @@
           inherit
             (pkgs)
             openmemex-frontend
+            openmemex-frontend-static
             ;
         };
       })

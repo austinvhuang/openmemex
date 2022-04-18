@@ -3,6 +3,7 @@
   torch,
   cudaSupport,
   cudaMajorVersion,
+  stdenv,
 }:
 (haskell-nix.stackProject {
   src = ../.;
@@ -16,10 +17,10 @@
           "--extra-include-dirs=${torch}/include"
           "--extra-include-dirs=${torch}/include/torch/csrc/api/include"
         ];
-        # flags = {
-        #   cuda = cudaSupport;
-        #   gcc = !cudaSupport && final.stdenv.hostPlatform.isDarwin;
-        # };
+        flags = {
+          cuda = cudaSupport;
+          gcc = !cudaSupport && stdenv.hostPlatform.isDarwin;
+        };
       };
     }
   ];
