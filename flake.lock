@@ -878,22 +878,6 @@
         "type": "github"
       }
     },
-    "npmlock2nix": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1648735462,
-        "narHash": "sha256-G22WBttdFoWp7E/YvGfePOc+W+ZsQGw+IwpFbAwJNeI=",
-        "owner": "tweag",
-        "repo": "npmlock2nix",
-        "rev": "dd2897c3a6e404446704a63f40b9a29fa0acf752",
-        "type": "github"
-      },
-      "original": {
-        "owner": "tweag",
-        "repo": "npmlock2nix",
-        "type": "github"
-      }
-    },
     "old-ghc-nix": {
       "flake": false,
       "locked": {
@@ -955,7 +939,6 @@
         "libtorch-nix": "libtorch-nix_2",
         "nix-filter": "nix-filter",
         "nixpkgs": "nixpkgs_6",
-        "npmlock2nix": "npmlock2nix",
         "rust-overlay": "rust-overlay"
       }
     },

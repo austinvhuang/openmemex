@@ -9,16 +9,13 @@
   stdenv,
   wasm-pack,
 }: let
-  cargoTOML = builtins.fromTOML (builtins.readFile ./Cargo.toml);
-  WasmBindgenCargoVersion = cargoTOML.dependencies.wasm-bindgen.version;
-  WasmBindgenVersion = builtins.substring 1 (builtins.stringLength WasmBindgenCargoVersion) WasmBindgenCargoVersion;
   rust-env = rust-bin.stable.latest.default.override {
     extensions = ["rust-src"];
     targets = ["wasm32-unknown-unknown"];
   };
 in
   rustPlatform.buildRustPackage {
-    pname = "openmemex";
+    pname = "openmemex-frontend";
     version = openmemex-version;
 
     src = nix-filter.lib.filter {

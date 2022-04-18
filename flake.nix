@@ -48,7 +48,6 @@
           inherit
             (pkgs)
             openmemex-frontend
-            openmemex-frontend-static
             ;
         };
       })
