@@ -20,6 +20,10 @@
     flake-utils.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-filter.url = "github:numtide/nix-filter";
+    libtorch-nix = {
+      url = "github:hasktorch/libtorch-nix";
+      flake = false;
+    };
   };
 
   outputs = {
@@ -28,29 +32,32 @@
     nixpkgs,
     ...
   } @ inputs:
-  # FIXME: ghc currently doesn't build on aarch64-darwin
-    flake-utils.lib.eachSystem (nixpkgs.lib.remove "aarch64-darwin" flake-utils.lib.defaultSystems) (system: let
+    flake-utils.lib.eachSystem ["x86_64-linux"] (system: let
+      cudaSupport = false;
+      cudaMajorVersion = null;
+
+      overlays = import ./nix/overlays.nix {inherit inputs cudaSupport cudaMajorVersion;};
       pkgs = import inputs.nixpkgs {
         inherit system;
         overlays = [
-          self.overlays.default
+          overlays.default
           inputs.rust-overlay.overlay
+          inputs.haskell-nix.overlay
+          (import ./nix/libtorch.nix {inherit inputs cudaSupport cudaMajorVersion;})
         ];
-        config = {allowBroken = true;};
+        inherit (inputs.haskell-nix) config;
       };
-    in {
-      devShells.default = import ./nix/shell.nix {inherit pkgs;};
-
-      packages = {
-        inherit
-          (pkgs)
-          openmemex-frontend
-          ;
-          inherit (pkgs.haskell.packages.ghc884)
-            openmemex;
-      };
-    })
-    // {
-      overlays = import ./nix/overlays.nix {inherit inputs;};
-    };
+    in
+      (pkgs.lib.recursiveUpdate pkgs.openmemex {
+        shell = import ./nix/shell.nix {inherit pkgs;};
+        packages = {
+          inherit
+            (pkgs)
+            openmemex-frontend
+            ;
+        };
+      })
+      // {
+        # extra flake
+      });
 }

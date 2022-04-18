@@ -276,11 +276,11 @@
     "hackage": {
       "flake": false,
       "locked": {
-        "lastModified": 1650157984,
-        "narHash": "sha256-hitutrIIn+qINGi6oef53f87we+cp3QNmXSBiCzVU90=",
+        "lastModified": 1650244345,
+        "narHash": "sha256-VNtE4zdlcbdMqzF0b715LcPsC3QT+9c14x3ip1O6x9A=",
         "owner": "input-output-hk",
         "repo": "hackage.nix",
-        "rev": "2290fdc4d135407896f41ba518a0eae8efaae9c5",
+        "rev": "b0e158a1e783a4508ec95e6480a187ab3dbd22ce",
         "type": "github"
       },
       "original": {
@@ -329,11 +329,11 @@
         "stackage": "stackage"
       },
       "locked": {
-        "lastModified": 1650158155,
-        "narHash": "sha256-6+v87g/ub++zhrFrSOB4xAWE0ve1h+EO+GG+LZj5ofQ=",
+        "lastModified": 1650244467,
+        "narHash": "sha256-pZWe4nRN1/43qR22HltqSvDau3e64WFdc6+wiTxYVlA=",
         "owner": "input-output-hk",
         "repo": "haskell.nix",
-        "rev": "efcdd520ae83fe34410cb4bb73d2fea7cc567581",
+        "rev": "cc40a24585ccba274dc9a5af96d5506034e0d658",
         "type": "github"
       },
       "original": {
@@ -497,6 +497,22 @@
           "flake-utils"
         ]
       },
+      "locked": {
+        "lastModified": 1647710908,
+        "narHash": "sha256-Q087FfbOn5vehzENnpPftp2Fy/vwwighCT3jTVG7nIg=",
+        "owner": "hasktorch",
+        "repo": "libtorch-nix",
+        "rev": "fbf5bb828c5f1eff0f4cf0c88c6eb436845273b3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hasktorch",
+        "repo": "libtorch-nix",
+        "type": "github"
+      }
+    },
+    "libtorch-nix_2": {
+      "flake": false,
       "locked": {
         "lastModified": 1647710908,
         "narHash": "sha256-Q087FfbOn5vehzENnpPftp2Fy/vwwighCT3jTVG7nIg=",
@@ -815,11 +831,11 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1648219316,
-        "narHash": "sha256-Ctij+dOi0ZZIfX5eMhgwugfvB+WZSrvVNAyAuANOsnQ=",
+        "lastModified": 1650109093,
+        "narHash": "sha256-tqlnKrAdJktRLXTou9le0oTqrYBAFpGscV5RADdpArU=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "30d3d79b7d3607d56546dd2a6b49e156ba0ec634",
+        "rev": "faad370edcb37162401be50d45526f52bb16a713",
         "type": "github"
       },
       "original": {
@@ -903,6 +919,7 @@
         "flake-utils": "flake-utils",
         "haskell-nix": "haskell-nix",
         "hasktorch": "hasktorch",
+        "libtorch-nix": "libtorch-nix_2",
         "nix-filter": "nix-filter",
         "nixpkgs": "nixpkgs_5",
         "npmlock2nix": "npmlock2nix",

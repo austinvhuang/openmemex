@@ -1,21 +1,27 @@
-{ mkDerivation, aeson, base, bytestring, directory, filepath
-, hasktorch, http-conduit, lib, mtl, network-uri
-, optparse-applicative, optparse-generic, pretty-simple, process
-, scalpel, servant-server, servant-swagger, sqlite-simple, swagger2
-, tagsoup, text, time, wai-cors, wai-logger, warp
+{
+  haskell-nix,
+  torch,
+  cudaSupport,
+  cudaMajorVersion,
 }:
-mkDerivation {
-  pname = "openmemex";
-  version = "0.1.0.0";
+(haskell-nix.stackProject {
   src = ../.;
-  isLibrary = false;
-  isExecutable = true;
-  executableHaskellDepends = [
-    aeson base bytestring directory filepath hasktorch http-conduit mtl
-    network-uri optparse-applicative optparse-generic pretty-simple
-    process scalpel servant-server servant-swagger sqlite-simple
-    swagger2 tagsoup text time wai-cors wai-logger warp
+  compiler-nix-name = "ghc884";
+  modules = [
+    # Fixes for libtorch-ffi
+    {
+      packages.libtorch-ffi = {
+        configureFlags = [
+          "--extra-lib-dirs=${torch}/lib"
+          "--extra-include-dirs=${torch}/include"
+          "--extra-include-dirs=${torch}/include/torch/csrc/api/include"
+        ];
+        # flags = {
+        #   cuda = cudaSupport;
+        #   gcc = !cudaSupport && final.stdenv.hostPlatform.isDarwin;
+        # };
+      };
+    }
   ];
-  homepage = "https://github.com/austinvhuang/openmemex#readme";
-  license = lib.licenses.asl20;
-}
+})
+.flake {}
