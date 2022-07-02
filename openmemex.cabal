@@ -22,7 +22,6 @@ executable server
                      , bytestring
                      , directory
                      , filepath
-                     , hasktorch
                      , mtl
                      , network-uri
                      , optparse-applicative
