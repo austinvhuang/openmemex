@@ -184,7 +184,7 @@ instance FromRow CacheEntry where
 
 instance ToJSON CacheEntry
 
-dbFile = "openmemex.db"
+dbFile = "openmemex.db" -- TODO - make this configurable
 
 -- Helper functions
 
@@ -704,7 +704,7 @@ createCacheView tableName = do
         "CREATE VIEW IF NOT EXISTS cache(entry_id, content_id, date, time, " -- event
           ++ "content, url, display, " -- text, link, coalesced(text+link)
           ++ "title, screenshot_file, thumbnail_file) " -- cache_*
-          ++ "AS SELECT event.entry_id, content_original.content_id, date, time, content, url, "
+          ++ "AS SELECT DISTINCT event.entry_id, content_original.content_id, date, time, content, url, "
           ++ "COALESCE((SELECT content FROM text WHERE url IS NULL AND text.entry_id=event.entry_id), "
           ++ "         (SELECT cache_title FROM "
           ++ tableName
@@ -831,6 +831,23 @@ initDB = do
     addTextInferDate "Memex Created." [] -- TODO get rid of this hack
     appendCache []
     pure ()
+
+createCache :: IO ()
+createCache = do
+    now <- getZonedTime
+    let dt = formatTime defaultTimeLocale "%Y-%m-%d" now
+        tm = formatTime defaultTimeLocale "%H:%M:%S" now
+        timeStamp = formatTime defaultTimeLocale "%Y%m%d_%H%M%S" now
+        tableName = "cache_" ++ timeStamp
+    bracketExecute' $ "DROP TABLE IF EXISTS " ++ tableName ++ ";"
+    print $
+      "CREATE TABLE " ++ tableName
+        ++ "(cache_entry_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, "
+        ++ "cache_url TEXT, "
+        ++ "cache_title TEXT, cache_body TEXT, cache_screenshot_file TEXT, cache_thumbnail_file TEXT);"
+    bracketExecute' $ "DROP TABLE IF EXISTS " ++ tableName ++ ";"
+    bracketExecute' $ "DROP VIEW IF EXISTS cache;"
+    createCacheView tableName
 
 bracketExecute' :: String -> IO ()
 bracketExecute' q = runReaderT (bracketExecute q) (Sqlite dbFile)
