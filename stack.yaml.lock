@@ -32,45 +32,6 @@ packages:
       sha256: 165db39bdeb0ae75d45ae7eef354f5d42858c2e465fd69d58ff605096a811622
   original:
     hackage: script-monad-0.0.3@sha256:ba3bad28d6f6400fe492101300dad63989afc813cc6c8dc23832170275951ef0,2218
-- completed:
-    subdir: hasktorch
-    name: hasktorch
-    version: 0.2.0.0
-    git: https://github.com/hasktorch/hasktorch.git
-    pantry-tree:
-      size: 8273
-      sha256: 5adb3ef336320634ffa838fe3d30c901c18d6e48c95ef26cc9abddd433bba197
-    commit: b5685dca3aebfc1516c7623b9ed7521a5db890ef
-  original:
-    subdir: hasktorch
-    git: https://github.com/hasktorch/hasktorch.git
-    commit: b5685dca3aebfc1516c7623b9ed7521a5db890ef
-- completed:
-    subdir: libtorch-ffi
-    name: libtorch-ffi
-    version: 1.9.0.0
-    git: https://github.com/hasktorch/hasktorch.git
-    pantry-tree:
-      size: 9503
-      sha256: a8f6652fe97f52c113f814bde05a2a83523e42c1a363e9284783f1e107e102e9
-    commit: b5685dca3aebfc1516c7623b9ed7521a5db890ef
-  original:
-    subdir: libtorch-ffi
-    git: https://github.com/hasktorch/hasktorch.git
-    commit: b5685dca3aebfc1516c7623b9ed7521a5db890ef
-- completed:
-    subdir: libtorch-ffi-helper
-    name: libtorch-ffi-helper
-    version: 1.7.0.0
-    git: https://github.com/hasktorch/hasktorch.git
-    pantry-tree:
-      size: 147
-      sha256: b1e155fc23859d0372b15287f8f0fcac8388f82cb3a74d91f994a448e0552695
-    commit: b5685dca3aebfc1516c7623b9ed7521a5db890ef
-  original:
-    subdir: libtorch-ffi-helper
-    git: https://github.com/hasktorch/hasktorch.git
-    commit: b5685dca3aebfc1516c7623b9ed7521a5db890ef
 snapshots:
 - completed:
     size: 563103

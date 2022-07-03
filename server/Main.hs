@@ -32,7 +32,6 @@ import Servant
 import System.Directory (doesFileExist)
 import System.IO (hPutStrLn, stderr)
 import Text.Pretty.Simple
-import Torch
 
 -- API Types
 
@@ -81,12 +80,6 @@ type LinkEntryTagsAPI =
     :> QueryParams "filter" String
     :> Get '[JSON] [EntryTag]
 
-type HelloTorchAPI =
-  "test"
-    :> "torch"
-    :> Capture "value" Float
-    :> Get '[JSON] [TestTorch]
-
 type ConfigAPI =
   "config"
     :> Get '[JSON] [Configuration]
@@ -106,7 +99,6 @@ type CombinedAPI =
     :<|> SearchAPI
     :<|> FrontendAPI
     :<|> LinkEntryTagsAPI
-    :<|> HelloTorchAPI
     :<|> ConfigAPI
 
 combinedApi :: Proxy CombinedAPI
@@ -128,7 +120,6 @@ server config =
     :<|> searchH
     :<|> frontendH
     :<|> linkEntryTagsH
-    :<|> helloTorchH
     :<|> (configH config)
 
 configH :: Configuration -> Handler [Configuration]

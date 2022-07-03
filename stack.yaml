@@ -13,25 +13,8 @@ extra-deps:
   - direct-sqlite-2.3.26@sha256:04e835402f1508abca383182023e4e2b9b86297b8533afbd4e57d1a5652e0c23,3718
   - webdriver-w3c-0.0.2@sha256:f07934702391238d79a06727a11f5c0518819e69814bc34b3fd4e2d3905ff464,4116
   - script-monad-0.0.3@sha256:ba3bad28d6f6400fe492101300dad63989afc813cc6c8dc23832170275951ef0,2218
-  - git: https://github.com/hasktorch/hasktorch.git
-    commit: b5685dca3aebfc1516c7623b9ed7521a5db890ef
-    subdirs:
-      - hasktorch
-      - libtorch-ffi
-      - libtorch-ffi-helper
 # servant swagger ui
 #  - servant-swagger-ui-jensoleg-0.3.3@sha256:e2b59a65f0d4f8aa7e43881e0f5447c496908aff7b80dd9a3a9e1e825eb007a6,3541
-
-extra-include-dirs:
-  - libtorch/include/torch/csrc/api/include
-  - libtorch/include
-
-# will fail on osx for absolute paths
-# according to stack docs absolute paths are required but it seems to work on mac with relative paths
-# see https://docs.haskellstack.org/en/v1.3.2/yaml_configuration/#extra-include-dirsextra-lib-dirs
-extra-lib-dirs:
-  - ./libtorch/lib
-  - ./deps/tokenizers
 
 packages:
   - .
