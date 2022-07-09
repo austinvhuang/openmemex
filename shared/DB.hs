@@ -220,7 +220,7 @@ allTags minCount = do
   conn <- open dbFile
   let queryString = case minCount of
         Nothing -> Query $ pack "SELECT distinct tag from tag order by tag"
-        (Just minCount) -> Query $ pack $ "SELECT tag FROM tag GROUP BY tag HAVING count(*) >= " ++ show minCount ++ " ORDER BY tag"
+        (Just minCount) -> Query $ pack $ "SELECT tag FROM tag WHERE tag <> \"\" GROUP BY tag HAVING count(*) >= " ++ show minCount ++ " ORDER BY tag"
   r <- query_ conn queryString :: IO [[String]]
   close conn
   pure $ concat r
