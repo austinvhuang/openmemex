@@ -670,7 +670,7 @@ search query = do
     stdQuery =
       Query $
         pack
-          ( "SELECT DISTINCT cache.entry_id, date, time, content, url, display, title, thumbnail_file, screenshot_file "
+          ( "SELECT DISTINCT cache.entry_id, cache.content_id, date, time, content, url, display, title, thumbnail_file, screenshot_file "
               ++ "FROM cache "
               ++ "LEFT JOIN tag ON cache.entry_id=tag.entry_id "
               ++ "WHERE url LIKE '%"

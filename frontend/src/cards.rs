@@ -91,7 +91,7 @@ impl Cards {
                 <font color="grey">
                 {
                     match &parsed {
-                        Ok(x) => { host_simplify(x.host_str().unwrap()) }
+                        Ok(x) => { host_simplify(x.host_str().unwrap_or("")) }
                         Err(error) => { "".to_string() }
                     }
                 }
