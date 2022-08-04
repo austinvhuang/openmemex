@@ -216,6 +216,7 @@ impl Component for Detail {
             }
             DetailMsg::SubmitAnnotation(txt) => {
                 log::info!("submitting annotation: {:?}", txt);
+                // TODO
                 false
             }
             DetailMsg::Timer => {

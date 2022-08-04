@@ -756,7 +756,8 @@ initDB = do
     bracketExecute' "CREATE TABLE event (entry_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, time TEXT);"
     bracketExecute' "CREATE TABLE type (entry_id INTEGER, type TEXT CHECK (type IN ('TEXT', 'TEXT_UPDATE', 'IMAGE', 'AUDIO', 'LINK', 'ANNOTATION_UPDATE',  'QUEUE_UPDATE', 'OTHER')), UNIQUE(entry_id, type) );"
 
-    bracketExecute' "CREATE TABLE content (entry_id INTEGER PRIMARY KEY UNIQUE, content_id INTEGER, is_original INTEGER);"
+    -- bracketExecute' "CREATE TABLE content (entry_id INTEGER PRIMARY KEY UNIQUE, content_id INTEGER, is_original INTEGER);"
+    bracketExecute' "CREATE TABLE content (entry_id INTEGER, content_id INTEGER, is_original INTEGER DEFAULT 0);"
 
     -- Tables: annotation TODO - these should be linked in the content table by content_id
     bracketExecute' "CREATE TABLE tag (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, entry_id INTEGER, tag TEXT);"
