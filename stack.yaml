@@ -6,7 +6,7 @@
 # resolver: lts-16.26
 # compiler: ghc-8.8.4
 
-resolver: lts-17.4
+resolver: lts-18.28
 
 extra-deps:
   - sqlite-simple-0.4.18.0@sha256:3ceea56375c0a3590c814e411a4eb86943f8d31b93b110ca159c90689b6b39e5,3002
